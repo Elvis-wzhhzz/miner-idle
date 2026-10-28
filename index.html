@@ -1960,7 +1960,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
 'use strict';
 /* ================= 基础工具 ================= */
 var SAVE_KEY='minerLegendSave_v3';
-var GAME_VER='13.4'; // v13.4 自动存档：本地崩溃缓冲 + 30s 节流云同步 + 里程碑强存 + 断网退避重试
+var GAME_VER='13.5'; // v13.5 一次性兑换码（服务端HMAC验证+每账号一次）；v13.4 自动存档：本地崩溃缓冲+30s节流云同步+里程碑强存+断网退避重试
 var SAVE_V=18;         // 存档迁移计数（SAVE_V=18：v13 强制云存档）
 var MIN_SAVE_VER='13.0'; // v13 起拒绝更早版本存档（本地存档完全废弃）
 /* ================= v12.3 云端存档（Supabase） =================
@@ -2504,19 +2504,25 @@ function singBuy(key){
   }
   derived=calcDerived();renderShop();saveGame(false);
 }
-/* 至高无上：直接发放一件随机无上装备（空槽装配 → 背包 → 包满分解保底） */
-function grantSupreme(){
-  var it=genEquipOfRarity('unique',Math.max(1,state.depth));
-  markNew(it);state.drops++;state.dropsByRarity.unique++;
+/* 发放一件指定稀有度装备（空槽装配 → 背包 → 包满分解保底）。
+ * v13.5：从 grantSupreme 泛化而出——官方兑换码（至宝/无上）与无上授予共用同一入包逻辑 */
+function grantRarityItem(rk){
+  var it=genEquipOfRarity(rk,Math.max(1,state.depth));
+  markNew(it);state.drops++;state.dropsByRarity[rk]=(state.dropsByRarity[rk]||0)+1;
   var tag;
   var cur=state.equip[it.type];
   if(!cur){state.equip[it.type]=it;tag='⚡ 空槽自动装配';}
   else if(state.bag.length<equipBagSize()){state.bag.push(it);tag='🎒 已放入装备背包';}
   else{var og=dissolveGold(it,false);tag='🎒 背包已满，自动分解 +'+fmt(og)+' 金币';}
   if(it.score>(state.bestDrop?state.bestDrop.score:-1))state.bestDrop=it;
-  beep(523,0.1,'triangle',0.05);setTimeout(function(){beep(784,0.16,'triangle',0.05);},110);
-  toast('👑 至高无上：'+it.name,'#ff9f43',it.statText+' · '+tag);
   checkVictory();renderEquip(true);
+  return {it:it,tag:tag};
+}
+/* 至高无上：直接发放一件随机无上装备 */
+function grantSupreme(){
+  var r=grantRarityItem('unique');
+  beep(523,0.1,'triangle',0.05);setTimeout(function(){beep(784,0.16,'triangle',0.05);},110);
+  toast('👑 至高无上：'+r.it.name,'#ff9f43',r.it.statText+' · '+r.tag);
 }
 /* 使用物品栏物品（inspire 无论成败都消耗；条件不满足时不消耗） */
 function singUse(key){
@@ -3842,14 +3848,22 @@ function fmtDur(s){
  *     offline 暂停云推，online 恢复后立即 flush 积压。
  * 里程碑事件（爆装/灵光乍现/转生/飞升）调 milestoneSave() 无视节流立即强存。
  * 冲突合并：登录拉档时云端 vs 本地缓冲取较新者（LWW）为底，败者的单调计数
- * （累计金币/掉落/转生/飞升等）max 合并进来，防多端覆盖丢档。 */
+ * （累计金币/掉落/转生/飞升等）max 合并进来，防多端覆盖丢档。
+ * 拉档写锁（_as.pulling）：进入 afterLogin 即上锁、云端状态确认后才解锁——
+ * 拉档窗口内（session_claim + pull_save 两个网络往返）主循环/心跳/爆装里程碑
+ * 都可能触发推送，而此刻 state 仍是 defaultState；慢网时 push_save 先于 pull_save
+ * 落库就会把玩家云端旧档覆盖成全新档（clobber 后 updated_at 更新，LWW 也救不回）。
+ * 写锁期间一切本地/云端写入全部暂停（含 pagehide 兜底与 online flush）。 */
 var AUTOSAVE_LOCAL_DEBOUNCE=1500;               // 第 1 层：本地缓冲 debounce（ms）
 var AUTOSAVE_HEARTBEAT=5000;                    // 心跳间隔（ms）：驱动本地缓冲与 30s 节流判定
 var AUTOSAVE_CLOUD_THROTTLE=30000;              // 第 2 层：云推节流间隔（ms）——规格 30s
 var AUTOSAVE_BACKOFF=[5000,15000,45000,120000]; // 第 2 层：云推失败退避序列（ms），封顶 2min
 var AUTOSAVE_PUSH_TIMEOUT=10000;                // 第 2 层：单次云推超时（复用 withTimeout）
 var _as={dirty:false,flushAt:0,retry:0,timer:null,retryTimer:null,localTimer:null,
-  flushing:false,lastLocalAt:0,bound:false};
+  flushing:false,lastLocalAt:0,bound:false,
+  /* v13.4 自动存档：拉档写锁——true 期间禁止一切存档写入（本地+云端）。
+   * afterLogin 上锁，云端状态确认（拉档成功/确认空档/已知坏档）或被踢出后解锁。 */
+  pulling:false};
 var _asHeartbeatId=null;
 /* 单调计数字段（跨转生/飞升也只增不减的统计口径）——冲突合并时与败者取 max。
  * 注意：gold/ore/runGold/up/maxDepth 不在此列——它们会被转生/飞升重置，
@@ -3868,7 +3882,9 @@ function _asLocalKey(){
 /* 第 1 层：本地缓冲写入（整份 state 编码后存 localStorage；写前刷新 lastSeen，
  * 让崩溃后的离线结算只算"真正离开"的时间，不把在线时间按 50% 效率漏算） */
 function localSave(){
-  if(saveBlocked)return false;
+  // v13.4 自动存档：saveBlocked 或拉档写锁期间不写——后者防止"新档缓冲"
+  // 抢在拉档完成前覆盖本机旧缓冲（localLoad 的 LWW 会把它当成更新的存档）
+  if(saveBlocked||_as.pulling)return false;
   var key=_asLocalKey();
   if(!key)return false;
   try{
@@ -3906,6 +3922,7 @@ function _asClearLocalBuf(){
 /* 第 1 层调度：任何状态改动后 debounce 写本地（合并高频调用，如批量爆装） */
 function scheduleLocalSave(){
   if(!_asLocalKey())return;
+  if(_as.pulling)return; // v13.4 自动存档：拉档期间不排本地写入（解锁后由心跳补排）
   if(_as.localTimer)clearTimeout(_as.localTimer);
   _as.localTimer=setTimeout(function(){
     _as.localTimer=null;
@@ -3916,6 +3933,9 @@ function scheduleLocalSave(){
  * 否则置 dirty，由定时器在距上次成功推送 ≥30s 时触发。 */
 function scheduleCloudPush(force){
   if(saveBlocked)return;
+  // v13.4 自动存档：拉档写锁期间禁止云推（含 force）——拉档未完成时 state 还是
+  // 拉档前的旧内容，推上去就是拿新档覆盖云端旧档；解锁后由 afterLogin 决定推什么
+  if(_as.pulling)return;
   if(!cloudEnabled()||!cloudUser)return;
   _as.dirty=true;
   if(force){ flushCloudPush(); return; }
@@ -3931,6 +3951,8 @@ function scheduleCloudPush(force){
  * 主循环/玩法逻辑不依赖本函数结果——纯后台尽力而为。 */
 async function flushCloudPush(){
   if(_as.flushing)return;         // 防并发：上一推未回（推送期间的新改动由 dirty 保留）
+  // v13.4 自动存档：拉档写锁双保险——拦 online 事件直拨与登录前排下的在途定时器
+  if(_as.pulling)return;
   if(!cloudEnabled()||!cloudUser)return;
   if(navigator.onLine===false)return; // 断网暂停：保留 dirty，等 online 事件 flush
   _as.flushing=true;
@@ -4038,6 +4060,7 @@ function _asMergeMax(dst,src){
 /* v13.4 自动存档：云页面板里的自动存档状态行文案 */
 function _asStatusText(){
   if(!cloudUser)return '💾 自动存档：未登录不生效（本地仅崩溃保险 · 须登录才能玩）';
+  if(_as.pulling)return '💾 自动存档：正在载入云端存档（暂停写入，防止覆盖）…';
   var t=_as.lastLocalAt?(' · 本地缓冲 '+fmtLocalTime(_as.lastLocalAt)):'';
   if(_as.dirty)return '💾 自动存档：有待同步改动'+(cloudSync.lastErr?'（失败重试中）':'（即将上传）')+t;
   return '💾 自动存档：已开启 · 本地实时缓冲 · 云端每 30 秒同步'+t;
@@ -4188,6 +4211,13 @@ function _rememberClear(){ try{localStorage.removeItem('minerRememberLogin');}ca
 // v13.1：登录成功后的统一处理——恢复游戏 → 抢占互斥锁 → 拉取云端存档 → 启动看门狗
 // 用户名询问改为幂等接力：等离线收益弹窗关闭后再问（已有账号不问，新账号必问）
 async function afterLogin(){
+  /* v13.4 自动存档：拉档写锁上锁——此刻起直到"云端状态确认"为止，禁止一切
+   * 本地/云端存档写入。resumeGame 之后主循环（爆装→milestoneSave）、心跳
+   * （登录后首个心跳必推，见 _as.flushAt=0）、切窗口（_asFinalFlush）都可能
+   * 触发推送，而 state 此刻仍是 defaultState：慢网时 push_save 先于 pull_save
+   * 落库 = 拿新档覆盖玩家云端旧档，且 clobber 后的 updated_at 更新，LWW+max
+   * 合并只能救回单调计数，金币/装备/转生进度全丢。 */
+  _as.pulling=true;
   _forceLogoutDone=false;
   resumeGame();
   /* v13.3：抢占互斥锁的失败不能再被静默吞掉——
@@ -4229,17 +4259,25 @@ async function afterLogin(){
   try{ _localBuf=localLoad(); }catch(e){}
   var applied=await cloudPull(false,askName,_localBuf);
   if(applied){
-    /* v13.4 自动存档：拉档成功后立即把"离线结算/冲突合并后的最新状态"强推回云端，
-     * 保证合并结果与离线收益落库（每次登录仅此一次强制推，之后走 30s 节流）。 */
+    /* v13.4 自动存档：拉档成功 = 云端状态已确认 → 解锁写入，并把"离线结算/
+     * 冲突合并后的最新状态"强推回云端，保证合并结果与离线收益落库
+     * （每次登录仅此一次强制推，之后走 30s 节流）。 */
+    _as.pulling=false;
     scheduleCloudPush(true);
   }else{
     /* v13.4：红线第二道——抢锁成功但拉取存档连接类失败，同样拒入。
      * "登进去了但云端不可用"正是用户不想要的困惑状态；缺 SQL / 存档过旧等
-     * 非连接类失败仍放行（那是配置问题，本地可玩），由 toast 告知原因。 */
+     * 非连接类失败仍放行（那是配置问题，本地可玩），由 toast 告知原因。
+     * v13.4 自动存档：此分支 pulling 保持上锁——_netBlockLogin 会同步清
+     * cloudUser 停写，双保险确保"云端状态未知"时一个字节都不写云。 */
     if(_cloudPullNetFail){ _netBlockLogin(); return; }
     /* v13.4 自动存档：云端无存档但本机有更新的崩溃缓冲（如崩溃前没来得及上传）——
-     * 询问玩家恢复还是开新档；不自动恢复，避免"别处重置过账号却被本地复活"的歧义。 */
-    if(_cloudPullEmpty&&_localBuf){ _asOfferLocalRestore(_localBuf,askName); return; }
+     * 询问玩家恢复还是开新档；不自动恢复，避免"别处重置过账号却被本地复活"的歧义。
+     * 云端已确认是空的，解锁写入无害（此时写什么都不覆盖已有进度）。 */
+    if(_cloudPullEmpty&&_localBuf){ _as.pulling=false; _asOfferLocalRestore(_localBuf,askName); return; }
+    /* 新账号/已知坏档（版本过旧/损坏，v13 设计即拒绝载入）→ 开新档，
+     * 解锁写入让自动存档把新档建立起来。被踢出路径 cloudUser 已清，写不入。 */
+    _as.pulling=false;
     askName(); // 没拉到存档（新账号/读取失败）也要问名字
   }
 }
@@ -4522,7 +4560,9 @@ var _cloudPullEmpty=false;
 async function cloudFetch(){
   if(!cloudEnabled()||!cloudUser)return {ok:false,err:'未登录云端'};
   try{
-    var {data,error} = await supabaseClient.rpc('pull_save',{p_device:DEVICE_ID});
+    /* v13.4 自动存档：拉取也加 10s 超时——pull 挂死会让 afterLogin 的拉档写锁
+     * 永远解不开（自动存档全停）；超时按网络错误走红线拒入，云端原档一个字节不动。 */
+    var {data,error} = await withTimeout(supabaseClient.rpc('pull_save',{p_device:DEVICE_ID}),AUTOSAVE_PUSH_TIMEOUT,'拉取存档');
     if(error){
       if(_isDeviceKickError(error)){ _kickOutUser(); return {ok:false,err:'',kicked:true}; }
       return {ok:false,err:_friendlyErr(error),net:_isConnErr(error)};
@@ -4979,7 +5019,11 @@ function tryDrop(silent){
   if(state.dropFeed.length>10)state.dropFeed.pop();
   equipDirty=true;
   // v11.2：新装备掉落 → 揭晓赌局（resolveWager 内部处理串关无注自动落袋）
-  if(state.wager||state.parlay)resolveWager(it);
+  // v13.4 修复：无条件揭晓——玩家未下注的pending预言也随每次掉落轮换，
+  // 恢复"每掉落一件装备刷新一道赌局"。此前被 if(state.wager||state.parlay)
+  // 挡住：不下注则预言永不改变，resolveWager 里"未参赌自然揭晓"分支沦为死代码。
+  // 读档后 betWinTotal=0 时强制爆装钩子待位，首个自然掉落即重新武装倒计时条。
+  resolveWager(it);
   checkVictory();
   // 揭晓后再生成针对下一件装备的预言（赌局期间由 updateBetLive 驱动强制爆装）
   maybeMakeProphecy();
@@ -5096,6 +5140,8 @@ function useRedeemCode(){
   if(!box)return;
   var code=(box.value||'').trim();
   if(!code){if(msg)msg.innerHTML='<span style="color:#ff5c5c">⚠️ 请输入兑换码</span>';return;}
+  // v13.5：官方一次性兑换码（MC1 前缀）→ 走服务端验证，与下方测试用途码完全隔离
+  if(_redeemNorm(code).indexOf('MC1')===0){ redeemOfficial(code,box,msg); return; }
   var ok=false;
   try{ ok=redeemCode(code); }catch(e){ ok=false; }
   if(msg){
@@ -5104,6 +5150,56 @@ function useRedeemCode(){
       :'<span style="color:#ff5c5c">❌ 兑换码无效</span>';
   }
   if(ok)box.value='';
+}
+/* v13.5：兑换码规范化——与 SQL 端 redeem_code 的规则严格一致
+ * （大写、I/L→1、O→0、剔除 Crockford 字母表之外的分隔符/空格）。
+ * 两端同规则：带连字符/空格/小写/误输 ILO 的官方码都能正常兑换。 */
+function _redeemNorm(c){
+  var s=String(c||'').toUpperCase();
+  s=s.replace(/I/g,'1').replace(/L/g,'1').replace(/O/g,'0');
+  return s.replace(/[^0-9A-HJKMNP-TV-Z]/g,'');
+}
+/* v13.5：官方一次性兑换码兑换（服务端 redeem_code RPC）。
+ * 码结构：MC1 + base32(载荷17字节) + base32(HMAC-SHA256 前16字节)，载荷含
+ * 有效期/福利内容，玩家无密钥无法伪造；每账号限一次由 code_redemptions 表主键保证。
+ * 网络失败 = RPC 未执行 = 未消耗次数，可放心重试。 */
+async function redeemOfficial(code,box,msg){
+  var fail=function(t){ if(msg)msg.innerHTML='<span style="color:#ff5c5c">'+t+'</span>'; };
+  if(saveBlocked){ fail('🚫 原存档来自更高版本，已停止保存——请更新游戏版本后再兑换'); return; }
+  if(!cloudEnabled()||!cloudUser){ fail('❌ 官方兑换码需要登录云端账号后兑换'); return; }
+  if(_as.pulling){ fail('⏳ 正在载入云端存档，请稍候再兑换'); return; }
+  if(msg)msg.innerHTML='<span style="color:#a89a86">⏳ 正在验证兑换码…</span>';
+  var r=null;
+  try{
+    var res=await withTimeout(supabaseClient.rpc('redeem_code',{p_code:code}),AUTOSAVE_PUSH_TIMEOUT,'兑换验证');
+    if(res&&res.error)r={ok:false,err:_friendlyErr(res.error)};
+    else r=(res&&res.data)||{ok:false,err:'验证失败'};
+  }catch(e){ r={ok:false,err:_friendlyErr(e)}; }
+  if(typeof r==='string'){ try{r=JSON.parse(r);}catch(e){r={ok:false,err:'验证失败'};} }
+  if(!r||!r.ok){ fail('❌ '+((r&&r.err)||'兑换失败，请稍后重试')); return; }
+  var summary=applyRedeemBenefit(r.ben||{});
+  if(box)box.value='';
+  if(msg)msg.innerHTML='<span style="color:#7ed321">✅ 兑换成功：'+esc(summary)+'</span>';
+  derived=calcDerived();rebuildAll();checkAchievements();
+  milestoneSave(); // 福利立即落本地缓冲 + 强推云端，防关页面/断网丢失
+  beep(523,0.1,'triangle',0.05);setTimeout(function(){beep(784,0.16,'triangle',0.05);},110);
+  toast('🎁 兑换成功：'+esc(summary),'#7ed321');
+}
+/* v13.5：应用官方兑换码福利（金币/矿石/至宝/无上）。
+ * 矿石直接入包不受容量上限约束（超出部分由后续出售周期统一结算，不会丢失）；
+ * 装备走 grantRarityItem 统一入包逻辑（空槽装配→背包→包满分解保底）。 */
+function applyRedeemBenefit(ben){
+  var parts=[],i;
+  var gold=Math.max(0,Math.floor(+ben.gold||0));
+  var ore=Math.max(0,Math.floor(+ben.ore||0));
+  var art=Math.max(0,Math.min(255,Math.floor(+ben.artifact||0)));
+  var uni=Math.max(0,Math.min(255,Math.floor(+ben.unique||0)));
+  if(gold>0){ state.gold+=gold;state.totalGold+=gold;state.runGold+=gold;parts.push('金币 +'+fmt(gold)); }
+  if(ore>0){ state.ore+=ore;state.totalOre+=ore;parts.push('矿石 +'+fmt(ore)); }
+  for(i=0;i<art;i++){ var a=grantRarityItem('artifact');parts.push('至宝「'+a.it.name+'」'); }
+  for(i=0;i<uni;i++){ var u=grantRarityItem('unique');parts.push('无上「'+u.it.name+'」'); }
+  if(!parts.length)parts.push('空福利');
+  return parts.join(' · ');
 }
 var smeltSel=[];
 function showSmeltModal(){
