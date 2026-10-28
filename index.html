@@ -1960,7 +1960,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
 'use strict';
 /* ================= 基础工具 ================= */
 var SAVE_KEY='minerLegendSave_v3';
-var GAME_VER='13.3'; // v13.3：bug 修复版（连续爆装统计 / 按钮骨架 / toast HTML / 换层撤注手续费 等）
+var GAME_VER='13.4'; // v13.4 自动存档：本地崩溃缓冲 + 30s 节流云同步 + 里程碑强存 + 断网退避重试
 var SAVE_V=18;         // 存档迁移计数（SAVE_V=18：v13 强制云存档）
 var MIN_SAVE_VER='13.0'; // v13 起拒绝更早版本存档（本地存档完全废弃）
 /* ================= v12.3 云端存档（Supabase） =================
@@ -2562,6 +2562,8 @@ function singUse(key){
     }else{
       toast('💡 灵光乍现……石沉大海','#a89a86','参透概率仅 0.1%（千分之一）· 物品已消耗，再试一杯');
     }
+    // v13.4 自动存档：灵光乍现里程碑——无论是否参透成功，奇点道具一局仅一两次，立即强存
+    milestoneSave();
   }else if(key==='mars'){
     if(state.sing.marsUntil>Date.now()){toast('☄️ 火星四溅生效中，无法再次使用','#ff5c5c','剩余 '+fmtDur((state.sing.marsUntil-Date.now())/1000));return;}
     state.sing.marsUntil=Date.now()+SING_MARS_MS;
@@ -2687,7 +2689,7 @@ function doAscend(){
   state.betWin=0;state.betLose=0;state.betWinYes=0;state.betLoseNo=0;
   derived=calcDerived();applyTheme();rebuildAll();
   checkAchievements();
-  saveGame(false);
+  milestoneSave(); // v13.4 自动存档：飞升里程碑——无视节流立即强存
   beep(392,0.12,'triangle',0.05);setTimeout(function(){beep(523,0.12,'triangle',0.05);},140);setTimeout(function(){beep(659,0.12,'triangle',0.05);},280);setTimeout(function(){beep(784,0.3,'triangle',0.06);},420);
   var ult=hasUltimate();
   showModal({title:'✨ 飞升！',confirmText:ult?'極':'继续挖矿',
@@ -3827,28 +3829,283 @@ function fmtDur(s){
 }
 
 /* ================= 存档 ================= */
-// v13：只有用户手动点「☁️ 保存至云端」按钮才会上传，其他所有 saveGame(false) 调用都直接跳过
+/* ================= v13.4 自动存档（三层，互不阻塞） =================
+ * 目标：玩家随时关页面/掉网/崩页都不丢进度；云同步开销可控；网络抖动可重试恢复。
+ *   第 1 层 本地缓冲：localSave() 把整份 state 编码后写 localStorage（key 按 uid 隔离，
+ *     minerLocalBuf_v1_<uid>）。任何状态改动后 debounce 1.5s 写一次（scheduleLocalSave），
+ *     零网络零成本。仅作崩溃保险——未登录绝不写本地（红线：无登录不能玩）。
+ *   第 2 层 节流云同步：dirty 标记 + 30s 节流包住现有 cloudPush()（scheduleCloudPush）；
+ *     失败按 5s→15s→45s→2min 指数退避重试（复用 withTimeout 10s 超时）。
+ *     活跃期写入量 ≈ 2–3 次/分钟/人，远低于 Supabase 免费额度。
+ *   第 3 层 退出/断网兜底：visibilitychange(hidden)/pagehide/beforeunload 触发
+ *     尽力而为的最终云推 + 本地存盘（本地已连续保存，云推失败也不丢）；
+ *     offline 暂停云推，online 恢复后立即 flush 积压。
+ * 里程碑事件（爆装/灵光乍现/转生/飞升）调 milestoneSave() 无视节流立即强存。
+ * 冲突合并：登录拉档时云端 vs 本地缓冲取较新者（LWW）为底，败者的单调计数
+ * （累计金币/掉落/转生/飞升等）max 合并进来，防多端覆盖丢档。 */
+var AUTOSAVE_LOCAL_DEBOUNCE=1500;               // 第 1 层：本地缓冲 debounce（ms）
+var AUTOSAVE_HEARTBEAT=5000;                    // 心跳间隔（ms）：驱动本地缓冲与 30s 节流判定
+var AUTOSAVE_CLOUD_THROTTLE=30000;              // 第 2 层：云推节流间隔（ms）——规格 30s
+var AUTOSAVE_BACKOFF=[5000,15000,45000,120000]; // 第 2 层：云推失败退避序列（ms），封顶 2min
+var AUTOSAVE_PUSH_TIMEOUT=10000;                // 第 2 层：单次云推超时（复用 withTimeout）
+var _as={dirty:false,flushAt:0,retry:0,timer:null,retryTimer:null,localTimer:null,
+  flushing:false,lastLocalAt:0,bound:false};
+var _asHeartbeatId=null;
+/* 单调计数字段（跨转生/飞升也只增不减的统计口径）——冲突合并时与败者取 max。
+ * 注意：gold/ore/runGold/up/maxDepth 不在此列——它们会被转生/飞升重置，
+ * max 合并会把"重置前的旧值"复活成非法横财（如转生后白拿重置前的金币），
+ * 这些字段整体跟随较新存档（LWW）。 */
+var _AS_MONO=['totalGold','totalOre','totalPrestige','prestigeCount',
+  'ascensions','drops','taps','merges','recruits','smelts','strandedCleaned','uniSoldFull',
+  'playtime','awayTime','betWins','bets','betMax','betWinMax','betLoseMax',
+  'betWinYesMax','betLoseNoMax','parlayCount','parlayBestRound','parlayBestPot',
+  'bestStreakMax','uniqueStreakMax'];
+/* 本地缓冲 key 按 uid 隔离——绝不把 A 的缓冲露给 B；未登录返回 null（守红线） */
+function _asLocalKey(){
+  try{ return (cloudUser&&cloudUser.id)?('minerLocalBuf_v1_'+cloudUser.id):null; }
+  catch(e){ return null; }
+}
+/* 第 1 层：本地缓冲写入（整份 state 编码后存 localStorage；写前刷新 lastSeen，
+ * 让崩溃后的离线结算只算"真正离开"的时间，不把在线时间按 50% 效率漏算） */
+function localSave(){
+  if(saveBlocked)return false;
+  var key=_asLocalKey();
+  if(!key)return false;
+  try{
+    state.lastSeen=Date.now();
+    var data=saveEncode(state);
+    if(!data)return false;
+    var payload={uid:cloudUser.id,savedAt:state.lastSeen,ver:GAME_VER,v:SAVE_V,data:data};
+    localStorage.setItem(key,JSON.stringify(payload));
+    _as.lastLocalAt=state.lastSeen;
+    return true;
+  }catch(e){ return false; } // 配额满/隐私模式：静默失败，不影响游戏
+}
+/* 第 1 层：本地缓冲读取（校验 uid 归属 + 存档版本，不合格返回 null） */
+function localLoad(){
+  var key=_asLocalKey();
+  if(!key)return null;
+  try{
+    var raw=localStorage.getItem(key);
+    if(!raw)return null;
+    var o=JSON.parse(raw);
+    if(!o||!o.data)return null;
+    if(cloudUser&&o.uid!==cloudUser.id)return null; // 归属校验：不是本账号的缓冲不读
+    if(o.v!==SAVE_V)return null;                    // 版本不符（旧缓冲）不读
+    var decoded=saveDecode(o.data);
+    if(!decoded)return null;
+    return {decoded:decoded,savedAt:o.savedAt||0};
+  }catch(e){ return null; }
+}
+/* 第 1 层：清掉本机崩溃缓冲（重置游戏时调用，防止"云端已重置又被本地复活"） */
+function _asClearLocalBuf(){
+  var key=_asLocalKey();
+  if(!key)return;
+  try{localStorage.removeItem(key);}catch(e){}
+}
+/* 第 1 层调度：任何状态改动后 debounce 写本地（合并高频调用，如批量爆装） */
+function scheduleLocalSave(){
+  if(!_asLocalKey())return;
+  if(_as.localTimer)clearTimeout(_as.localTimer);
+  _as.localTimer=setTimeout(function(){
+    _as.localTimer=null;
+    localSave();
+  },AUTOSAVE_LOCAL_DEBOUNCE);
+}
+/* 第 2 层：节流云同步调度。force=true 无视节流立即推（里程碑/手动保存）；
+ * 否则置 dirty，由定时器在距上次成功推送 ≥30s 时触发。 */
+function scheduleCloudPush(force){
+  if(saveBlocked)return;
+  if(!cloudEnabled()||!cloudUser)return;
+  _as.dirty=true;
+  if(force){ flushCloudPush(); return; }
+  if(_as.timer||_as.retryTimer)return; // 已有排队中的节流推/退避重试，不重复排
+  var left=AUTOSAVE_CLOUD_THROTTLE-(Date.now()-_as.flushAt);
+  if(left<0)left=0;
+  _as.timer=setTimeout(function(){
+    _as.timer=null;
+    if(_as.dirty)flushCloudPush();
+  },left);
+}
+/* 第 2 层：执行一次云推（并发保护 + 在线检查 + 10s 超时 + 退避重试）。
+ * 主循环/玩法逻辑不依赖本函数结果——纯后台尽力而为。 */
+async function flushCloudPush(){
+  if(_as.flushing)return;         // 防并发：上一推未回（推送期间的新改动由 dirty 保留）
+  if(!cloudEnabled()||!cloudUser)return;
+  if(navigator.onLine===false)return; // 断网暂停：保留 dirty，等 online 事件 flush
+  _as.flushing=true;
+  cloudSync.busy=true; cloudSync.lastErr='';
+  try{
+    await withTimeout(cloudPush(),AUTOSAVE_PUSH_TIMEOUT,'云同步');
+    if(cloudSync.ok){
+      _as.dirty=false; _as.retry=0; _as.flushAt=Date.now();
+      if(_as.retryTimer){clearTimeout(_as.retryTimer);_as.retryTimer=null;}
+      updateSaveLabel();
+    }else{
+      _asScheduleRetry(); // 失败保留 dirty，指数退避重试
+    }
+  }catch(e){
+    _asScheduleRetry(); // 超时等异常同样走退避（cloudPush 内部已记 lastErr）
+  }finally{
+    _as.flushing=false;
+    cloudSync.busy=false;
+    /* 推送飞行期间又产生新改动（如离线批量爆装）→ 立即补推一次，把最新状态也推上去 */
+    if(_as.dirty&&!_as.retryTimer&&!_as.timer&&navigator.onLine!==false){
+      setTimeout(function(){ if(_as.dirty&&!_as.flushing)flushCloudPush(); },0);
+    }
+  }
+}
+/* 第 2 层：失败退避重试 5s→15s→45s→2min（封顶）；期间 dirty 保留不丢 */
+function _asScheduleRetry(){
+  if(!cloudEnabled()||!cloudUser)return;
+  if(_as.retryTimer)return; // 已排队
+  var delay=AUTOSAVE_BACKOFF[Math.min(_as.retry,AUTOSAVE_BACKOFF.length-1)];
+  _as.retry++;
+  _as.retryTimer=setTimeout(function(){
+    _as.retryTimer=null;
+    if(_as.dirty)flushCloudPush();
+  },delay);
+  updateSaveLabel();
+}
+/* 里程碑强存：无视 30s 节流立即推云 + 本地缓冲（debounce 合并爆发式调用）。
+ * 触发点：爆装 / 灵光乍现 / 转生 / 飞升（一局仅一两次的稀有事件，零成本）。 */
+function milestoneSave(){
+  scheduleLocalSave();
+  scheduleCloudPush(true);
+}
+/* 第 3 层：退出/隐藏时的尽力而为最终保存——本地同步落盘（零网络），
+ * 云推尽力发起（异步，不阻塞页面关闭；失败也有本地缓冲兜底） */
+function _asFinalFlush(){
+  localSave();
+  if(_as.dirty)scheduleCloudPush(true);
+}
+/* 心跳：本地缓冲 + 30s 节流云推的驱动源（游戏主循环不直接管存档）。
+ * 距上次成功云推 ≥30s 即视为"存在未保存改动"（挖矿收益持续累计），推一次。 */
+function _asHeartbeat(){
+  if(!cloudUser)return;
+  scheduleLocalSave();
+  if(document.hidden)return; // 后台标签：pagehide/visibilitychange 已最终推过，不重复云推
+  if(Date.now()-_as.flushAt>=AUTOSAVE_CLOUD_THROTTLE){
+    _as.dirty=true;
+    scheduleCloudPush(false);
+  }
+}
+/* 第 3 层：退出/断网兜底监听 + 心跳启动（init 调用） */
+function bindAutoSaveEvents(){
+  if(_as.bound)return; _as.bound=true;
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden)_asFinalFlush();
+  });
+  window.addEventListener('pagehide',_asFinalFlush);
+  window.addEventListener('beforeunload',_asFinalFlush);
+  window.addEventListener('offline',function(){
+    // 断网：暂停云推（清掉节流/退避计时器），dirty 保留，等 online 立即 flush
+    if(_as.timer){clearTimeout(_as.timer);_as.timer=null;}
+    if(_as.retryTimer){clearTimeout(_as.retryTimer);_as.retryTimer=null;}
+    updateSaveLabel();
+  });
+  window.addEventListener('online',function(){
+    updateSaveLabel();
+    if(_as.dirty)flushCloudPush(); // 恢复网络：立即 flush 积压改动
+  });
+  if(_asHeartbeatId)clearInterval(_asHeartbeatId);
+  _asHeartbeatId=setInterval(_asHeartbeat,AUTOSAVE_HEARTBEAT);
+}
+/* 冲突合并：dst=较新存档（底），src=败者。把 src 的单调计数 max 进 dst；
+ * ach/spirits 取并集（解锁不可逆）；dropsByRarity 逐档 max；
+ * 装备数组/背包/赌局等无法 max 的整体跟随较新者（LWW）。 */
+function _asMergeMax(dst,src){
+  if(!dst||!src)return dst;
+  var i,k;
+  for(i=0;i<_AS_MONO.length;i++){
+    k=_AS_MONO[i];
+    if(typeof src[k]==='number'&&(src[k]||0)>(dst[k]||0))dst[k]=src[k];
+  }
+  if(src.dropsByRarity&&dst.dropsByRarity){
+    for(k in src.dropsByRarity){
+      if((src.dropsByRarity[k]||0)>(dst.dropsByRarity[k]||0))dst.dropsByRarity[k]=src.dropsByRarity[k];
+    }
+  }
+  if(src.sing&&dst.sing){
+    if((src.sing.spent||0)>(dst.sing.spent||0))dst.sing.spent=src.sing.spent;
+    if((src.sing.earned||0)>(dst.sing.earned||0))dst.sing.earned=src.sing.earned;
+  }
+  if(typeof src.bagBase==='number'&&(src.bagBase||0)>(dst.bagBase||0))dst.bagBase=src.bagBase;
+  if(src.ach)for(k in src.ach){ if(src.ach[k]&&!dst.ach[k]){ if(!dst.ach)dst.ach={}; dst.ach[k]=true; } }
+  if(src.spirits)for(k in src.spirits){ if(src.spirits[k]&&!(dst.spirits&&dst.spirits[k])){ if(!dst.spirits)dst.spirits={}; dst.spirits[k]=true; } }
+  return dst;
+}
+/* v13.4 自动存档：云页面板里的自动存档状态行文案 */
+function _asStatusText(){
+  if(!cloudUser)return '💾 自动存档：未登录不生效（本地仅崩溃保险 · 须登录才能玩）';
+  var t=_as.lastLocalAt?(' · 本地缓冲 '+fmtLocalTime(_as.lastLocalAt)):'';
+  if(_as.dirty)return '💾 自动存档：有待同步改动'+(cloudSync.lastErr?'（失败重试中）':'（即将上传）')+t;
+  return '💾 自动存档：已开启 · 本地实时缓冲 · 云端每 30 秒同步'+t;
+}
+/* v13.4 自动存档：把本地崩溃缓冲直接应用为当前 state（云端空档时的恢复路径） */
+function _asApplyLocalBuf(local,after){
+  state=defaultState();
+  Object.assign(state,local.decoded);
+  state.v=SAVE_V; state.ver=GAME_VER;
+  normalizeStateAfterMigration(state);
+  syncItemSeq();
+  if(local.savedAt)state.lastSeen=local.savedAt; // 从缓冲保存时刻起算离线收益
+  derived=calcDerived();
+  applyUserName();
+  try{settleAway(null,{after:after});}catch(e){ if(after)after(); }
+  rebuildAll(); render();
+  checkVictory();
+}
+/* v13.4 自动存档：云端无存档但本机有更新的崩溃缓冲（如崩溃前没来得及上传）——
+ * 询问玩家恢复还是开新档。不自动恢复，避免"别处重置过账号却被本地缓冲复活"的歧义。 */
+function _asOfferLocalRestore(local,askName){
+  var when=fmtLocalTime(local.savedAt||Date.now());
+  showModal({title:'💾 发现本地崩溃缓冲',confirmText:'恢复本地进度',cancelText:'开始新游戏',
+    body:'云端没有存档，但本机浏览器有一份 <b>'+when+'</b> 的自动缓冲存档（v'+(local.decoded&&local.decoded.ver||GAME_VER)+'）。<br><br>'+
+      '· <b>恢复本地进度</b>：把这份缓冲传上云端并继续（适合崩溃/断网没来得及上传的情况）<br>'+
+      '· <b>开始新游戏</b>：丢弃缓冲，从零开始（适合你已在别处重置过这个账号）',
+    onConfirm:function(){
+      _asApplyLocalBuf(local,function(){
+        scheduleCloudPush(true); // 恢复后立即把缓冲状态推回云端，闭环
+        if(askName)askName();
+      });
+    },
+    onCancel:function(){
+      _asClearLocalBuf();
+      if(askName)askName();
+    }});
+}
+/* v13.4 自动存档：manual=true 保留原手动逻辑（改为立即强制同步，无视节流）；
+ * manual=false 不再空操作——本地缓冲 debounce + dirty + 30s 节流云推。
+ * saveBlocked（版本不兼容）时两条路都停写，保护玩家进度。 */
 function saveGame(manual){
-  if(!manual)return;
   if(saveBlocked){
-    saveOK=false;updateSaveLabel();
-    toast(blockedOld
-      ?('🚫 原存档来自旧版本（v'+blockedVer+'），v'+GAME_VER+' 起无法使用')
-      :('🚫 原存档来自更高版本（v'+blockedVer+'），已停止保存'),'#ff5c5c',
-      blockedOld?'请重置游戏开始新旅程':'请更新游戏版本后再继续');
+    if(manual){
+      saveOK=false;updateSaveLabel();
+      toast(blockedOld
+        ?('🚫 原存档来自旧版本（v'+blockedVer+'），v'+GAME_VER+' 起无法使用')
+        :('🚫 原存档来自更高版本（v'+blockedVer+'），已停止保存'),'#ff5c5c',
+        blockedOld?'请重置游戏开始新旅程':'请更新游戏版本后再继续');
+    }
     return;
   }
-  state.lastSeen=Date.now();
-  lastSaveTime=Date.now();
-  if(cloudEnabled()&&cloudUser){
-    cloudPush();
-    saveOK=true;
-    toast('☁️ 已保存到云端','#e040fb','上传中...');
-  }else{
-    saveOK=false;
-    toast('⚠️ 请先登录云端再保存','#ffcf5c','设置页点「☁️ 保存至云端」');
+  if(manual){
+    state.lastSeen=Date.now();
+    lastSaveTime=Date.now();
+    if(cloudEnabled()&&cloudUser){
+      scheduleCloudPush(true); // v13.4 自动存档：手动保存 = 立即强制同步
+      saveOK=true;
+      toast('☁️ 已保存到云端','#e040fb','上传中...');
+    }else{
+      saveOK=false;
+      toast('⚠️ 请先登录云端再保存','#ffcf5c','设置页点「☁️ 保存至云端」');
+    }
+    updateSaveLabel();
+    return;
   }
-  updateSaveLabel();
+  // v13.4 自动存档：游戏内事件触发的自动保存——本地缓冲 + 节流云同步（后台尽力而为）
+  scheduleLocalSave();
+  scheduleCloudPush(false);
 }
 function updateSaveLabel(){
   var el=$('saveState');if(!el)return;
@@ -3965,12 +4222,24 @@ async function afterLogin(){
     if(asked)return; asked=true;
     if(!_gameFrozen&&!state.user)askUserName(); // 被踢出时（_gameFrozen）不再追问
   };
-  var applied=await cloudPull(false,askName);
-  if(!applied){
+  /* v13.4 自动存档：登录拉档前先读本机崩溃缓冲（localLoad 按 uid 隔离，
+   * 非本账号/版本不符返回 null），交给 cloudPull 与云端存档做 LWW+max
+   * 冲突合并；云端空档时用于询问是否恢复本地进度。 */
+  var _localBuf=null;
+  try{ _localBuf=localLoad(); }catch(e){}
+  var applied=await cloudPull(false,askName,_localBuf);
+  if(applied){
+    /* v13.4 自动存档：拉档成功后立即把"离线结算/冲突合并后的最新状态"强推回云端，
+     * 保证合并结果与离线收益落库（每次登录仅此一次强制推，之后走 30s 节流）。 */
+    scheduleCloudPush(true);
+  }else{
     /* v13.4：红线第二道——抢锁成功但拉取存档连接类失败，同样拒入。
      * "登进去了但云端不可用"正是用户不想要的困惑状态；缺 SQL / 存档过旧等
      * 非连接类失败仍放行（那是配置问题，本地可玩），由 toast 告知原因。 */
     if(_cloudPullNetFail){ _netBlockLogin(); return; }
+    /* v13.4 自动存档：云端无存档但本机有更新的崩溃缓冲（如崩溃前没来得及上传）——
+     * 询问玩家恢复还是开新档；不自动恢复，避免"别处重置过账号却被本地复活"的歧义。 */
+    if(_cloudPullEmpty&&_localBuf){ _asOfferLocalRestore(_localBuf,askName); return; }
     askName(); // 没拉到存档（新账号/读取失败）也要问名字
   }
 }
@@ -4114,8 +4383,11 @@ function forceLoginModal(resumeEmail,first){
 //   getSession 会一直返回有效 session，根本发现不了被踢）
 // v13.3：轮询 15s → 10s；并且窗口重新获得焦点/可见时立刻补一次 ping——
 // 旧版只有定时轮询，玩家切回旧窗口后最多要等 15 秒才被踢，体验上像"两边都能玩"。
+// v13.4 自动存档：10s → 45s（30–60s 区间取中值）——自动存档已把云推降到 2–3 次/分钟，
+// 看门狗无需 10s 一次的频繁请求；被踢检测最长延迟 45s，由 focus/visibilitychange
+// 立即补 ping 兜底（切回窗口即校验），不影响互斥锁核心逻辑。
 var _sessionWatchdogId=null;
-var WATCHDOG_MS=10000;
+var WATCHDOG_MS=45000;
 function sessionPingOnce(){
   if(!cloudEnabled()||!cloudUser)return;
   try{
@@ -4245,6 +4517,8 @@ function _isConnErr(x){
 }
 /* v13.4：cloudPull 最近一次失败是否属于连接类（供 afterLogin 红线判定） */
 var _cloudPullNetFail=false;
+/* v13.4 自动存档：cloudPull 最近一次是否"云端无存档"（供 afterLogin 判定本地缓冲恢复） */
+var _cloudPullEmpty=false;
 async function cloudFetch(){
   if(!cloudEnabled()||!cloudUser)return {ok:false,err:'未登录云端'};
   try{
@@ -4270,17 +4544,23 @@ async function cloudFetch(){
 }
 // v13：把拉到的云端存档应用到当前游戏（覆盖进度）
 // v13.1：onAwayClosed——离线收益弹窗关闭后的接力回调（如紧接着询问用户名）
-function cloudApplySave(decoded,updatedAt,onAwayClosed){
+// v13.4 自动存档：localBuf——本机崩溃缓冲（localLoad 结果）。传入时先做冲突合并：
+// 云端 vs 本地取较新者（LWW）为底，败者的单调计数 max 合并（_asMergeMax），
+// 防多端/崩溃场景覆盖丢档；不传时行为与旧版完全一致。
+function cloudApplySave(decoded,updatedAt,onAwayClosed,localBuf){
+  var _base=decoded,_other=null,_winTs=updatedAt?new Date(updatedAt).getTime():0;
+  if(localBuf&&localBuf.decoded){
+    if((localBuf.savedAt||0)>_winTs){ _base=localBuf.decoded; _other=decoded; _winTs=localBuf.savedAt||0; }
+    else _other=localBuf.decoded;
+    _asMergeMax(_base,_other); // 以较新者为底，败者单调计数取 max
+  }
   state=defaultState();
-  Object.assign(state,decoded);
+  Object.assign(state,_base);
   state.v=SAVE_V; state.ver=GAME_VER;
   normalizeStateAfterMigration(state);
   syncItemSeq(); // v13.3：离线结算会先生成装备，必须在那之前校准 id 序列
-  // 把 state.lastSeen 设为云端存档保存时间 → 离线结算从那个时刻开始算
-  if(updatedAt){
-    var t=new Date(updatedAt).getTime();
-    if(!isNaN(t))state.lastSeen=t;
-  }
+  // 把 state.lastSeen 设为胜者存档的保存时间 → 离线结算从那个时刻开始算
+  if(_winTs&&!isNaN(_winTs))state.lastSeen=_winTs;
   derived=calcDerived();
   applyUserName();
   // 立刻用新 lastSeen 算离线收益；弹窗关闭后经 onAwayClosed 接力后续流程
@@ -4289,9 +4569,12 @@ function cloudApplySave(decoded,updatedAt,onAwayClosed){
   checkVictory();
 }
 // v13.1：onAwayClosed 透传给 cloudApplySave（离线弹窗关闭后接力）；
+// v13.4 自动存档：localBuf 透传给 cloudApplySave 做 LWW+max 冲突合并；
+// 空档且有本地缓冲时不在此处接力（由 afterLogin 询问是否恢复本地缓冲）。
 // 返回值：true=已应用云端存档（含离线结算），false=未应用（空/失败/被踢）
-async function cloudPull(silent,onAwayClosed){
+async function cloudPull(silent,onAwayClosed,localBuf){
   var r=await cloudFetch();
+  _cloudPullEmpty=false;
   if(r.kicked)return false; // 被踢出：_kickOutUser 已弹锁定框，不接力
   _cloudPullNetFail=!!r.net; // v13.4：供 afterLogin 红线判定（连接类失败则拒入）
   if(!r.ok){
@@ -4301,13 +4584,15 @@ async function cloudPull(silent,onAwayClosed){
       // 新账号会顶着别人的进度玩（且 state.user 有值导致连用户名都不问）
       state=defaultState();
       derived=calcDerived(); applyUserName(); rebuildAll(); render(); checkVictory();
-      if(!silent)toast('☁️ 云端暂无存档 · 开始新游戏','#a89a86');
+      if(!silent)toast(localBuf?'☁️ 云端暂无存档':'☁️ 云端暂无存档 · 开始新游戏','#a89a86');
+      _cloudPullEmpty=true;
+      if(localBuf)return false; // v13.4 自动存档：有本地缓冲 → afterLogin 询问恢复，不抢弹用户名框
     }
     else if(!silent)toast('❌ '+r.err,'#ff5c5c');
     if(onAwayClosed)onAwayClosed(); // 没拉到存档也要接力（新账号要问名字）
     return false;
   }
-  cloudApplySave(r.decoded,r.updatedAt,onAwayClosed);
+  cloudApplySave(r.decoded,r.updatedAt,onAwayClosed,localBuf);
   if(!silent)toast('☁️ 已载入云端存档 · 保存于 '+fmtLocalTime(r.updatedAt),'#e040fb');
   return true;
 }
@@ -4391,8 +4676,10 @@ function showCloudPanel(){
     body+='<div id="cloudSyncRow" class="cloud-status">'+
          (cloudSync.busy?'⏳ 正在同步...':
           (cloudSync.ok?'🟢 云端存档已同步'+(cloudSync.lastPushAt?' · '+fmtLocalTime(cloudSync.lastPushAt):''):
-          (cloudSync.lastErr?('⚪ 上次同步失败：'+cloudSync.lastErr):'⚪ 等待手动上传到云端')))+
+          (cloudSync.lastErr?('⚪ 上次同步失败：'+cloudSync.lastErr):'🟢 自动存档已开启 · 本地实时缓冲 · 云端每 30 秒同步')))+
          '</div>';
+    /* v13.4 自动存档：本地缓冲状态行（开面板时刷新，让玩家看到"关页面也不丢"） */
+    body+='<div id="asRow" style="margin-top:6px;font-size:12px;color:var(--dim)">'+_asStatusText()+'</div>';
     body+='<div class="row"><button id="cloudBtnPush" class="btn-primary">☁️ 上传到云端</button>'+
          '<button id="cloudBtnPull" class="btn-sec">☁️ 从云端恢复</button></div>';
     body+='<div class="row"><button id="cloudBtnLogout" class="btn-sec">退出登录</button></div>';
@@ -4429,18 +4716,17 @@ function showCloudPanel(){
     var _bp=$('cloudBtnPush');
     if(_bp)_bp.onclick=function(){
       var row=$('cloudSyncRow');
-      cloudSync.busy=true; cloudSync.lastErr='';
+      cloudSync.lastErr='';
       if(row)row.innerHTML='<span style="color:#a89a86">⏳ 正在上传存档到云端...</span>';
-      cloudPush();
-      // 1.2s 后刷新状态（cloudPush 是异步的，这里再等一会儿拿结果）
-      setTimeout(function(){
-        cloudSync.busy=false;
-        if(row){
-          if(cloudSync.ok) row.innerHTML='<span style="color:#7ed321">🟢 上传成功 · '+fmtLocalTime(cloudSync.lastPushAt||Date.now())+'</span>';
-          else row.innerHTML='<span style="color:#ff5c5c">❌ 上传失败：'+cloudSync.lastErr+'</span>';
-        }
+      scheduleCloudPush(true); // v13.4 自动存档：手动保存按钮 = 立即强制同步（复用节流/退避/超时管道）
+      // 轮询等待本次推送落地（仍在飞行中就继续等，避免把"慢"误报成"失败"）
+      var _t0=Date.now();
+      (function _waitPush(){
+        if(cloudSync.ok){ if(row)row.innerHTML='<span style="color:#7ed321">🟢 上传成功 · '+fmtLocalTime(cloudSync.lastPushAt||Date.now())+'</span>'; renderCloudBanner(); return; }
+        if(cloudSync.busy&&Date.now()-_t0<12000){ setTimeout(_waitPush,200); return; }
+        if(row)row.innerHTML='<span style="color:#ff5c5c">❌ 上传失败：'+(cloudSync.lastErr||'未知错误')+'</span>';
         renderCloudBanner();
-      },1500);
+      })();
     };
     var _bl=$('cloudBtnPull');
     if(_bl)_bl.onclick=async function(){
@@ -4592,7 +4878,10 @@ function bindAbout(){
   // v12.3：独立「云端」按钮（关于面板左边）+ 状态提示
   var bt=$('btnCloudTop'); if(bt)bt.onclick=function(e){if(e)e.stopPropagation();showCloudPanel();};
 }
-/* v13：无本地存档。state 声明时已 =defaultState()，直接渲染新游戏界面 */
+/* v13.4 自动存档：loadGame 仍不作为启动入口（红线：无登录不能玩）。
+ * 本地缓冲（localSave/localLoad，key 按 uid 隔离）仅在登录后作为崩溃保险存在——
+ * 关页面/断网/崩页不丢进度，但未登录绝不读档开局、也绝不写本地档。
+ * 历史 SAVE_KEY（minerLegendSave_v3）本地存档自 v13 起废弃，此处不再读取。 */
 function loadGame(){ return false; }
 /* ================= 音效 ================= */
 var actx=null;
@@ -4694,6 +4983,9 @@ function tryDrop(silent){
   checkVictory();
   // 揭晓后再生成针对下一件装备的预言（赌局期间由 updateBetLive 驱动强制爆装）
   maybeMakeProphecy();
+  // v13.4 自动存档：爆装里程碑——无视 30s 节流立即强存（本地缓冲 + 云推）。
+  // 离线批量爆装时由 flushCloudPush 并发保护 + dirty 合并，不会每件装备推一次。
+  milestoneSave();
   var now=Date.now();
   if(!silent&&now-lastDropToast>700){ // 提示节流，防止高频爆装时刷屏
     lastDropToast=now;
@@ -5381,7 +5673,7 @@ function doPrestige(){
   }else if(state.bag.length)state.bag=[];
   derived=calcDerived();applyTheme();rebuildAll();
   checkAchievements();
-  saveGame(false);
+  milestoneSave(); // v13.4 自动存档：转生里程碑——无视节流立即强存
   if(nowSing){
     // v12 修订：提示精简——声望收益只告知"永久提升全局产出"，天数折算写清计算过程
     toast('🏆 金盆洗手！获得 <b>'+fmt(g)+'</b> 点声望（声望已达上限）','#fbbf24',
@@ -6564,6 +6856,9 @@ function bindUI(){
           // RPC 内部删除云端存档 + 释放互斥锁
           var {error}=await supabaseClient.rpc('reset_save');
           if(error){ toast('❌ 重置失败：'+error.message,'#ff5c5c'); return; }
+          // v13.4 自动存档：重置必须同时清掉本机崩溃缓冲——否则重新登录时
+          // "云端空+本地有缓冲"会询问恢复，把已重置的进度又复活（玩家视角=重置无效）
+          _asClearLocalBuf();
           await supabaseClient.auth.signOut({scope:'local'});
           cloudUser=null; cloudSync={ok:false,busy:false,lastErr:'',lastPushAt:0};
           renderCloudBanner();
@@ -6762,7 +7057,7 @@ function showOldSaveModal(){
     }});
 }
 function init(){
-  loadGame(); // v13：空壳 return false，无本地存档
+  loadGame(); // v13.4：空壳 return false；本地缓冲仅登录后崩溃保险（见 loadGame 注释）
   syncItemSeq();
   buildShop();buildEquip();bindUI();
   bindAbout();
@@ -6781,6 +7076,7 @@ function init(){
   var _tb=$('toasts'); if(_tb)_tb.innerHTML='';
   updateSaveLabel();
   renderCloudBanner(); // v13.3：立即按真实登录态渲染云按钮（旧版首屏一直显示占位 title"已登录：xxx"）
+  bindAutoSaveEvents(); // v13.4 自动存档：退出/断网兜底监听 + 本地缓冲/节流云推心跳
   cloudInit();
   requestAnimationFrame(loop);
 }
