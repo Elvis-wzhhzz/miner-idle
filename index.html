@@ -21,7 +21,7 @@ body{
 button{font-family:inherit;color:inherit;cursor:pointer}
 #app{max-width:1280px;margin:0 auto;padding:14px}
 
-/* ---------- 顶栏 --------- */
+/* ---------- 顶栏 ---------- */
 header{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .logo{font-size:21px;font-weight:800;letter-spacing:1px}
 .logo span{color:var(--gold)}
@@ -2408,6 +2408,9 @@ var SING_REFRESH_MS=8*3600*1000;// 奇点商店刷新周期：8 小时
 var SING_MARS_MULT=10;          // 火星四溅：全局倍率 +10（加法）
 var SING_MARS_MS=10*60*1000;    // 火星四溅持续 10 分钟
 var SING_INSPIRE_P=1/1000;      // 灵光乍现：直接参透一项未获得精神的概率
+var SING_TOMATO_MIN_DEPTH=6;    // v13.5：番茄炒蛋（传说+保底）第六层起可用——层数稀有度上限=层数，
+                                // 第 4 层才开放传说档；转生满的玩家会从第 1 层重打，浅层使用会因
+                                // 传说及以上权重全零在 genEquip 空转 100 次后兜底退出，buff 白费
 var SING_DOUBLE_CAP=2;          // 持有 2 瓶倍倍加后商店不再刷新该物品
 var SING_DEPTH13_COST=2.37e33;  // 第 13 层（犹大密室）解锁价
 var SING_ITEMS={
@@ -2419,7 +2422,7 @@ var SING_ITEMS={
   mars   :{name:'火星四溅',icon:'☄️',cost:1  ,kind:'use',desc:'使用后全局产出倍率 +10，持续 10 分钟'},
   supreme:{name:'至高无上',icon:'👑',cost:10 ,kind:'use',desc:'使用后立即获得一件随机无上品质装备'},
   shield :{name:'必须信'  ,icon:'🛡️',cost:2  ,kind:'use',max:1,desc:'使用后在「信吗」界面放置一枚连胜盾：下一次赌错时自动生效——返还下注金、保留连胜计数及加成；串关中赌错则保留串关资格，自动进入下一题'},
-  tomato :{name:'番茄炒蛋',icon:'🍅',cost:2  ,kind:'use',desc:'使用后 20 分钟内不再出现史诗及以下稀有度的装备'},
+  tomato :{name:'番茄炒蛋',icon:'🍅',cost:2  ,kind:'use',desc:'使用后 20 分钟内不再出现史诗及以下稀有度的装备（第六层起可用）'},
   duo    :{name:'奇之又奇',icon:'🌀',cost:6  ,kind:'perm',desc:'往后奇点商店每次会刷新出 2 件物品 · 购买后不再刷新'}
 };
 
@@ -2585,6 +2588,14 @@ function singUse(key){
     betDirty=true;try{renderBet(true);}catch(e){/* UI 渲染故障忽略，物品消耗由公共链保证 */}
   }else if(key==='tomato'){
     if(state.sing.tomatoUntil>Date.now()){toast('🍅 番茄炒蛋生效中，无法再次使用','#ff5c5c','剩余 '+fmtDur((state.sing.tomatoUntil-Date.now())/1000));return;}
+    /* v13.5：第六层前禁用。层数稀有度上限=层数（第4层才开放传说），转生满从第1层
+     * 重打的玩家在浅层使用会保不出传说——genEquip 的空转兜底让 buff 白费 20 分钟。
+     * 这里直接拒绝且不消耗物品。 */
+    if(state.depth<SING_TOMATO_MIN_DEPTH){
+      toast('🍅 第 '+SING_TOMATO_MIN_DEPTH+' 层起才能炒这道菜','#ff5c5c',
+        '保底传说及以上品质 · 当前第 '+state.depth+' 层（还需 '+(SING_TOMATO_MIN_DEPTH-state.depth)+' 层）<br>物品未消耗，到深层再来');
+      return;
+    }
     state.sing.tomatoUntil=Date.now()+20*60*1000;
     beep(262,0.12,'square',0.045);setTimeout(function(){beep(392,0.16,'square',0.045);},130);
     toast('🍅 番茄炒蛋！','#ff7043','20 分钟内不再出现史诗及以下稀有度的装备');
@@ -3859,6 +3870,11 @@ var AUTOSAVE_HEARTBEAT=5000;                    // 心跳间隔（ms）：驱动
 var AUTOSAVE_CLOUD_THROTTLE=30000;              // 第 2 层：云推节流间隔（ms）——规格 30s
 var AUTOSAVE_BACKOFF=[5000,15000,45000,120000]; // 第 2 层：云推失败退避序列（ms），封顶 2min
 var AUTOSAVE_PUSH_TIMEOUT=10000;                // 第 2 层：单次云推超时（复用 withTimeout）
+/* v13.5：LWW 的 playtime 裁决容差（秒）——云端 playtime 高出本地超过此值才判定
+ * "有其他设备玩过"并翻转 LWW 基底；用于吸收同机两边的舍入/时钟噪声。
+ * playtime 由 rAF tick 累加（秒），挂起页面不涨；localSave 的 savedAt 却会被
+ * 节流心跳持续刷新——savedAt 晚 ≠ 内容新，必须用 playtime 交叉验证。 */
+var AS_MERGE_PLAYTIME_TOL=5;
 var _as={dirty:false,flushAt:0,retry:0,timer:null,retryTimer:null,localTimer:null,
   flushing:false,lastLocalAt:0,bound:false,
   /* v13.4 自动存档：拉档写锁——true 期间禁止一切存档写入（本地+云端）。
@@ -4590,8 +4606,18 @@ async function cloudFetch(){
 function cloudApplySave(decoded,updatedAt,onAwayClosed,localBuf){
   var _base=decoded,_other=null,_winTs=updatedAt?new Date(updatedAt).getTime():0;
   if(localBuf&&localBuf.decoded){
-    if((localBuf.savedAt||0)>_winTs){ _base=localBuf.decoded; _other=decoded; _winTs=localBuf.savedAt||0; }
-    else _other=localBuf.decoded;
+    /* v13.5：LWW 加 playtime 裁决——本地 savedAt 晚 ≠ 本地内容新。
+     * 事故还原：iPad 锁屏出门（页面挂着没退出）→ 手机登录拉档、玩完保存退出 →
+     * 回家打开 iPad 重登。锁屏期间 iOS 把 setInterval 节流到分钟级但没停，
+     * 本地缓冲的 savedAt 被持续刷到"打开前一刻"（晚于手机存档的 updated_at），
+     * 而 rAF 暂停、playtime 不涨——旧版 LWW 仅凭 savedAt 判本地更新，
+     * 拿上午的旧进度盖掉手机进展。playtime 单调不减（rAF tick 累加、无任何
+     * 扣减路径），云端高出本地超过容差 = 玩家在别处玩过，必须以云端为底。 */
+    var _lb=localBuf.decoded;
+    var _lbPt=(_lb&&_lb.playtime)||0, _cdPt=(decoded&&decoded.playtime)||0;
+    if((localBuf.savedAt||0)>_winTs && _cdPt<=_lbPt+AS_MERGE_PLAYTIME_TOL){
+      _base=_lb; _other=decoded; _winTs=localBuf.savedAt||0;
+    }else _other=_lb;
     _asMergeMax(_base,_other); // 以较新者为底，败者单调计数取 max
   }
   state=defaultState();
