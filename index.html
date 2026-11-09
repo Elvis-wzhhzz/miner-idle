@@ -1429,10 +1429,17 @@ function _settleAlreadyDone(key){
   try{
     var hit=localStorage.getItem(key)==='1';
     var prefix='minerSettled_v152_'+((cloudUser&&cloudUser.id)||'anon')+'_';
+    /* V15.2.6：旧版无条件删除其它 key，导致 A→B→A 来回切档可重复领离线收益。
+     * 改为按时间戳保留最近 8 个，既防无限增长又不互相抹掉。 */
+    var keys=[];
     for(var i=localStorage.length-1;i>=0;i--){
       var k=localStorage.key(i);
-      if(k&&k.indexOf(prefix)===0&&k!==key){ try{localStorage.removeItem(k);}catch(e){} }
+      if(k&&k.indexOf(prefix)===0)keys.push(k);
     }
+    keys.sort(function(a,b){
+      return (parseInt(a.slice(prefix.length),10)||0)-(parseInt(b.slice(prefix.length),10)||0);
+    });
+    while(keys.length>8){ try{localStorage.removeItem(keys.shift());}catch(e){ keys.shift(); } }
     return hit;
   }catch(e){ return false; }
 }
@@ -1479,6 +1486,11 @@ var cloudUser = null, cloudSync = {ok:false, busy:false, lastErr:'', lastPushAt:
 /* v13.3：多端互斥锁的可用性标志——session_claim 失败时置位，界面如实告知"互斥未启用"，
  * 不再像旧版那样静默失效 · 旧版 try/catch 全吞，玩家以为开了其实没开。 */
 var cloudLockMissing=false, cloudLockErr='';
+/* V15.2.1 热修：登录流程保护窗口。登录成功后会异步调用
+ * auth.signOut({scope:'others'}) 撤销其他设备，个别 supabase-js 版本会顺带
+ * emit 一次 SIGNED_OUT；旧代码不分场合直接 _forceLoggedOut()，表现为
+ * "登录成功 → 读取存档 → 被踢回登录框"。真正的退出/踢出走主动调用，不依赖事件。 */
+var _loginFlowUntil=0;
 /* v13.3：同浏览器多窗口即时互踢 · BroadcastChannel。
  * 服务端 session_ping 有最长 10 秒的检测空窗，做不到"秒级"；
  * 同一个浏览器内的两个窗口用 BroadcastChannel 可以做到新窗口一登录、旧窗口立刻下线。
@@ -2891,6 +2903,7 @@ function gemLusterDots(lu){
 }
 var gemFeedKey='';
 function gemFeedTime(t){
+  if(isNaN(new Date(t).getTime()))return '--:--:--'; // V15.2.6：脏档不显示 NaN:NaN:NaN
   var d=new Date(t);
   function p(x){return (x<10?'0':'')+x;}
   return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
@@ -4201,7 +4214,7 @@ function fmtTime(sec){
   if(m>0)return m+'分'+(s>0?s+'秒':'');
   return s+'秒';
 }
-function fmtPct(v,dec){return v.toFixed(dec||1)+'%';}
+function fmtPct(v,dec){ if(!isFinite(v))return '—'; return v.toFixed(dec||1)+'%'; }
 /* 爆装间隔的人类可读格式：<10 秒保留 1 位小数，否则整秒；≥60 秒转 "X 分 Y 秒" */
 function fmtInterval(s){
   if(!isFinite(s))return '∞';
@@ -4256,6 +4269,7 @@ var BACKUP_RETRY_INTERVAL=60000;
  * 节流心跳持续刷新——savedAt 晚 ≠ 内容新，必须用 playtime 交叉验证。 */
 var AS_MERGE_PLAYTIME_TOL=5;
 var _as={dirty:false,flushAt:0,retry:0,timer:null,retryTimer:null,localTimer:null,
+  nextFlushAt:0,nextRetryAt:0,nextCheckAt:0,lastErrCN:'', // V15.2.4/6：面板倒计时与失败原因
   flushing:false,lastLocalAt:0,bound:false,
   /* v13.4 自动存档：拉档写锁——true 期间禁止一切存档写入 · 本地+云端。
    * afterLogin 上锁，云端状态确认 · 拉档成功/确认空档/已知坏档或被踢出后解锁。 */
@@ -4352,6 +4366,7 @@ function scheduleCloudPush(force){
   if(_as.timer||_as.retryTimer)return; // 已有排队中的节流推/退避重试，不重复排
   var left=AUTOSAVE_CLOUD_THROTTLE-(Date.now()-_as.flushAt);
   if(left<0)left=0;
+  _as.nextFlushAt=Date.now()+left; // V15.2.4：面板"下次自动保存"用
   _as.timer=setTimeout(function(){
     _as.timer=null;
     if(_as.dirty)flushCloudPush();
@@ -4372,9 +4387,12 @@ async function flushCloudPush(){
     await withTimeout(cloudPush(),AUTOSAVE_PUSH_TIMEOUT,'云同步');
     if(cloudSync.ok){
       _as.dirty=false; _as.retry=0; _as.flushAt=Date.now();
+      _as.nextRetryAt=0; _as.nextFlushAt=0; _as.lastErrCN='';
+      _as.nextCheckAt=Date.now()+AUTOSAVE_CLOUD_THROTTLE; // V15.2.6：真实递减的下次检查时刻
       if(_as.retryTimer){clearTimeout(_as.retryTimer);_as.retryTimer=null;}
       updateSaveLabel();
     }else{
+      _as.lastErrCN=cloudSync.lastErr||'云端暂时没有响应';
       _asScheduleRetry(); // 失败保留 dirty，指数退避重试
     }
   }catch(e){
@@ -4394,6 +4412,8 @@ function _asScheduleRetry(){
   if(_as.retryTimer)return; // 已排队
   var delay=AUTOSAVE_BACKOFF[Math.min(_as.retry,AUTOSAVE_BACKOFF.length-1)];
   _as.retry++;
+  _as.nextRetryAt=Date.now()+delay; // V15.2.4：面板"X 秒后重试"用
+  _as.nextFlushAt=0;
   _as.retryTimer=setTimeout(function(){
     _as.retryTimer=null;
     if(_as.dirty)flushCloudPush();
@@ -4503,13 +4523,42 @@ function _asMergeMax(dst,src){
   if(_sfa>0&&(_dfa===0||_sfa<_dfa))dst.spiritFullAt=_sfa;
   return dst;
 }
-/* v13.4 自动存档：云页面板里的自动存档状态行文案 */
+/* V15.2.4：状态行说人话——最近一次成功时间、下次几点、还剩几秒，全部直接写出。
+ * 不再出现"有待同步""设备锁同步中"这类玩家看不懂、看了也不安心的词。 */
+function _asClock(ts){ return fmtLocalTime(ts).slice(11); } // 只取 HH:MM:SS
+function _asSyncText(){
+  if(!cloudUser)return '☁️ 未登录，不会保存';
+  if(cloudSync.busy)return '⏳ 正在保存到云端…';
+  if(cloudSync.ok&&cloudSync.lastPushAt)
+    return '🟢 已保存到云端 · <b>'+fmtLocalTime(cloudSync.lastPushAt)+'</b>';
+  if(cloudSync.lastErr)return '🔴 上次保存失败 · '+esc(cloudSync.lastErr);
+  return '🟢 自动存档已开启';
+}
 function _asStatusText(){
-  if(!cloudUser)return '💾 自动存档：未登录不生效 · 本地仅崩溃保险 · 须登录才能玩';
-  if(_as.pulling)return '💾 自动存档：正在载入云端存档 · 暂停写入，防止覆盖…';
-  var t=_as.lastLocalAt?(' · 本地缓冲 '+fmtLocalTime(_as.lastLocalAt)):'';
-  if(_as.dirty)return '💾 自动存档：有待同步改动'+(cloudSync.lastErr?'失败重试中':'')+t;
-  return '💾 自动存档：已开启 · 本地实时缓冲 · 云端每 30 秒同步'+t;
+  if(!cloudUser)return '💾 自动存档：未登录，不会保存';
+  if(_as.pulling)return '💾 自动存档：正在读取云端存档 · 读完后开始保存';
+  var now=Date.now();
+  var sec=function(ts){ return Math.max(0,Math.ceil((ts-now)/1000)); };
+  var last=cloudSync.lastPushAt
+    ? ('<br>最近一次成功保存：<b>'+fmtLocalTime(cloudSync.lastPushAt)+'</b>')
+    : '<br>本次登录还没有成功保存过云端';
+  /* 1) 保存失败 → 明确告诉玩家几点重试、还剩几秒、为什么、进度会不会丢 */
+  if(_as.nextRetryAt>now){
+    return '🔴 <b>自动保存失败</b> · '+_asClock(_as.nextRetryAt)+' 自动重试（还有 '+sec(_as.nextRetryAt)+' 秒）'+
+           '<br>原因：'+esc(_as.lastErrCN||'云端暂时没有响应')+
+           '<br>进度已存在本机，不会丢；重试成功会自动补传'+last;
+  }
+  /* 2) 有改动等待上传 → 明确下一次几点上传 */
+  if(_as.dirty){
+    var t=_as.nextFlushAt>now?_as.nextFlushAt:(_as.flushAt+AUTOSAVE_CLOUD_THROTTLE);
+    if(t>now)return '🟡 有改动等待上传 · '+_asClock(t)+' 自动保存（还有 '+sec(t)+' 秒）'+last;
+    return '🟡 有改动等待上传 · 马上自动保存'+last;
+  }
+  /* 3) 全部已保存 → V15.2.6：读固定时刻，不再每秒现算导致时钟永远不动 */
+  var nx=(_as.nextCheckAt>now)?_as.nextCheckAt:(now+AUTOSAVE_CLOUD_THROTTLE);
+  if(_as.nextCheckAt<=now)_as.nextCheckAt=nx;
+  return '🟢 已全部保存 · 下次自动检查 '+_asClock(nx)+'（还有 '+sec(nx)+' 秒）'+
+         last+(_as.lastLocalAt?('<br>本机缓冲：'+fmtLocalTime(_as.lastLocalAt)):'');
 }
 /* v14.9：保底存档状态文案 · 云存档面板第 3 层展示 */
 function _bakStatusText(){
@@ -4559,7 +4608,7 @@ function _asApplyLocalBuf(local,after){
 function _asOfferLocalRestore(local,askName){
   var when=fmtLocalTime(local.savedAt||Date.now());
   showModal({title:'💾 发现本地崩溃缓冲',confirmText:'恢复本地进度',cancelText:'开始新游戏',
-    body:'云端没有存档，但本机浏览器有一份 <b>'+when+'</b> 的自动缓冲存档 · v'+(local.decoded&&local.decoded.ver||GAME_VER)+'。<br><br>'+
+    body:'云端没有存档，但本机浏览器有一份 <b>'+esc(when)+'</b> 的自动缓冲存档 · v'+esc(local.decoded&&local.decoded.ver||GAME_VER)+'。<br><br>'+
       '· <b>恢复本地进度</b>：把这份缓冲传上云端并继续 · 适合崩溃/断网没来得及上传的情况<br>'+
       '· <b>开始新游戏</b>：丢弃缓冲，从零开始 · 适合你已在别处重置过这个账号',
     onConfirm:function(){
@@ -4632,9 +4681,10 @@ function updateSaveLabel(){
     }
     el.textContent='☁️ 已同步 '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds())+_bakTag;
   }else if(cloudSync.lastErr){
-    el.textContent='☁️ 同步失败';
+    var _s=(_as.nextRetryAt>Date.now())?Math.ceil((_as.nextRetryAt-Date.now())/1000):0;
+    el.textContent=_s>0?('☁️ 保存失败 · '+_s+'秒后重试'):'☁️ 保存失败 · 等待重试';
   }else{
-    el.textContent='☁️ 待同步';
+    el.textContent='☁️ 等待自动保存';
   }
 }
 /* ================= v12.3 云端存档 =================
@@ -4644,7 +4694,7 @@ function updateSaveLabel(){
 function fmtLocalTime(iso){
   if(!iso)return '未知';
   var d=new Date(iso);
-  if(isNaN(d.getTime()))return iso.replace('T',' ').substring(0,19);
+  if(isNaN(d.getTime()))return String(iso).replace('T',' ').substring(0,19);
   var p=function(x){return (x<10?'0':'')+x;};
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
 }
@@ -4654,6 +4704,13 @@ function cloudEnabled(){ return !!supabaseClient; }
 var _forceLogoutDone=false, _lastLoginEmail='';
 /* v13.3：强制登录框是否正在显示 · showModal 的霸体判据 */
 var _loginModalUp=false;
+/* V15.2.6：登录/被踢/拒入的统一收尾——解锁写锁、关遮罩、停闲置定时器，
+ * 避免异常路径把 _as.pulling 永久锁死（自动存档全停）或选档遮罩卡住画面。 */
+function _abortLogin(){
+  _as.pulling=false;
+  try{ _svc.loading=false;_svcClearTimer();_svcClose(); }catch(e){}
+  try{ if(_svc.idleTimer){clearTimeout(_svc.idleTimer);_svc.idleTimer=null;} }catch(e){}
+}
 function _forceLoggedOut(resumeEmail){
   if(_sessionWatchdogId){clearInterval(_sessionWatchdogId);_sessionWatchdogId=null;}
   cloudUser=null;
@@ -4678,6 +4735,17 @@ function _netBlockLogin(){
   _loginNetFails++; // 计入连续失败：下次达到 3 次即提示"维护中"
   toast('⚠️ '+_netFailText(),'#ff5c5c','服务器连接异常，请重试；网络恢复后再登录 · 未登录无法游戏');
   _forceLoggedOut(_lastLoginEmail||'');
+  _showLoginDiag('服务器连接异常，云端暂不可用。网络恢复后再登录 · 未登录无法游戏。');
+}
+/* V15.2.1 热修：把"为什么回到登录框"常驻显示在登录框里，
+ * 不再只是一闪而过、玩家根本来不及看的提示。 */
+function _showLoginDiag(html){
+  setTimeout(function(){
+    try{
+      var m=document.getElementById('floginMsg');
+      if(m)m.innerHTML='<span style="color:#ff5c5c;line-height:1.6">⚠️ '+html+'</span>';
+    }catch(e){}
+  },0);
 }
 /* V15.2 · P1-6：多端互斥锁未就绪时的拒入（与 _netBlockLogin 并列）。
  * 区分两类原因只体现在提示文案上，处置完全一致：撤销登录 + 凝固 + 回锁定登录框。 */
@@ -4691,6 +4759,11 @@ function _lockBlockLogin(isNet,errText){
       ('云端缺少互斥锁函数/字段或权限未就绪：'+esc(errText||'未知错误')+
        ' · 请到 Supabase → SQL Editor 执行 supabase-v15.2-patch.sql 与 supabase-v13-multi-device-lock.sql 后重试'));
   _forceLoggedOut(_lastLoginEmail||'');
+  _showLoginDiag(isNet
+    ? '服务器连接异常，云端暂不可用，请稍后重试。'
+    : ('云端多端互斥锁未就绪，已阻止进入。<br>原因：'+esc(errText||'未知错误')+
+       '<br>请在 Supabase → SQL Editor 执行 supabase-v15.2-patch.sql 与 supabase-v13-multi-device-lock.sql 后重试。'));
+  try{ console.error('[V15.2.1][拒入]', errText||'unknown'); }catch(e){}
 }
 // v13.1：登录凭据本地记忆（仅当玩家勾选"记住我"才写入 localStorage）
 function _rememberSave(email,pwd){
@@ -4721,7 +4794,7 @@ function _rememberClear(){ try{localStorage.removeItem('minerRememberLogin');}ca
  * 口径：本地同步仅在「本地在线时长比云档多 ≥10 分钟 且 保存时间更晚」时可用。
  * 开新档：两次确认；且开始后 NEWGAME_CLOUD_GRACE 内不覆盖云端主档。
  * ================================================================== */
-var SAVE_LOAD_TIMEOUT=35000;        // ms · 登录成功到存档就绪的硬超时
+var SAVE_LOAD_TIMEOUT=70000;        // ms · V15.2.6：覆盖 3×10s 抢锁+5s 校时+10s 保底+10s 拉档
 var LOCAL_SYNC_MIN_ADVANTAGE=600;   // 秒 · 本地在线时长需比云档多 10 分钟
 var NEWGAME_CLOUD_GRACE=300000;     // ms · 开新档后 5 分钟内不覆盖云端主档
 var SVC_IDLE_TIMEOUT=300000;        // ms · 选档界面停留 5 分钟未操作 → 自动载入默认档
@@ -4759,7 +4832,7 @@ function _svcArmIdle(){
     }else{
       _svcClose();
       _as.pulling=false;
-      try{ _netBlockLogin(); }catch(e){}
+      _abortLogin(); try{ _netBlockLogin(); }catch(e){}
       toast('⚠️ 没有可载入的存档','#ff5c5c','已退回登录界面 · 请重新登录或开新档');
     }
   },SVC_IDLE_TIMEOUT);
@@ -4776,7 +4849,7 @@ function _svcTimeout(){
   _svcClearTimer();
   _svcClose();
   toast('⚠️ 读取存档超时','#ff5c5c','云端长时间无响应，已退回登录界面 · 请检查网络后重新登录');
-  try{ _netBlockLogin(); }catch(e){}
+  _abortLogin(); try{ _netBlockLogin(); }catch(e){}
 }
 function svcShowLoading(){
   freezeGame(); // 加载期硬锁：无论调用方是谁，游戏循环立即停下
@@ -5014,6 +5087,7 @@ function svcShowChoices(r,localBuf,askName){
 // v13.1：登录成功后的统一处理——冻结游戏 → 抢占互斥锁 → 拉取三种存档 → 玩家选择 → 启动看门狗
 // 用户名询问改为幂等接力：等离线收益弹窗关闭后再问 · 已有账号不问，新账号必问
 async function afterLogin(){
+  _loginFlowUntil=Date.now()+5000; // V15.2.6：只覆盖 signOut({scope:'others'}) 的异步窗口
   /* v15.1：登录成功先冻结 + 全屏「正在读取存档」遮罩——存档未就绪前禁止进入游戏、
    * 禁止点击任何游戏功能。拉档写锁同时上锁，禁止一切存档写入。 */
   _as.pulling=true;
@@ -5024,6 +5098,8 @@ async function afterLogin(){
   _bak.slots=[];_bak.slotPlaytime=0;_bak.lastAt=0;_bak.ok=false;_bak.warned=false;
   _bak.disabled=false;_bak.lastErr='';_bak.lastTryAt=0;_bak.nextRetryAt=0;_bak.failCount=0;
   _as.newGameGraceUntil=0;
+  /* V15.2.6：重新登录不沿用上一会话的 dirty / 退避级数 / 倒计时 / 失败原因 */
+  _as.dirty=false;_as.retry=0;_as.nextFlushAt=0;_as.nextRetryAt=0;_as.nextCheckAt=0;_as.lastErrCN='';
   _forceLogoutDone=false;
   freezeGame();
   svcShowLoading();
@@ -5031,11 +5107,17 @@ async function afterLogin(){
    * 旧代码 try{await rpc('session_claim')}catch(e){} 既不判 res.error 也不提示，
    * 一旦 v13 的 RPC/device_id 列没建，多端互斥就彻底失效且玩家毫不知情 · 问题 4 的根因之一。 */
   var _claimErr=null;
-  try{
-    // v13.3：加 10s 超时——挂死的请求会让 afterLogin 整个卡住 · 拉存档/问名字全都不做
-    var _cr=await withTimeout(supabaseClient.rpc('session_claim',{p_device:DEVICE_ID}),10000,'抢占互斥锁');
-    if(_cr&&_cr.error)_claimErr=_cr.error;
-  }catch(e){ _claimErr=e; }
+  /* V15.2.1 热修：一次瞬时抖动不应直接把玩家踢回登录框，最多重试 2 次。 */
+  for(var _ci=0;_ci<3;_ci++){
+    _claimErr=null;
+    try{
+      // v13.3：加 10s 超时——挂死的请求会让 afterLogin 整个卡住 · 拉存档/问名字全都不做
+      var _cr=await withTimeout(supabaseClient.rpc('session_claim',{p_device:DEVICE_ID}),10000,'抢占互斥锁');
+      if(_cr&&_cr.error)_claimErr=_cr.error;
+    }catch(e){ _claimErr=e; }
+    if(!_claimErr)break;
+    if(_ci<2)await new Promise(function(r){setTimeout(r,800);});
+  }
   cloudLockMissing=!!_claimErr;
   cloudLockErr=_claimErr?_friendlyErr(_claimErr):'';
   if(cloudLockMissing){
@@ -5043,7 +5125,7 @@ async function afterLogin(){
      * 旧版只有网络错误拒入；函数缺失 / 权限错 / 列缺失只弹 toast 就放行，
      * 玩家会在"以为开了互斥"的状态下双端同时写、每 30 秒互相覆盖进度。 */
     var _ce=String((_claimErr&&(_claimErr.message||_claimErr.msg))||_claimErr||'');
-    _svc.loading=false;_svcClearTimer();_svcClose();
+    _abortLogin();
     _lockBlockLogin(_isConnErr(_ce),cloudLockErr);
     return;
   }
@@ -5051,7 +5133,7 @@ async function afterLogin(){
    * 补丁未执行 / 网络异常时 offset 保持 0，游戏照常可玩（只是时间口径仍是本机）。 */
   try{
     var _sr=await withTimeout(supabaseClient.rpc('server_now'),5000,'服务器校时');
-    if(_sr&&!_sr.error&&typeof _sr.data==='number'&&isFinite(_sr.data))_serverOffset=_sr.data-Date.now();
+    if(_sr&&!_sr.error){ var _t=Number(_sr.data); if(isFinite(_t)&&_t>0)_serverOffset=_t-Date.now(); }
   }catch(e){ _serverOffset=0; }
   startSessionWatchdog();
   bcClaim(); // v13.3：同浏览器其他窗口立即下线 · 不等 10 秒轮询
@@ -5068,12 +5150,12 @@ async function afterLogin(){
   var _r=null;
   try{ _r=await cloudFetch(); }
   catch(e){ _r={ok:false,err:_friendlyErr(e),net:_isConnErr(e)}; }
-  if(_r&&_r.kicked){ _svc.loading=false;_svcClearTimer();_svcClose(); return; }
+  if(_r&&_r.kicked){ _abortLogin(); return; }
   if(!_r||!_r.ok){
     /* v13.4：红线第二道——连接类失败同样拒入。云端状态未知时一个字节都不写云，
      * 并退回登录界面（不留半加载状态、不静默进游戏）。 */
     if(_r&&_r.net){
-      _svc.loading=false;_svcClearTimer();_svcClose();
+      _abortLogin();
       _netBlockLogin();
       return;
     }
@@ -5097,7 +5179,9 @@ function cloudInit(){
         renderCloudBanner();
       }
       else if(ev==='SIGNED_OUT'){
-        // 退出登录 · 或被其他设备踢出后本地 session 被清→ 凝固游戏 + 强制回登录框
+        /* V15.2.1：登录流程中 scope:'others' 的签退不是真退出，忽略其事件。
+         * 真实退出/踢出由 _forceLoggedOut / _kickOutUser 主动调用，仍然生效。 */
+        if(Date.now()<_loginFlowUntil)return;
         _forceLoggedOut(_lastLoginEmail);
       }
     });
@@ -5227,6 +5311,7 @@ function forceLoginModal(resumeEmail,first){
 // 立即补 ping 兜底 · 切回窗口即校验，不影响互斥锁核心逻辑。
 var _sessionWatchdogId=null;
 var WATCHDOG_MS=45000;
+var _watchdogBound=false; // V15.2.6：focus/visibilitychange 只绑一次
 /* v15.1 · 日志降量：push_save / pull_save / push_backup_save 每次都会在服务端跑
  * _lock_check（校验锁归属），即"写/读成功"本身已证明锁仍属于我。因此在最近
  * LOCK_FRESH_MS 内有过成功云请求时，看门狗不再额外发 session_ping；
@@ -5238,14 +5323,14 @@ var _lastLockVerifiedAt=0;
 function _lockFresh(){ return _lastLockVerifiedAt>0&&Date.now()-_lastLockVerifiedAt<LOCK_FRESH_MS; }
 function sessionPingOnce(){
   if(!cloudEnabled()||!cloudUser)return;
-  if(document.hidden)return;   // 后台标签不轮询 · 切回时 visibilitychange/focus 补一次
-  if(_lockFresh())return;      // 近 90 秒内有成功读写（已校验锁）→ 免 ping
+  /* V15.2.6：后台标签也要检查。旧代码直接 return，导致"先登设备切到后台就永不被踢"，
+   * 互锁形同虚设。浏览器会节流定时器，但至少 1 分钟一次仍能生效。 */
+  /* V15.2.5：固定每 45 秒查一次设备码，不再因"刚存档成功"而跳过。
+   * 旧代码用 _lastLockVerifiedAt 豁免，两台设备都在正常存档 → 看门狗永不运行。 */
   try{
-    supabaseClient.rpc('session_ping',{p_device:DEVICE_ID}).then(function(res){
+    withTimeout(supabaseClient.rpc('session_ping',{p_device:DEVICE_ID}),8000,'设备检查').then(function(res){
       if(res&&res.error&&_isDeviceKickError(res.error))_kickOutUser();
-      else if(!(res&&res.error))_lastLockVerifiedAt=Date.now();
     }).catch(function(e){
-      // 网络抖动不踢；只有锁易主（错误含"其他设备"）才踢
       if(_isDeviceKickError(e))_kickOutUser();
     });
   }catch(e){}
@@ -5254,16 +5339,24 @@ function startSessionWatchdog(){
   bcInit();
   if(_sessionWatchdogId)return;
   _sessionWatchdogId=setInterval(sessionPingOnce,WATCHDOG_MS);
-  // 切回旧窗口时立即校验 · 不再等下一个轮询周期
-  window.addEventListener('focus',sessionPingOnce);
-  document.addEventListener('visibilitychange',function(){ if(!document.hidden)sessionPingOnce(); });
+  /* V15.2.6：具名回调 + 只绑一次，避免"踢出→重登"反复叠加匿名监听器 */
+  if(!_watchdogBound){
+    _watchdogBound=true;
+    window.addEventListener('focus',_onFocusPing);
+    document.addEventListener('visibilitychange',_onVisPing);
+  }
 }
+function _onFocusPing(){ sessionPingOnce(); }
+function _onVisPing(){ if(!document.hidden)sessionPingOnce(); }
 // v13：检测多端互斥锁异常——RPC 会抛出带"其他设备"的消息
 function _isDeviceKickError(err){
   if(!err)return false;
   var msg=(err.message||err.msg||String(err)||'').toString();
-  return msg.indexOf('其他设备')>=0||msg.indexOf('device')>=0&&msg.indexOf('lock')>=0;
+  /* V15.2.5：服务端 push_save / session_ping 在设备码不符时抛 DEVICE_MISMATCH */
+  return msg.indexOf('DEVICE_MISMATCH')>=0||msg.indexOf('其他设备')>=0||msg.indexOf('异地登录')>=0;
 }
+/* V15.2.2：登录＝新设备强制接管。服务端 session_claim 本身就是 upsert 抢锁，
+ * 这里供拉档/首次推送遇到"锁在别处"时立刻抢回，玩家无需去旧设备手动退出。 */
 /* v13.3：网络层错误判定与"面向玩家"的短提示。
  * 玩家不需要知道 Supabase / CSP / 项目暂停这些开发者细节——只告诉他两句话：
  *   没连上 → "服务器连接异常，请重试"
@@ -5314,6 +5407,9 @@ function _authErrCN(err){
 // v13：把常见数据库错误翻译成人话
 function _friendlyErr(err){
   var msg=(err&&(err.message||err.msg)||String(err)||'').toString();
+  /* V15.2.3：不再把服务端要求玩家操作另一台设备的报错原样显示出来 */
+  if(msg.indexOf('DEVICE_MISMATCH')>=0)return '账号已在另一台设备登录，本机已退出';
+  if(msg.indexOf('其他设备')>=0)return '云端暂时没有响应，稍后自动重试';
   if(_isNetErr(msg)){
     // v13.3：面向玩家的短文案 · 长排查清单只留在开发者侧的 claim 提示里
     return _netFailText();
@@ -5333,33 +5429,33 @@ function _kickOutUser(){
   // （JWT 无状态：被踢设备的 access token 过期前 getSession 仍返回有效 session，
   //   必须主动 signOut 清掉本地 session，否则刷新页面又溜回来）
   if(_sessionWatchdogId){clearInterval(_sessionWatchdogId);_sessionWatchdogId=null;}
+  _abortLogin(); // V15.2.6：关选档遮罩、解锁写锁，防止 5 分钟后游戏自己复活
   try{ supabaseClient.auth.signOut({scope:'local'}).catch(function(){}); }catch(e){}
-  toast('⚠️ 该账号已在其他设备登录，请重新登录','#ff5c5c');
+  toast('⚠️ 账号已在另一台设备登录，本机已退出','#ff5c5c');
   _forceLoggedOut(_lastLoginEmail);
+  _showLoginDiag('检测到账号在另一台设备登录，本机已自动退出并回到登录界面。直接重新登录即可接管进度，无需操作另一台设备。');
+  try{ console.error('[V15.2.5][异地登录] 存档设备码与本机不符，已退出'); }catch(e){}
 }
 async function cloudPush(){
   if(!cloudEnabled()){ cloudSync.lastErr='云端未配置'; return; }
-  // 未登录时给明确报错 · 旧版静默 return，玩家点了没反应，以为功能坏了
   if(!cloudUser){ cloudSync.ok=false; cloudSync.lastErr='未登录云端 · 请先登录再上传'; return; }
   var data = saveEncode(state);
   cloudSync.ok=false; cloudSync.lastErr='';
   try{
-    // v13：走 RPC——服务端先校验"我是互斥锁持有者"，再写入
     var {error} = await supabaseClient.rpc('push_save',{p_device:DEVICE_ID,p_data:data,p_version:SAVE_V});
     if(error){
+      /* V15.2.5：服务端判定设备码不符＝账号已在别处登录。
+       * 直接弹窗并退出到登录界面，绝不抢写设备码、绝不静默重试。 */
+      if(_isDeviceKickError(error)){ _kickOutUser(); return; }
       cloudSync.lastErr=_friendlyErr(error);
-      if(_isDeviceKickError(error)){ _kickOutUser(); }
       return;
     }
     cloudSync.ok=true; cloudSync.lastPushAt=Date.now();
-    /* v13.6 三轮：存档上传成功 · 自动 30s 节流 / 手动 / 转生飞升强存即顺带
-     * 上报排行榜数值——与 cloud_saves 同一成功路径，"上传过就该上榜"。
-     * lbPush 内层自带 5 分钟节流 + 数值签名去重，不会双倍请求。 */
-    lbPush(false);
-    _lastLockVerifiedAt=Date.now(); // v15.1：push 成功即已校验锁 → 看门狗免 ping
+    try{ lbPush(false); }catch(e){} // V15.2.6：榜单上报失败不能污染存档状态
+    /* V15.2.5：刻意不再用"存档成功"豁免看门狗 —— 互锁必须靠固定检查 */
   }catch(e){
+    if(_isDeviceKickError(e)){ _kickOutUser(); return; }
     cloudSync.lastErr=_friendlyErr(e);
-    if(_isDeviceKickError(e)){ _kickOutUser(); }
   }
 }
 // v13：只拉取+解码+版本校验，不应用。返回：
@@ -5378,8 +5474,8 @@ var _cloudPullEmpty=false;
 async function cloudFetch(){
   if(!cloudEnabled()||!cloudUser)return {ok:false,err:'未登录云端'};
   try{
-    /* v13.4 自动存档：拉取也加 10s 超时——pull 挂死会让 afterLogin 的拉档写锁
-     * 永远解不开 · 自动存档全停；超时按网络错误走红线拒入，云端原档一个字节不动。 */
+    /* V15.2.5：登录时 session_claim 已把本机设备码写进存档行，
+     * 拉档不再做任何抢锁动作；设备码不符一律按异地登录退出。 */
     var {data,error} = await withTimeout(supabaseClient.rpc('pull_save',{p_device:DEVICE_ID}),AUTOSAVE_PUSH_TIMEOUT,'拉取存档');
     if(error){
       if(_isDeviceKickError(error)){ _kickOutUser(); return {ok:false,err:'',kicked:true}; }
@@ -5390,11 +5486,9 @@ async function cloudFetch(){
     var decoded=null;
     try{ decoded=saveDecode(row.save_data); }catch(e){}
     if(!decoded)return {ok:false,err:'云端存档损坏，无法解码',row:true};
-    // 拒绝 V13 之前版本的存档 · SAVE_V=18 起
     if(row.save_version!==SAVE_V){
       return {ok:false,err:'云端存档版本过旧 · '+(decoded.ver||'未知版本')+'，V13 已拒绝载入',row:true};
     }
-    _lastLockVerifiedAt=Date.now(); // v15.1：pull 成功即已校验锁
     return {ok:true,decoded:decoded,updatedAt:row.updated_at};
   }catch(e){
     if(_isDeviceKickError(e)){ _kickOutUser(); return {ok:false,err:'',kicked:true}; }
@@ -5805,7 +5899,7 @@ function lbRenderList(){
   if(!rows.length)h='<div class="lb-empty">榜单还是空的——成为第一位上榜的矿工吧！</div>';
   box.innerHTML=h;
   var mt=$('lbMetaTime');
-  if(mt)mt.textContent=_lb.cacheAt?('更新于 '+fmtLocalTime(new Date(_lb.cacheAt).toISOString())):'加载中...';
+  if(mt)mt.textContent=_lb.cacheAt?('更新于 '+fmtLocalTime(_lb.cacheAt)):'加载中...';
   lbRenderCd();
 }
 function lbRenderErr(msg){
@@ -5962,11 +6056,7 @@ function showCloudPanel(){
   if(cloudUser){
     body+='<div style="margin-bottom:10px">已登录：<b style="color:#e040fb">'+(cloudUser.email||cloudUser.id)+'</b></div>';
     // 实时状态区 · push/pull 会更新这里
-    body+='<div id="cloudSyncRow" class="cloud-status">'+
-         (cloudSync.busy?'⏳ 正在同步...':
-          (cloudSync.ok?'🟢 云端存档已同步'+(cloudSync.lastPushAt?' · '+fmtLocalTime(cloudSync.lastPushAt):''):
-          (cloudSync.lastErr?('⚪ 上次同步失败：'+cloudSync.lastErr):'🟢 自动存档已开启 · 本地实时缓冲 · 云端每 30 秒同步')))+
-         '</div>';
+    body+='<div id="cloudSyncRow" class="cloud-status">'+_asSyncText()+'</div>';
     /* v13.4 自动存档：本地缓冲状态行（开面板时刷新，让玩家看到"关页面也不丢"） */
     body+='<div id="asRow" style="margin-top:6px;font-size:12px;color:var(--dim)">'+_asStatusText()+'</div>';
     /* v14.9：保底存档状态行 · 第 3 层，登录满 30 分钟起每 30 分钟一份 */
@@ -6002,6 +6092,17 @@ function showCloudPanel(){
   }
   body+='</div>';
   showModal({title:'☁️ 云端存档', body:body, confirmText:'关闭', cancelText:''},function(){});
+  /* V15.2.4：面板打开期间每秒刷新倒计时；面板关闭后找不到元素就自动停掉 */
+  if(cloudUser){
+    try{ if(window._asPanelTicker)clearInterval(window._asPanelTicker); }catch(e){}
+    window._asPanelTicker=setInterval(function(){
+      var r=$('asRow'), s=$('cloudSyncRow'), b=$('bakRow');
+      if(!r&&!s&&!b){ clearInterval(window._asPanelTicker); window._asPanelTicker=null; return; }
+      if(r)r.innerHTML=_asStatusText();
+      if(s)s.innerHTML=_asSyncText();
+      if(b)b.innerHTML=_bakStatusText();
+    },1000);
+  }
   /* v13.3：霸体/异常路径下 showModal 可能被抑制 · 如强制登录框在场，
    * 此时面板按钮并不存在——裸设 onclick 会 TypeError 崩溃。全部加空值保护。 */
   if(cloudUser){
@@ -6016,7 +6117,7 @@ function showCloudPanel(){
           if(row)row.innerHTML='<span style="color:#a89a86">☁️ 云端暂无存档</span>';
           toast('☁️ 云端暂无存档 · 开始新游戏','#a89a86');
         }else{
-          if(row)row.innerHTML='<span style="color:#ff5c5c">❌ 读取失败：'+r.err+'</span>';
+          if(row)row.innerHTML='<span style="color:#ff5c5c">❌ 读取失败：'+esc(r.err)+'</span>';
           toast('❌ '+r.err,'#ff5c5c');
         }
         return;
@@ -6025,7 +6126,7 @@ function showCloudPanel(){
       if(row)row.innerHTML='<span style="color:#a89a86">📄 已读到云端存档 · 等待确认</span>';
       var when=fmtLocalTime(r.updatedAt);
       showModal({title:'☁️ 从云端恢复',confirmText:'确认载入',cancelText:'取消',
-        body:'云端存档保存于 <b>'+when+'</b> · 版本 v'+(r.decoded.ver||GAME_VER)+'。<br><br>'+
+        body:'云端存档保存于 <b>'+esc(when)+'</b> · 版本 v'+esc(r.decoded.ver||GAME_VER)+'。<br><br>'+
              '载入后将<b>覆盖</b>当前进度，确定吗？',
         onConfirm:function(){
           cloudApplySave(r.decoded,r.updatedAt);
@@ -6088,7 +6189,7 @@ function showCloudPanel(){
         // 否则会把之后弹出的模态框误关掉，如新账号的用户名询问、被踢回的登录框
         setTimeout(function(){ if($('cloudMsg'))$('overlay').classList.remove('show'); },600);
         afterLogin(); // 恢复游戏 → 抢占互斥锁 → 拉取云端存档 → 启动看门狗
-      }).catch(function(e){ msg.innerHTML='<span style="color:#ff5c5c">❌ '+e.message+'</span>'; });
+      }).catch(function(e){ msg.innerHTML='<span style="color:#ff5c5c">❌ '+esc(e.message||'')+'</span>'; });
     };
     var _bsg=$('cloudBtnSignup');
     if(_bsg)_bsg.onclick=function(){
@@ -6112,7 +6213,7 @@ function showCloudPanel(){
           setTimeout(function(){ if($('cloudMsg'))$('overlay').classList.remove('show'); },600);
           afterLogin(); // 注册的是全新账号，云端无存档 → 会询问用户名
         }
-      }).catch(function(e){ msg.innerHTML='<span style="color:#ff5c5c">❌ '+e.message+'</span>'; });
+      }).catch(function(e){ msg.innerHTML='<span style="color:#ff5c5c">❌ '+esc(e.message||'')+'</span>'; });
     };
   }
 }
@@ -6136,7 +6237,7 @@ function askUserName(){
       state.user=v;applyUserName();saveGame(false);
       lbPush(true); // v13.6：榜单上的显示名就是矿工名——改名后立即强推，不等节流
       beep(587,0.09,'triangle',0.045);
-      toast('👷 欢迎，'+esc(v)+'！','#7ed321','用户名已保存在云端存档');
+      toast('👷 欢迎，'+v+'！','#7ed321','用户名已保存在云端存档');
     },
     onCancel:function(){askUserName();}}); // 用户名必填——取消则再次询问
 }
@@ -6156,7 +6257,7 @@ function showRenameModal(){
       renderShop();saveGame(false);
       lbPush(true); // v13.6：榜单显示名就是矿工名——改名后立即强推，不等节流
       beep(587,0.09,'triangle',0.045);
-      toast('🪪 已改名为 '+esc(v),'#7ed321','左上角与排行榜将显示新名字');
+      toast('🪪 已改名为 '+v,'#7ed321','左上角与排行榜将显示新名字');
     }});
 }
 /* v14.9.1：天然色料对话框——选源/目标颜色，把源颜色全部宝石碎片染成目标色。
@@ -6423,7 +6524,7 @@ function equipFromBag(i,auto){
   state.equip[slot]=it;
   derived=calcDerived();renderEquip(true);renderShop();
   beep(520,0.07,'square',0.035);
-  toast('🎽 已装备 '+esc(it.name),RARITIES[it.rarity].color,esc(it.statText)+(cur?' · '+esc(cur.name)+' 已卸下回包并自动上锁':''));
+  toast('🎽 已装备 '+it.name,RARITIES[it.rarity].color,it.statText+(cur?' · '+cur.name+' 已卸下回包并自动上锁':''));
   checkVictory();
 }
 /* 卸下 · 槽位 → 背包，需有空间 */
@@ -6436,7 +6537,7 @@ function unequipToBag(slot,auto){
   state.bag.push(it);
   derived=calcDerived();renderEquip(true);renderShop();
   beep(300,0.07,'triangle',0.035);
-  toast('📤 已卸下 '+esc(it.name),'#a89a86','放入装备背包并自动上锁');
+  toast('📤 已卸下 '+it.name,'#a89a86','放入装备背包并自动上锁');
   checkVictory();
 }
 /* 背包物品上锁/解锁：上锁后不会被"装满自动替换/一键出售"淘汰 */
@@ -6537,7 +6638,7 @@ function _redeemNorm(c){
  * 有效期/福利内容，玩家无密钥无法伪造；每账号限一次由 code_redemptions 表主键保证。
  * 网络失败 = RPC 未执行 = 未消耗次数，可放心重试。 */
 async function redeemOfficial(code,box,msg){
-  var fail=function(t){ if(msg)msg.innerHTML='<span style="color:#ff5c5c">'+t+'</span>'; };
+  var fail=function(t){ if(msg)msg.innerHTML='<span style="color:#ff5c5c">'+esc(t)+'</span>'; };
   if(saveBlocked){ fail('🚫 原存档来自更高版本，已停止保存——请更新游戏版本后再兑换'); return; }
   if(!cloudEnabled()||!cloudUser){ fail('❌ 官方兑换码需要登录云端账号后兑换'); return; }
   if(_as.pulling){ fail('⏳ 正在载入云端存档，请稍候再兑换'); return; }
@@ -6556,7 +6657,7 @@ async function redeemOfficial(code,box,msg){
   derived=calcDerived();rebuildAll();checkAchievements();
   milestoneSave(); // 福利立即落本地缓冲 + 强推云端，防关页面/断网丢失
   beep(523,0.1,'triangle',0.05);setTimeout(function(){beep(784,0.16,'triangle',0.05);},110);
-  toast('🎁 兑换成功：'+esc(summary),'#7ed321');
+  toast('🎁 兑换成功：'+summary,'#7ed321');
 }
 /* v13.5：应用官方兑换码福利 · 金币/矿石/至宝/无上。
  * 矿石直接入包不受容量上限约束 · 超出部分由后续出售周期统一结算，不会丢失；
@@ -6612,18 +6713,18 @@ function normalizeStateAfterMigration(s){
     /* v13.3：补齐其余数值/布尔字段。旧档缺 spent 时 singBuy 里 spent+=cost 得到 NaN，
      * singPoints() = max(0, earned - NaN) = NaN，所有"奇点值不足/可购买"比较恒为 false
      * ——奇点商店整体瘫痪。judas/rollAt/marsUntil 同理。 */
-    if(typeof s.sing.spent!=='number'||s.sing.spent<0)s.sing.spent=0;
-    if(typeof s.sing.earned!=='number'||s.sing.earned<0)s.sing.earned=0;
-    if(typeof s.sing.lastGain!=='number'||s.sing.lastGain<0)s.sing.lastGain=0;
-    if(typeof s.sing.marsUntil!=='number'||s.sing.marsUntil<0)s.sing.marsUntil=0;
+    if(typeof s.sing.spent!=='number'||!isFinite(s.sing.spent)||s.sing.spent<0)s.sing.spent=0;
+    if(typeof s.sing.earned!=='number'||!isFinite(s.sing.earned)||s.sing.earned<0)s.sing.earned=0;
+    if(typeof s.sing.lastGain!=='number'||!isFinite(s.sing.lastGain)||s.sing.lastGain<0)s.sing.lastGain=0;
+    if(typeof s.sing.marsUntil!=='number'||!isFinite(s.sing.marsUntil)||s.sing.marsUntil<0)s.sing.marsUntil=0;
     if(typeof s.sing.rollAt!=='number'||s.sing.rollAt<0)s.sing.rollAt=0;
     if(typeof s.sing.judas!=='boolean')s.sing.judas=false;
-    if(typeof s.sing.shopRefreshN!=='number'||s.sing.shopRefreshN<0)s.sing.shopRefreshN=0; // v13.6 二轮：递增刷新计数
+    if(typeof s.sing.shopRefreshN!=='number'||!isFinite(s.sing.shopRefreshN)||s.sing.shopRefreshN<0)s.sing.shopRefreshN=0; // v13.6 二轮：递增刷新计数
     // v14.9.1：大国工匠就位标记 / 灭霸已购买标记 · 旧档缺省回填
     if(typeof s.sing.craftNoDrop!=='boolean')s.sing.craftNoDrop=false;
     if(typeof s.sing.thanos!=='boolean')s.sing.thanos=false;
   }
-  if(typeof s.prestigeCdUntil!=='number'||s.prestigeCdUntil<0)s.prestigeCdUntil=0;
+  if(typeof s.prestigeCdUntil!=='number'||!isFinite(s.prestigeCdUntil)||s.prestigeCdUntil<0)s.prestigeCdUntil=0;
   if(typeof s.lastSaveSource!=='string')s.lastSaveSource=''; // v15.1：旧档回填
   if(typeof s.spiritFullAt!=='number'||s.spiritFullAt<0)s.spiritFullAt=0; // v13.6：極达成时长
   /* V14：永曜之石字段清洗（旧档没有这些字段——normalize 末尾会从 defaultState 回填，
@@ -6683,7 +6784,7 @@ function normalizeStateAfterMigration(s){
   ['gold','ore','totalOre','totalGold','runGold','depth','maxDepth','prestige','prestigeCount','totalPrestige','recruits','merges','drops','dropStreak','dropCd','taps'].forEach(function(k){
     if(typeof s[k]!=='number')s[k]=d[k];
   });
-  var du={};for(var u in d.up)du[u]=Number(s.up&&s.up[u])||0;s.up=du;
+  var du={};for(var u in d.up){var _uv=Number(s.up&&s.up[u]);du[u]=(isFinite(_uv)&&_uv>=0)?Math.floor(_uv):0;}s.up=du;
   // 矿工数据清洗
   if(!Array.isArray(s.miners)){
     var mn={},any=false;
@@ -6918,7 +7019,7 @@ function doSmelt(){
   equipDirty=true;derived=calcDerived();renderEquip(true);renderShop();
   state.smelts=(state.smelts||0)+1;checkAchievements();
   dropSound(it.rarity);
-  toast('🔥 熔炼成功：'+esc(it.name),RARITIES[it.rarity].color,'<span class="r-'+it.rarity+'">'+RARITIES[it.rarity].name+'</span> · '+esc(it.statText));
+  toast('🔥 熔炼成功：'+esc(it.name),RARITIES[it.rarity].color,'<span class="r-'+it.rarity+'">'+RARITIES[it.rarity].name+'</span> · '+esc(it.statText),true);
 }
 /* v10 装备售价：只与稀有度相关 · 平价，不与装备等级、声望挂钩。
  * 玩家口径：普通几十块 · 稀有大几百 · 史诗万把块 · 传说百万级 · 至宝 1 亿 · 无上 100 亿。
@@ -7262,7 +7363,7 @@ function doPrestige(){
   if(g<=0)return;
   // v12.2.1：转生冷却拦截 · 防线；正常流程在按钮处已拦截
   // v13.6.3：仅"矿工等级上限≥50 且声望达到上限"的冷却才拦截——其余情况旧 CD 不挡路 · 走到下面一并清零
-  if(singMode()&&minerLevelCap()>=50&&Date.now()<(state.prestigeCdUntil||0)){toast('⏳ 转生冷却中','#ff5c5c','还剩 '+fmtDur((state.prestigeCdUntil-Date.now())/1000)+' 可再次转生');return;}
+  if(singMode()&&minerLevelCap()>=50&&gameNow()<(state.prestigeCdUntil||0)){toast('⏳ 转生冷却中','#ff5c5c','还剩 '+fmtDur((state.prestigeCdUntil-gameNow())/1000)+' 可再次转生');return;}
   var wasSing=singMode(); // v12：记录切换前是否已在奇点商店态
   // v12：天数 = 本次转生的溢出声望。转生前已满 · =上限则本轮可获得声望全部等于天数；
   // 天数仅用于折算奇点值，算完即弃，不做展示和统计。
@@ -7274,7 +7375,7 @@ function doPrestige(){
   // v13.6.3：转生冷却——"矿工等级上限≥50 且声望达到上限"奇点商店态才进入 CD · 1 小时起，每 +5 级再 +1 小时；
   // 两个条件缺一不进 CD，已有 CD 一并清零 · 没有需要冷却的理由
   var cdH=(singMode()&&minerLevelCap()>=50)?prestigeCdHours(minerLevelCap()):0;
-  if(cdH>0)state.prestigeCdUntil=Date.now()+cdH*3600*1000;
+  if(cdH>0)state.prestigeCdUntil=gameNow()+cdH*3600*1000;
   else state.prestigeCdUntil=0;
   var cdNote=cdH>0?'<br>⏳ <b>转生冷却</b>：矿工等级上限 ≥50 且声望已达上限，本次转生后 <b>'+cdH+'</b> 小时内无法再次转生 · 上限每 +5 级 +1 小时':'';
   if(singGain>0)state.sing.earned=(state.sing.earned||0)+singGain;
@@ -7427,13 +7528,13 @@ function tick(dt){
   if(achAcc>=1){achAcc=0;checkAchievements();}
   // v11.2：火星四溅到期提示 · 一次性；v12.2.1：奇点商店轮刷只跟 8 小时倒计时走 · 与是否购买无关
   if(state.sing){
-    if(state.sing.marsUntil&&Date.now()>=state.sing.marsUntil){
+    if(state.sing.marsUntil&&gameNow()>=state.sing.marsUntil){
       state.sing.marsUntil=0;toast('☄️ 火星四溅效果已结束','#a89a86');
     }
-    if(state.sing.tomatoUntil&&Date.now()>=state.sing.tomatoUntil){
+    if(state.sing.tomatoUntil&&gameNow()>=state.sing.tomatoUntil){
       state.sing.tomatoUntil=0;toast('🍅 番茄炒蛋效果已结束','#a89a86');
     }
-    if(singMode()&&Date.now()>=(state.sing.rollAt||0))singNaturalRestock(); // v13.6.2：固定 8 小时自然刷新——重刷物品 + 刷新花费重置回 1 · 手动刷新/购买不重置倒计时
+    if(singMode()&&gameNow()>=(state.sing.rollAt||0))singNaturalRestock(); // v13.6.2：固定 8 小时自然刷新——重刷物品 + 刷新花费重置回 1 · 手动刷新/购买不重置倒计时
   }
   renderAcc+=dt;
   if(renderAcc>=0.1){renderAcc=0;render();}
@@ -7913,10 +8014,10 @@ function renderSingShop(){
   h+='<div class="sing-sub">上一次转生 <b>'+(state.sing.lastGain||0)+'</b> · 累计 <b>'+singEarn()+'</b> · 已消耗 <b>'+(state.sing.spent||0)+'</b></div>';
   // v12.2.1：火星四溅 / 番茄炒蛋 buff 状态 · 移置奇点商店内，避免顶栏排版混乱
   h+='<div class="sing-buffs">';
-  if(state.sing.marsUntil>Date.now())
-    h+='<div class="sing-buff sing-buff-mars">☄️ 火星四溅 · 全局+'+SING_MARS_MULT+' · 剩余 <b>'+fmtDur((state.sing.marsUntil-Date.now())/1000)+'</b></div>';
-  if(state.sing.tomatoUntil>Date.now())
-    h+='<div class="sing-buff sing-buff-tomato">🍅 番茄炒蛋 · 传说+保底 · 剩余 <b>'+fmtDur((state.sing.tomatoUntil-Date.now())/1000)+'</b></div>';
+  if(state.sing.marsUntil>gameNow())
+    h+='<div class="sing-buff sing-buff-mars">☄️ 火星四溅 · 全局+'+SING_MARS_MULT+' · 剩余 <b>'+fmtDur((state.sing.marsUntil-gameNow())/1000)+'</b></div>';
+  if(state.sing.tomatoUntil>gameNow())
+    h+='<div class="sing-buff sing-buff-tomato">🍅 番茄炒蛋 · 传说+保底 · 剩余 <b>'+fmtDur((state.sing.tomatoUntil-gameNow())/1000)+'</b></div>';
   if(state.sing.thanos)
     h+='<div class="sing-buff sing-buff-thanos">🟣 灭霸 · 全局倍率 +<b>'+thanosBonus()+'</b>六色最低最高级 · 随宝石成长动态提升</div>';
   if(state.sing.craftNoDrop)
@@ -8199,11 +8300,11 @@ function renderStats(){
   // v11.2：奇点商店信息 · 越限后显示
   if(singMode()){
     h+=kv('奇点值','<b class="g">'+singPoints()+'</b> 点 · 累计折算 '+singEarn()+' · 已消耗 '+(state.sing.spent||0)+' · 全游戏已获取声望 '+fmt(state.totalPrestige||0)+'');
-    if(state.sing.marsUntil>Date.now()){
-      h+=kv('火星四溅','☄️ 全局倍率 +'+SING_MARS_MULT+' · 剩余 '+fmtDur((state.sing.marsUntil-Date.now())/1000));
+    if(state.sing.marsUntil>gameNow()){
+      h+=kv('火星四溅','☄️ 全局倍率 +'+SING_MARS_MULT+' · 剩余 '+fmtDur((state.sing.marsUntil-gameNow())/1000));
     }
-    if(state.sing.tomatoUntil>Date.now()){
-      h+=kv('番茄炒蛋','🍅 不再出现史诗及以下稀有度装备 · 剩余 '+fmtDur((state.sing.tomatoUntil-Date.now())/1000));
+    if(state.sing.tomatoUntil>gameNow()){
+      h+=kv('番茄炒蛋','🍅 不再出现史诗及以下稀有度装备 · 剩余 '+fmtDur((state.sing.tomatoUntil-gameNow())/1000));
     }
     if(state.sing.judas)h+=kv('犹大密室','🚪 已开启 · 矿层上限第 13 层 · 奇点之核 · 解锁价 '+fmt(SING_DEPTH13_COST)+' 金币');
     h+=kv('奇点货架',singStocked().length?singStocked().map(function(sk){return SING_ITEMS[sk].icon+' '+SING_ITEMS[sk].name+' · 售价 '+SING_ITEMS[sk].cost+' 点';}).join(' · '):'已售罄 · '+fmtDur(singRestockLeft()/1000)+' 后刷新');
@@ -8324,8 +8425,9 @@ function renderBet(force){
       var tg=x.targets&&x.targets.length?x.targets:(x.target!==undefined?[x.target]:[]);
       // v14.9：双选预言完整展示两个选项及各自结果 · ✓=该选项应验 / ✗=落空；旧档无 actual 时不标
       var _mk=function(t,n){
-        if(x.actual===undefined)return n;
-        return n+(t===x.actual?'<span style="color:#9be15d">✓</span>':'<span style="color:#a89a86">✗</span>');
+        /* V15.2.6：n 可能来自存档，逐值转义；✓✗ 的 span 是代码内固定 HTML，保留渲染。 */
+        if(x.actual===undefined)return esc(n);
+        return esc(n)+(t===x.actual?'<span style="color:#9be15d">✓</span>':'<span style="color:#a89a86">✗</span>');
       };
       var label=tg.map(function(t){
         var n;
@@ -8337,11 +8439,12 @@ function renderBet(force){
         return _mk(t,n);
       }).join('或');
       var res;
-      if(x.shield)res='🛡️ 连胜盾生效 · '+(x.side==='yes'?'是':'否')+'「'+label+'」赌错被抵消'+(x.parlay?'串关资格保留':' · 注金 '+fmt(x.price||0)+' 已返还');
+      if(x.shield)res='🛡️ 连胜盾生效 · '+(x.side==='yes'?'是':'否')+'「'+label+'」赌错被抵消'+(x.parlay?'串关资格保留':' · 注金 '+esc(fmt(x.price||0))+' 已返还');
       else if(x.win===null)res='➖ 未参赌 · 预言「'+label+'」'+(x.truth?'应验':'落空');
-      else res=(x.win?'✅ 押中':'❌ 押错')+' · '+(x.side==='yes'?'是':'否')+'「'+label+'」→ '+(x.win?x.reward:'损失 '+fmt(x.price));
+      else res=(x.win?'✅ 押中':'❌ 押错')+' · '+(x.side==='yes'?'是':'否')+'「'+label+'」→ '+(x.win?esc(x.reward):'损失 '+esc(fmt(x.price)));
       if(x.parlay)res='🔥 '+res;
-      h+='<div class="hrow"><span>'+esc(res)+'</span></div>';
+      /* V15.2.6：不再对整串 esc —— 会把上面固定的彩色 span 打成字面文本 */
+      h+='<div class="hrow"><span>'+res+'</span></div>';
     });
     h+='</div>';
   }
@@ -8601,7 +8704,7 @@ function bindUI(){
     }
     // v12.2.1：转生冷却中——拦截并告知剩余时间
     // v13.6.3：仅"矿工等级上限≥50 且声望达到上限"的冷却才拦截；其余情况转生零冷却 · 旧 CD 由 doPrestige 清零
-    var cdLeft=(singMode()&&minerLevelCap()>=50)?(state.prestigeCdUntil||0)-Date.now():0;
+    var cdLeft=(singMode()&&minerLevelCap()>=50)?(state.prestigeCdUntil||0)-gameNow():0;
     if(cdLeft>0){
       showModal({title:'⏳ 转生冷却中',confirmText:'知道了',cancelText:'关闭',
         body:'矿工等级上限 ≥50 且声望达到上限后，每次转生都会进入冷却 · 之后上限每 +5 级，冷却再 +1 小时。<br>距离下次可转生还剩 <b class="g">'+fmtDur(cdLeft/1000)+'</b>。'});
@@ -8788,7 +8891,8 @@ function showOldSaveModal(){
 function mobileAdapt(){
   var isMobile=false;
   try{
-    isMobile=(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches)||(window.innerWidth<=700);
+    var _fine=window.matchMedia&&window.matchMedia('(pointer:fine)').matches;
+    isMobile=!_fine&&((window.matchMedia&&window.matchMedia('(pointer:coarse)').matches)||(window.innerWidth<=700));
   }catch(e){}
   if(!isMobile)return;
   document.body.classList.add('is-mobile');
@@ -8830,6 +8934,7 @@ function mobileAnimDefault(){
     if(localStorage.getItem(k))return;
     state.settings.anim=false;
     localStorage.setItem(k,'1');
+    try{ document.body.classList.toggle('noanim',true); }catch(e){} // V15.2.6：开关与画面一致
     var sw=$('swAnim');if(sw)sw.checked=false;
   }catch(e){}
 }
