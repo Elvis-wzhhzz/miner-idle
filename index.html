@@ -1244,6 +1244,8 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
           <div class="chip about-row" id="verChip" title="游戏版本 v15.3" style="padding:5px 9px"><span style="color:var(--dim)">版本</span> <b id="verNum" style="margin-left:2px">v15.3</b></div>
           <!-- v13.6：原"云：上传中"状态行让位给排行榜入口 · 云状态仍在 ☁️ 按钮面板内展示-->
           <button class="iconbtn about-row" id="btnLeaderboard">🏆 排行榜</button>
+          <!-- V15.3：游戏公告 · 内容在 Supabase 的 announcements 表里改，改完玩家点一下就是新的 -->
+          <button class="iconbtn about-row" id="btnAnnounce">📢 公告</button>
         </div>
       </div>
     </div>
@@ -5212,6 +5214,11 @@ async function afterLogin(){
     if(_sr&&!_sr.error){ var _t=Number(_sr.data); if(isFinite(_t)&&_t>0)_serverOffset=_t-Date.now(); }
   }catch(e){ _serverOffset=0; }
   startSessionWatchdog();
+  /* V15.3 预留：弹窗公告挂载点（当前不启用，见 bindAnnouncements 里的说明）。
+   * 以后启用时，把下面这行取消注释，并把 ANNOUNCE_POPUP_ENABLED 改成 true；
+   * 实际建议挂在「存档载入完成、离线收益弹窗关闭之后」，避免和
+   * 「🌙 欢迎回来」抢同一个 showModal。现在刻意不调用，零风险。
+   * if(ANNOUNCE_POPUP_ENABLED)tryShowPopupAnnouncement(); */
   bcClaim(); // v13.3：同浏览器其他窗口立即下线 · 不等 10 秒轮询
   var asked=false;
   var askName=function(){
@@ -6443,6 +6450,95 @@ function doKiReset(keepIdx){
   lbPush(true);       // 返璞归真落幕后强推榜单 · 数值已归零
   milestoneSave();    // v13.4 自动存档：里程碑——无视节流立即强存
 }
+/* ================= V15.3 · 游戏公告（Supabase） =================
+ * 两类：about = 「关于 → 📢 公告」手动查看；popup = 登录后自动弹（预留，暂不启用）。
+ * 内容一律纯文本：标题/正文先 esc() 再渲染，换行转 <br>，绝不执行任何 HTML。
+ * 没执行 SQL / 断网 / 表为空 → 静默显示中性的「暂无公告」，不弹红字、不卡游戏。
+ * 每次点公告都重新读一次，改完 Supabase 里的内容玩家点一下就能看到，不用刷新页面。 */
+var ANNOUNCE_POPUP_ENABLED=false; // 弹窗公告总开关 · 留位待用，改 true 才生效
+var _announceCache={about:null,popup:null};
+var ANNOUNCE_MAX=20;
+function _announceText(v){
+  return esc(String(v==null?"":v).slice(0,4000))
+    .replace(/\r\n/g,"\n").replace(/\r/g,"\n").replace(/\n/g,"<br>");
+}
+function _announceNormalize(data){
+  var arr=[];
+  if(typeof data==="string"){ try{ data=JSON.parse(data); }catch(e){ data=null; } }
+  if(!Array.isArray(data))return arr;
+  for(var i=0;i<data.length&&arr.length<ANNOUNCE_MAX;i++){
+    var o=data[i];
+    if(!o||typeof o!=="object")continue;
+    var t=String(o.title==null?"":o.title).slice(0,120);
+    var b=String(o.body==null?"":o.body).slice(0,4000);
+    if(!t&&!b)continue;
+    arr.push({title:t,body:b,updatedAt:String(o.updatedAt||"")});
+  }
+  return arr;
+}
+function _announceHtml(list){
+  if(!list.length)return '<div style="color:var(--dim);font-size:12.5px;line-height:1.8">暂无公告</div>';
+  var h="";
+  for(var i=0;i<list.length;i++){
+    var a=list[i];
+    if(i)h+='<div style="border-top:1px dashed var(--line);margin:12px 0"></div>';
+    if(a.title)h+='<div style="font-weight:700;color:var(--gold);font-size:13px;margin-bottom:6px">'+esc(a.title)+'</div>';
+    if(a.body)h+='<div style="font-size:12.5px;line-height:1.9;color:var(--text)">'+_announceText(a.body)+'</div>';
+    if(a.updatedAt){
+      var d=new Date(a.updatedAt);
+      if(!isNaN(d.getTime()))h+='<div style="font-size:11px;color:var(--dim);margin-top:8px">'+esc(d.toLocaleString("zh-CN"))+'</div>';
+    }
+  }
+  return h;
+}
+async function fetchAnnouncements(kind,force){
+  kind=(kind==="popup")?"popup":"about";
+  if(!force&&_announceCache[kind])return _announceCache[kind];
+  var list=[],ok=false;
+  try{
+    if(cloudEnabled()&&cloudUser){
+      var r=await withTimeout(supabaseClient.rpc("get_announcements",{p_kind:kind}),6000,"公告读取");
+      if(r&&!r.error){ list=_announceNormalize(r.data); ok=true; }
+    }
+  }catch(e){}
+  /* 读取失败时若本会话曾成功拉过，继续显示旧内容，不突然变成「暂无公告」 */
+  if(!ok&&_announceCache[kind])return _announceCache[kind];
+  _announceCache[kind]=list;
+  return list;
+}
+async function showAnnouncementModal(kind){
+  var list=await fetchAnnouncements(kind,true);
+  showModal({title:"📢 游戏公告",confirmText:"知道了",body:_announceHtml(list)});
+}
+/* 预留：弹窗公告。完整实现已就位，默认不调用。
+ * 去重键按公告 updatedAt，改过内容才会再弹一次；关闭后才记已读。 */
+async function tryShowPopupAnnouncement(){
+  if(!ANNOUNCE_POPUP_ENABLED)return;
+  var list=await fetchAnnouncements("popup");
+  if(!list.length)return;
+  var key="minerAnnPopup_"+((cloudUser&&cloudUser.id)||"anon");
+  var stamp=list.map(function(a){return a.updatedAt;}).join("|");
+  try{ if(localStorage.getItem(key)===stamp)return; }catch(e){}
+  showModal({title:"📢 公告",confirmText:"知道了",body:_announceHtml(list),
+    onClose:function(){ try{localStorage.setItem(key,stamp);}catch(e){} }});
+}
+function bindAnnouncements(){
+  var b=$("btnAnnounce");
+  if(b)b.onclick=function(e){
+    if(e&&e.stopPropagation)e.stopPropagation();
+    var p=$("aboutPanel");if(p)p.classList.remove("open");
+    showAnnouncementModal("about");
+  };
+  /* ── 弹窗公告：位置已留好，当前不启用（Elvis 暂不使用） ──────────────
+   * 要启用只需两步：
+   *   1) 把上面的 ANNOUNCE_POPUP_ENABLED 改成 true；
+   *   2) 把 afterLogin() 里已写好的那行 tryShowPopupAnnouncement() 取消注释，
+   *      并移到存档载入完成、离线收益弹窗关闭之后。
+   * 之所以不在这里直接调用：本函数在页面初始化时执行，那会儿还没登录，
+   * 而且会自动和「🌙 欢迎回来」抢同一个弹窗。
+   * Supabase 表里 kind='popup' 的占位行也已备好（默认 enabled=false）。
+   */
+}
 /* v12：右上角「关于」折叠面板 · 玩法 / 版本号 / 保存状态 */
 function bindAbout(){
   var btn=$('btnAbout'),panel=$('aboutPanel');
@@ -6466,6 +6562,7 @@ function bindAbout(){
   document.addEventListener('click',function(){panel.classList.remove('open');});
   // v12.3：独立「云端」按钮 · 关于面板左边+ 状态提示
   var bt=$('btnCloudTop'); if(bt)bt.onclick=function(e){if(e)e.stopPropagation();showCloudPanel();};
+  bindAnnouncements(); // V15.3：关于面板里的「📢 公告」入口
 }
 /* v13.4 自动存档：loadGame 仍不作为启动入口 · 红线：无登录不能玩。
  * 本地缓冲 · localSave/localLoad，key 按 uid 隔离仅在登录后作为崩溃保险存在——
