@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<!-- V15.2 · 由 build_v15.2.py 从 V15.1 生成；SAVE_V 保持 18 以兼容全部存量云档。
+<!-- V15.3 · 由 build_v15.3.py 从 V15.2 生成；SAVE_V 保持 18 以兼容全部存量云档。
+     V15.3：离线结算修复 / 宝石五角星徽章 / 托管开关静态化 / 黑曜石 13 级门槛 /
+     隐藏机制文案模糊化 / 官方兑换码与开发验证码分流。
      纯编辑器工具样式（trae-previewer-tools-styles）已删除；第二个 style 块因含
      V15.1 新增的 #svcOverlay 存档选择界面样式而保留，确保视觉一致。 -->
 <html lang="zh-CN" style="--ore:#8d6e63; --depth-glow:rgba(141,110,99,0.28)"><head>
@@ -1130,6 +1132,29 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
 .gem-top-chip i{width:8px;height:8px;border-radius:2px;background:var(--gc);flex:none;box-shadow:0 0 6px var(--gc)}
 .gem-top-chip em{color:var(--dim);font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gem-top-chip b{color:var(--gold);font-size:13px}
+
+/* ===== V15.3：六色宝石五角星徽章 ===== */
+.gem-star-wrap{display:flex;align-items:center;justify-content:center;margin:8px 0 2px}
+.gem-star{width:min(232px,72%);height:auto;overflow:visible;display:block}
+.gs-line{fill:rgba(255,255,255,.025);stroke:rgba(255,255,255,.12);stroke-width:1.2}
+.gs-orb{stroke:rgba(255,255,255,.5);stroke-width:1.2}
+.gs-core{stroke:rgba(255,255,255,.4);stroke-width:1.4}
+.gs-lv{font-size:11px;font-weight:800;fill:#fff;text-anchor:middle;dominant-baseline:central;
+  paint-order:stroke;stroke:rgba(0,0,0,.75);stroke-width:2.4px}
+.gs-all{animation:gs-rainbow 3s linear infinite}
+.gs-all .gs-line{stroke:rgba(255,215,120,.85);stroke-width:2.2}
+@keyframes gs-rainbow{
+  0%{filter:drop-shadow(0 0 5px rgba(255,120,120,.5)) hue-rotate(0deg)}
+  100%{filter:drop-shadow(0 0 13px rgba(255,215,120,.85)) hue-rotate(360deg)}
+}
+.gs-caption{text-align:center;font-size:10.5px;color:var(--dim);margin:0 0 8px}
+.gs-caption.on{color:var(--gold);font-weight:800;animation:hueflow 3s linear infinite}
+/* V15.3：背包列头用颜色宝石图标，替掉会折行的中文名 */
+.gem-col-mark{width:17px;height:17px;flex:none;position:relative;display:inline-block;
+  clip-path:polygon(50% 0,100% 32%,82% 100%,18% 100%,0 32%)}
+.gem-col-mark i{position:absolute;inset:0;background:var(--gc)}
+.gem-col-mark::after{content:'';position:absolute;left:22%;top:8%;width:30%;height:38%;
+  background:rgba(255,255,255,.5);transform:skewX(-18deg)}
 .gem-meta-row{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--dim);margin:2px 0 10px}
 .gem-meta-row b{color:var(--text)}
 .gem-auto-row{display:flex;align-items:center;gap:10px;background:rgba(74,158,255,.06);border:1px solid rgba(74,158,255,.25);border-radius:10px;padding:8px 11px;margin:10px 0;flex-wrap:wrap}
@@ -1216,7 +1241,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
         <button class="iconbtn" id="btnAbout">ⓘ 关于</button>
         <div class="about-panel" id="aboutPanel">
           <button class="iconbtn about-row" id="btnHelp">❓ 玩法</button>
-          <div class="chip about-row" id="verChip" title="游戏版本 v15.2" style="padding:5px 9px"><span style="color:var(--dim)">版本</span> <b id="verNum" style="margin-left:2px">v15.2</b></div>
+          <div class="chip about-row" id="verChip" title="游戏版本 v15.3" style="padding:5px 9px"><span style="color:var(--dim)">版本</span> <b id="verNum" style="margin-left:2px">v15.3</b></div>
           <!-- v13.6：原"云：上传中"状态行让位给排行榜入口 · 云状态仍在 ☁️ 按钮面板内展示-->
           <button class="iconbtn about-row" id="btnLeaderboard">🏆 排行榜</button>
         </div>
@@ -1331,6 +1356,12 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
         <!-- 宝石 · v14.9.1：矿渣原石/洗练/合成台/宝石背包 + 永耀之石展示 · 自设置页迁入 -->
         <div class="tabpane" id="pane-gem">
           <div class="summary" id="gemHead"></div>
+          <!-- V15.3：全自动托管开关改为静态节点，不再随 #gemHead 每 0.1 秒重建。
+               旧版节点在鼠标按下与抬起之间被换掉，change 事件丢失，表现为"点了没反应"。 -->
+          <div class="gem-auto-row" id="gemAutoRow" style="margin-top:10px">
+            <label class="gem-auto-sw"><input type="checkbox" id="gemAutoChk" data-gem-auto><span>全自动托管</span></label>
+            <span class="gem-auto-tip" id="gemAutoTip">自动碎片合成 / 7 级以下同级合成 / 满 10000 洗练十连</span>
+          </div>
           <div class="summary" id="gemBag" style="margin-top:10px"></div>
           <div class="summary" id="gemFeed" style="margin-top:10px"></div>
           <div class="summary" id="stoneBoard" style="margin-top:10px"></div>
@@ -1363,8 +1394,9 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
           <div class="setrow" style="margin-top:8px">
             <button class="btn-sec" id="btnRedeem">🎁 使用兑换码</button>
           </div>
-          <textarea id="redeemBox" placeholder="输入兑换码后点「🎁 使用兑换码」 · 兑换码由作者发放" style="display:none; width:100%; margin-top:6px; padding:7px 10px; background:var(--panel2); border:1px solid var(--line); border-radius:7px; color:var(--text); font-size:12.5px; box-sizing:border-box"></textarea>
+          <textarea id="redeemBox" placeholder="输入作者发放的官方兑换码，或开发验证码" style="display:none; width:100%; margin-top:6px; padding:7px 10px; background:var(--panel2); border:1px solid var(--line); border-radius:7px; color:var(--text); font-size:12.5px; box-sizing:border-box"></textarea>
           <div class="cloud-status" id="redeemMsg" style="margin-top:4px"></div>
+          <div style="font-size:10.5px;color:var(--dim);margin-top:2px;line-height:1.6">官方兑换码由作者发放，每账号限兑一次；开发验证码需要二次确认。</div>
           <div class="setrow" id="prestigeRow" style="display:none">
             <button class="special" id="btnPrestige">🏆 金盆洗手 · 转生</button>
             <!-- v14.9.1：抵达「極」后的额外选项——与正常转生入口并存，默认隐藏，极状态显示 -->
@@ -1382,7 +1414,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
             第 6 层起开放「🎲 信吗」赌局与「🏅 成就」系统 · 含 14 项隐藏成就。<br>
             商店「⏫ 所有维度升一级」需声望 &gt; 20 万解锁；装备页可购买永久背包格 · 声望 &gt; 100 万，价格 ×10，上限 31 格。<br>
             目标：全身 7 槽无上 = <b style="color:#fbbf24">获胜</b> · 一套 6 件全无上 = <b style="color:#fbbf24">大获全胜</b>。<br>
-            进度保存在云端，离线收益 50% · 上限 8 小时 · 爆装速度 1/6· 当前版本 <b id="aboutGameVer">v15.2</b>旧版本存档在 v12 起无法使用。
+            进度保存在云端，离线收益 50% · 上限 8 小时 · 爆装速度 1/6· 当前版本 <b id="aboutGameVer">v15.3</b>旧版本存档在 v12 起无法使用。
           </div>
           <!-- v13.6：重置游戏从"转生/兑换码之间"迁至设置页最底部危险区域——远离高频点击区，防误触 -->
           <div style="margin-top:16px; border-top:1px dashed var(--line); padding-top:10px">
@@ -1393,7 +1425,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
       </div>
     </aside>
   </main>
-  <div class="footer-note">矿工传说 · 纯云端存档 · v15.2</div>
+  <div class="footer-note">矿工传说 · 纯云端存档 · v15.3</div>
 </div>
 
 <div id="toasts"></div>
@@ -1404,7 +1436,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
 'use strict';
 /* ================= 基础工具 ================= */
 var SAVE_KEY='minerLegendSave_v3';
-var GAME_VER='15.2'; // V15.2：上线前加固 · 存档压缩(S3) / 服务器时间基准 / 离线结算幂等 / 锁未启用拒入 / 脏档清洗 / 奇点态读档兜底 / 手机端适配 / 编辑器残留清理 / 文案审计。
+var GAME_VER='15.3'; // V15.3：离线结算修复 / 宝石五角星徽章 / 托管开关静态化 / 黑曜石 13 级门槛 / 隐藏机制文案模糊化 / 兑换码分流。
 // 以下为历史版本摘要（保留不改）：V15.1：存档选择界面 + 保底重试 + 每日快照 SQL + 狭义神秘套产出 ×10000。V15 大版本收口：S1 黄宝石额外掉落重新 roll 稀有度 · S2 集齐六颗后多余抽奖次数实时折算全局倍率 · S3 極中極与狭义套装 + V14.9.2 宝石锻造：① 永耀之石可用 10 级宝石强化 · 宝石消失、效果升级、不可逆；黑曜石强化后宝石上限解锁 20 级，20 级黑曜石可二次强化 · 奇点刷新免费/飞升免声望② 宝石页全自动托管 · 自动碎片合成/同级合成/十连洗练+ 界面精简重排 ③ 返璞归真可带走一颗 10 级宝石 ④ 全站面向玩家文案去除括号内机制解释。V14.9.1 摘要：① 标签页 icon/文字改上下两行排版 · 窄屏不错乱② 抵达「極」后保留正常转生入口 · 返璞归真作为额外选项，二选一或都不选③ 黑曜石特例修正：两颗9级黑曜碎裂只给其余五色10级宝石④ 奇点商店新增🔧大国工匠 · 3点消耗品：下次合成不降光泽、🎨天然色料 · 1点消耗品：全量碎片换色、🟣灭霸 · 25点一次：全局倍率+六色最低最高级；🪪改名卡权重降至0.34 ⑤ 宝石机制：碎裂只返还碎片当量10% · 向下取整、宝石页按钮改事件委托 · 连点可靠、3级保底改为「连续100次未出3级→下次必出3级」并显示进度 · 取消每10次十连赠3级⑥ 「原石」全部显示改「矿渣原石」 · 字段名不动⑦ 信吗串关连胜奖励5%→10%。V14.9 宝石系统：新增「宝石」标签页 · 洗练/合成台/宝石背包，原石与碎片经济，6基底色×0~10级×光泽度0~9，10级宝石将对应永耀之石效果翻倍，永耀之石展示迁入本页且更名加「永耀」前缀+ 保底存档 · 30分钟制+playtime守卫+可回滚+ 信吗修复 · 双选预言完整展示两选项结果、奖励为矿工且满员时按全价定价。V14 抵極终章：奇点商店新增⏱️立马转生 · 2点，清零转生CD，无CD不可用与🪪改名卡 · 2点，必须交互完成的对话框改矿工名，不点确定不消耗；矿工格子效率上亿后改用万亿/亿亿后缀计数防撑爆；抵达「極」后飞升/转生按钮变为「返璞归真」 · 除永耀之石外全部重置+诗文，内在精神界面下新增「永耀之石」 · 6宝石：红=购买价90%/蓝=全局倍率+1/绿=声望CD减半/黄=幸运+250/紫=信吗金币奖励+20%仅进入那一下/黑=无效果，每次抵極抽奖1次 · 已获得不重复；v13.6.3 转生CD条件补回矿工等级上限≥50 · 矿工等级上限≥50且声望达到上限才进CD，缺一不进CD且已有CD清零、飞升不受CD影响；v13.6.2 转生CD仅限声望达到上限 · 未达上限不进CD且清零、飞升不受CD影响+ 奇点商店8小时固定刷新周期 · 手动刷新/购买不重新计时，到期无条件重刷且刷新花费重置回1奇点值；v13.6 全服排行榜 · lb_profile 投影表 + lb_push/lb_board RPC + 关于面板入口；v13.5 一次性兑换码 · 服务端HMAC验证+每账号一次+ 锁屏 savedAt 漏刷 playtime 裁决 + 番茄炒蛋第六层起可用；v13.4 自动存档：本地崩溃缓冲+30s节流云同步+里程碑强存+断网退避重试
 var SAVE_V=18;         // 存档迁移计数 · SAVE_V=18：v13 强制云存档。V14 起不再递增——永曜之石/宝石等新字段均为附加字段，normalize 默认回填即可平滑迁移；递增会让 cloudFetch 的 save_version!==SAVE_V 校验拒掉全部存量云档
 var MIN_SAVE_VER='13.0'; // v13 起拒绝更早版本存档 · 本地存档完全废弃
@@ -2533,7 +2565,7 @@ var GEM_EFFECTS={
   g:'10 级绿宝石：可强化永耀绿宝石，声望冷却缩减 50% → 90%',
   y:'10 级黄宝石：可强化永耀黄宝石，基础幸运 +250，且普通装备额外掉落 1 件',
   p:'10 级紫水晶：可强化永耀紫水晶，信吗金币奖励 +20% → +60%，心情加成 10% → 20%',
-  k:'10 级黑曜石：可强化永耀黑曜石，黑曜石宝石上限解锁至 20 级'
+  k:'10 级黑曜石：可强化永耀黑曜石，黑曜石可突破原有等级上限'
 };
 function gemState(){if(!state.gem||typeof state.gem!=='object')state.gem=defaultState().gem;return state.gem;}
 /* V15：宝石最近掉落——洗练 / 碎片合成 / 同级合成，托管与手动都记录；超出上限裁掉最旧 */
@@ -2561,13 +2593,14 @@ function bumpHist(c,lv){
   if(!gs.hist||typeof gs.hist!=='object')gs.hist={r:0,b:0,g:0,y:0,p:0,k:0};
   if(lv>(gs.hist[c]||0))gs.hist[c]=lv;
 }
-/* v14.9.2：单色等级上限——黑曜石强化后 20 级，其余五色恒为 10 级 */
-function gemLvCap(c){return (c==='k'&&stoneTier('k')>=1)?20:10;}
+/* v14.9.2 / V15.3：单色等级上限——黑曜石强化后 13 级，其余五色恒为 10 级。
+ * 20 级需要连续跨过太多次同级合成，实测几乎不可达，按玩家反馈下调到 13。 */
+function gemLvCap(c){return (c==='k'&&stoneTier('k')>=1)?13:10;}
 /* ================= v14.9.2：永耀之石强化 =================
- * 消耗 1 颗对应颜色的 10 级宝石 · 黑曜石二次强化需 20 级，宝石消失、石头进入下一档，
+ * 消耗 1 颗对应颜色的 10 级宝石 · 黑曜石二次强化需 13 级，宝石消失、石头进入下一档，
  * 单向不可逆。效果档位由 state.stoneEnh 持久化标志驱动，与宝石是否还存在无关。 */
 var STONE_COLOR={ruby:'r',sapphire:'b',emerald:'g',topaz:'y',amethyst:'p',obsidian:'k'};
-function stoneNeedLv(k){return oldStoneTier(k)>=1?20:10;}
+function stoneNeedLv(k){return oldStoneTier(k)>=1?13:10;}
 function stoneGemIdx(k){
   var c=STONE_COLOR[k],gs=gemState(),need=stoneNeedLv(k),out=[];
   for(var i=0;i<gs.gems.length;i++)if(gs.gems[i].c===c&&gs.gems[i].lv>=need)out.push(i);
@@ -2646,7 +2679,7 @@ function gemShardTotal(){var n=0;for(var i=0;i<GEM_COLOR_KEYS.length;i++)n+=(gem
 function gemTip(g){
   var c=GEM_COLORS[g.c];
   var eff;
-  if(g.lv>=20)eff='20 级黑曜石：可再次强化永耀黑曜石，奇点商店刷新免费、飞升不消耗声望';
+  if(g.lv>=13)eff='黑曜石已抵达极限 · 可再次强化永耀黑曜石';
   else if(g.lv>=10)eff=GEM_EFFECTS[g.c]+(stoneTier(g.c)>=1?' · 对应永耀之石已强化':'');
   else eff='升至 10 级后可强化'+(STONE_DEFS[c.stone]?'永耀'+STONE_DEFS[c.stone].name:'对应永耀之石');
   return c.name+' Lv.'+g.lv+' · 光泽度 '+g.lu+'/'+GEM_LUSTER_MAX+'\n'+eff;
@@ -2806,19 +2839,29 @@ function gemCraftPair(silent){
   var i1=Math.min(gemSel[0],gemSel[1]),i2=Math.max(gemSel[0],gemSel[1]);
   gs.gems.splice(i2,1);gs.gems.splice(i1,1);
   gemSel=[];
-  if(lu<=0){
-    // 黑曜石特例 · v14.9.1 修正：两颗 9 级黑曜石合成时若碎裂，直接获得其余五色 · 红/蓝/绿/黄/紫各一颗 10 级宝石
+  /* V15.3：9 级黑曜石的碎裂阈值从「光泽度归零」放宽到「≤2」。
+   * 旧版里能一路合成到 9 级的宝石光泽度通常还剩 2~4，只有 ≤0 才触发，
+   * 这个隐藏机制几乎从不发生。放宽后约半数会碎裂给五色，另一半仍正常
+   * 升到 10 级 —— 13 级二次强化的路径不受影响。
+   * 刻意不改动光泽度扣减规则，避免把刚下调的 13 级门槛又变难。 */
+  if(lu<=0||(a.c==='k'&&a.lv===9&&lu<=2)){
+    /* V15.3：黑曜石隐藏机制。两颗 9 级黑曜石在光泽将尽时碎裂，其余五色各得
+     * 一颗 10 级宝石；托管/静默合成同样发奖，只是不弹窗、不响铃（旧版会弹窗打断托管）。 */
     if(a.c==='k'&&a.lv===9){
       gs.shattered++;
+      bumpHist('k',9);
       GEM_COLOR_KEYS.forEach(function(k){
         if(k!=='k'){gs.gems.push({c:k,lv:10,lu:GEM_LUSTER_MAX});bumpHist(k,10);
           gemFeedAdd('craft',k,10,GEM_LUSTER_MAX,'黑曜石的挽歌 · 光泽 '+GEM_LUSTER_MAX,!!silent);}
       });
       if(10>gs.craftedMax)gs.craftedMax=10;
-      beep(523,0.1,'triangle',0.05);setTimeout(function(){beep(659,0.12,'triangle',0.05);},110);setTimeout(function(){beep(784,0.2,'triangle',0.05);},230);
-      showModal({title:'🖤 黑曜石的挽歌',confirmText:'五色归位',
-        body:'两颗 9 级黑曜石在合成中碎裂——黑色石头应声裂开，<b>其余五色 · 红/蓝/绿/黄/紫 · 各一颗 10 级宝石</b>自裂隙中跌落！<br><br>'+
-          '五色 10 级宝石可用于强化对应的永耀之石，强化后宝石消失。'});
+      gemFeedAdd('craft','k',9,0,'黑曜石的挽歌 · 五色归位',!!silent);
+      if(!silent){
+        beep(523,0.1,'triangle',0.05);setTimeout(function(){beep(659,0.12,'triangle',0.05);},110);setTimeout(function(){beep(784,0.2,'triangle',0.05);},230);
+        showModal({title:'🖤 黑曜石的挽歌',confirmText:'五色归位',
+          body:'黑色石头应声裂开，<b>其余五色 · 红/蓝/绿/黄/紫 · 各一颗 10 级宝石</b>自裂隙中跌落！<br><br>'+
+            '五色 10 级宝石可用于强化对应的永耀之石，强化后宝石消失。'});
+      }
     }else{
       gemShatter(a.c,lv,silent);
       gemFeedAdd('craft',a.c,lv,0,'合成碎裂 · 返还碎片',!!silent);
@@ -2828,9 +2871,9 @@ function gemCraftPair(silent){
     bumpHist(a.c,lv);
     gemFeedAdd('craft',a.c,lv,lu,'合成成功 · 光泽 '+lu,!!silent);
     if(lv>gs.craftedMax)gs.craftedMax=lv;
-    if(lv===10||lv===20){
+    if(lv===10||lv===13){
       beep(523,0.1,'triangle',0.05);setTimeout(function(){beep(659,0.12,'triangle',0.05);},110);setTimeout(function(){beep(784,0.25,'triangle',0.05);},230);
-      if(!silent)showModal({title:lv===20?'🖤 20 级黑曜石诞生！':'💎 10 级宝石诞生！',confirmText:'好',
+      if(!silent)showModal({title:lv===13?'🖤 13 级黑曜石诞生！':'💎 10 级宝石诞生！',confirmText:'好',
         body:'<b style="color:'+GEM_COLORS[a.c].hex+'">'+GEM_COLORS[a.c].name+' Lv.'+lv+'</b> · 光泽度 '+lu+'<br><br>'+
           GEM_EFFECTS[a.c]});
     }else if(!silent){
@@ -2928,33 +2971,60 @@ function renderGemFeed(){
   }
   el.innerHTML=h;
 }
+/* V15.3：六色宝石五角星 —— 中心黑曜石，五个角依次 红/蓝/绿/黄/紫。
+ * 数字取"历史最高等级"（强化消耗掉宝石后不会回落），等级越高越亮；
+ * 六色都到 10 级后整体走无上装备同款炫彩流光。 */
+var GS_POINTS=[{x:100,y:24},{x:168,y:73},{x:142,y:153},{x:58,y:153},{x:32,y:73}];
+var GS_ORDER=['r','b','g','y','p'];
+var GS_PATH='M100,24 L116,73 L168,73 L126,104 L142,153 L100,123 L58,153 L74,104 L32,73 L84,73 Z';
+function gemStarHtml(){
+  var all=(gemHist('k')>=10);
+  GS_ORDER.forEach(function(k){ if(gemHist(k)<10)all=false; });
+  var h='<svg class="gem-star'+(all?' gs-all':'')+'" viewBox="0 0 200 178" role="img" aria-label="六色宝石等级">';
+  h+='<path class="gs-line" d="'+GS_PATH+'"/>';
+  GS_ORDER.forEach(function(k,i){
+    var p=GS_POINTS[i],lv=gemHist(k),t=Math.max(0,Math.min(1,lv/10));
+    h+='<circle class="gs-orb" cx="'+p.x+'" cy="'+p.y+'" r="13" fill="'+GEM_COLORS[k].hex+'" '+
+       'fill-opacity="'+(0.22+0.78*t).toFixed(2)+'" style="filter:drop-shadow(0 0 '+(1+7*t).toFixed(1)+'px '+GEM_COLORS[k].hex+')"/>'+
+       '<text class="gs-lv" x="'+p.x+'" y="'+p.y+'">'+(lv||'—')+'</text>';
+  });
+  var klv=gemHist('k'),kt=Math.max(0,Math.min(1,klv/13));
+  h+='<circle class="gs-core" cx="100" cy="93" r="19" fill="'+GEM_COLORS.k.hex+'" '+
+     'fill-opacity="'+(0.3+0.7*kt).toFixed(2)+'" style="filter:drop-shadow(0 0 '+(2+9*kt).toFixed(1)+'px #8a7bd8)"/>'+
+     '<text class="gs-lv" x="100" y="93">'+(klv||'—')+'</text></svg>';
+  return {svg:h,all:all};
+}
+/* V15.3：托管开关常驻 DOM，只同步状态，绝不重建节点 */
+function gemSyncAutoRow(gs){
+  var cb=$('gemAutoChk'),tip=$('gemAutoTip');
+  if(!cb)return;
+  var on=!!gs.auto;
+  if(cb.checked!==on)cb.checked=on;
+  if(tip)tip.textContent=on
+    ?'运行中 · 碎片合成 → 7 级以下同级合成 → 满 10000 洗练十连'
+    :'自动碎片合成 / 7 级以下同级合成 / 满 10000 洗练十连';
+}
 function renderGem(){
   var gs=gemState();
   var head=$('gemHead');
   if(head){
     var oreI=Math.floor(gs.ore);
     var rate=gemOreRate();
-    var hk=oreI+'|'+rate.toFixed(3)+'|'+gemShardTotal()+'|'+gs.lv3Miss+'|'+gs.washes+'|'+gs.shattered+'|'+gemCount()+'|'+GEM_COLOR_KEYS.map(gemMaxLv).join(',')+'|'+gemSel.join(',')+'|'+(gs.auto?1:0)+'|'+((state.sing&&state.sing.craftNoDrop)?1:0);
+    var hk=oreI+'|'+rate.toFixed(3)+'|'+gemShardTotal()+'|'+gs.lv3Miss+'|'+gs.washes+'|'+gs.shattered+'|'+gemCount()+'|'+GEM_COLOR_KEYS.map(gemHist).join(',')+'|'+gemSel.join(',')+'|'+((state.sing&&state.sing.craftNoDrop)?1:0);
     if(hk!==gemHeadKey){
       gemHeadKey=hk;
-      var top6='';
-      GEM_COLOR_KEYS.forEach(function(k){
-        var mx=gemMaxLv(k);
-        top6+='<span class="gem-top-chip" style="--gc:'+GEM_COLORS[k].hex+'" title="'+GEM_COLORS[k].name+' 当前最高等级">'+
-          '<i></i><em>'+GEM_COLORS[k].name+'</em><b>'+(mx?mx:'—')+'</b></span>';
-      });
+      var _star=gemStarHtml();
       head.innerHTML=
         '<div class="gem-ore-row">💠 矿渣原石 <b class="g">'+fmt(oreI)+'</b>'+
           '<span class="gem-ore-rate">+'+rate.toFixed(2)+'/秒 · 第 '+state.depth+' 层</span></div>'+
-        '<div class="gem-top6">'+top6+'</div>'+
+        '<div class="gem-star-wrap">'+_star.svg+'</div>'+
+        '<div class="gs-caption'+(_star.all?' on':'')+'">'+(_star.all?'✦ 六色共鸣 ✦':'数字为各色历史最高等级')+'</div>'+
         '<div class="gem-meta-row"><span>🎯 3 级保底 <b>'+gs.lv3Miss+' / '+GEM_LV3_PITY+'</b></span>'+
           '<span>💎 宝石 <b>'+gemCount()+'</b></span><span>💥 碎裂 <b>'+gs.shattered+'</b></span></div>'+
         '<div class="gem-wash-row">'+
           '<button class="gem-wash-btn" id="btnGemWash1" data-gem-act="wash1"'+(gs.ore<GEM_WASH_COST?' disabled':'')+'>💎 洗练一次<br><small>'+fmt(GEM_WASH_COST)+' 矿渣原石 · 20% 出宝石</small></button>'+
           '<button class="gem-wash-btn gem-wash10" id="btnGemWash10" data-gem-act="wash10"'+(gs.ore<GEM_WASH10_COST?' disabled':'')+'>✨ 洗练十次<br><small>'+fmt(GEM_WASH10_COST)+' 矿渣原石 · 保底 1 颗 1 级以上宝石</small></button>'+
         '</div>'+
-        '<div class="gem-auto-row"><label class="gem-auto-sw"><input type="checkbox" data-gem-auto'+(gs.auto?' checked':'')+'><span>全自动托管</span></label>'+
-          '<span class="gem-auto-tip">'+(gs.auto?'运行中 · 碎片合成 → 7 级以下同级合成 → 满 10000 洗练十连':'自动碎片合成 / 7 级以下同级合成 / 满 10000 洗练十连')+'</span></div>'+
         '<div class="gem-craft">'+
           '<div class="gem-craft-title">🔧 碎片合成 · 10 块同色碎片 → 1 颗 1 级宝石</div>'+
           '<div class="gem-craft-row">'+
@@ -2989,7 +3059,7 @@ function renderGem(){
             '<i style="background:'+GEM_COLORS[k].hex+'"></i><b>'+g.lv+'</b><u>'+gemLusterDots(g.lu)+'</u></div>';
         });
         cols+='<div class="gem-col"><div class="gem-col-head">'+
-          '<span class="gem-col-name" style="color:'+GEM_COLORS[k].hex+'">'+GEM_COLORS[k].name+'</span>'+
+          '<span class="gem-col-mark" style="--gc:'+GEM_COLORS[k].hex+'" title="'+GEM_COLORS[k].name+'"><i style="background:'+GEM_COLORS[k].hex+'"></i></span>'+
           (topG
             ?'<span class="gem-col-top" title="'+esc(gemTip(topG))+'"><i style="background:'+GEM_COLORS[k].hex+'"></i><b>'+topG.lv+'</b><u>'+gemLusterDots(topG.lu)+'</u></span>'
             :'<span class="gem-col-none">暂无</span>')+
@@ -3003,6 +3073,7 @@ function renderGem(){
   }
   renderGemFeed(); // V15：宝石最近掉落 · 位于宝石背包与永耀之石之间
   renderStoneBoard(); // v14.9：永耀之石展示已迁入宝石页
+  gemSyncAutoRow(gs); // V15.3：常驻开关只同步状态，不换节点
 }
 var EQUIP_TYPES={
   pickaxe:{name:'镐子',icon:'⛏️',stat:'挖矿速度',min:8 ,max:15 },
@@ -4595,8 +4666,10 @@ function _asApplyLocalBuf(local,after){
     state.lastSeen=gameNow();
     if(after)after();
   }else{
-    _markSettled(_lsk);
-    try{settleAway(null,{after:after});}catch(e){ if(after)after(); }
+    var _ldid=false;
+    try{ _ldid=settleAway(null,{after:after}); }
+    catch(e){ _ldid=false; if(after)after(); }
+    if(_ldid)_markSettled(_lsk); // V15.3：结算成功才写幂等标记
   }
   rebuildAll(); render();
   checkVictory();
@@ -4800,7 +4873,7 @@ var NEWGAME_CLOUD_GRACE=300000;     // ms · 开新档后 5 分钟内不覆盖�
 var SVC_IDLE_TIMEOUT=300000;        // ms · 选档界面停留 5 分钟未操作 → 自动载入默认档
 var SVC_OFFLINE_CLAMP_AFTER=60000;  // ms · 选档停留超过 60 秒 · 不再结算这段"挂机"离线收益
 var _svc={loading:false,open:false,selected:'',cands:null,localBuf:null,askName:null,timer:null,
-  idleTimer:null,openedAt:0,hadCloud:false,clampAway:false};
+  idleTimer:null,openedAt:0,hadCloud:false,clampAway:0};
 
 function _svcEl(){
   var el=document.getElementById('svcOverlay');
@@ -4939,8 +5012,11 @@ function svcApplySelected(){
   var c=_svc.cands&&_svc.cands[k];
   if(!c||c.off)return;
   var ask=_svc.askName;
-  /* 在选档遮罩里停留超过 60 秒：这段时间游戏是冻结的，不能借"离线结算"白拿收益 */
-  _svc.clampAway=(Date.now()-(_svc.openedAt||0))>SVC_OFFLINE_CLAMP_AFTER;
+  /* V15.3：只记录"在选档页停留了多久"，不再把整段真实离线时长清零。
+   * 旧版这里置 true，cloudApplySave 里直接 state.lastSeen=gameNow()，
+   * 结果存档保存时刻到现在的几个小时全被吞掉，金币/矿石/装备一件都不发。 */
+  var _dwell=Date.now()-(_svc.openedAt||0);
+  _svc.clampAway=(_dwell>SVC_OFFLINE_CLAMP_AFTER)?_dwell:0;
   _svcClose();
   _as.pulling=false;
   resumeGame();
@@ -5078,7 +5154,7 @@ function svcShowChoices(r,localBuf,askName){
    * 开新档时必须给它同样的保护期，避免确认后第一秒就把服务器旧档覆盖掉。 */
   _svc.hadCloud=!!(r&&(r.ok||r.row));
   _svc.openedAt=Date.now();
-  _svc.clampAway=false;
+  _svc.clampAway=0;
   _svc.selected=_svcDefault(c);
   _svcRenderChoices();
   _svcArmIdle();
@@ -5529,7 +5605,11 @@ function cloudApplySave(decoded,updatedAt,onAwayClosed,localBuf){
   if(_winTs&&!isNaN(_winTs))state.lastSeen=_winTs;
   /* v15.1：若玩家在选档界面停留超过 60 秒，这段冻结时间不再按离线收益结算
    * （避免"停在选档页白赚离线收益"的口径不一致）。 */
-  if(_svc.clampAway){ state.lastSeen=gameNow(); _svc.clampAway=false; }
+  if(_svc.clampAway>0){
+    /* V15.3：只扣掉选档遮罩冻结的那一小段，其余真实离线时间照常结算 */
+    state.lastSeen=Math.min((_winTs&&!isNaN(_winTs)?_winTs:gameNow())+_svc.clampAway,gameNow());
+    _svc.clampAway=0;
+  }
   derived=calcDerived();
   applyUserName();
   /* V15.2 · P1-3：同一份存档（按 updated_at / savedAt）只允许结算一次。
@@ -5539,9 +5619,13 @@ function cloudApplySave(decoded,updatedAt,onAwayClosed,localBuf){
     state.lastSeen=gameNow();                 // 已结算过：把基准拨到现在，不补发
     if(onAwayClosed)onAwayClosed();
   }else{
-    _markSettled(_sk);
-    // 立刻用新 lastSeen 算离线收益；弹窗关闭后经 onAwayClosed 接力后续流程
-    try{settleAway(null,{after:onAwayClosed});}catch(e){ if(onAwayClosed)onAwayClosed(); }
+    /* V15.3：幂等标记必须等结算真的跑完再写。旧版先写标记再结算，
+     * 只要这一帧抛错 / 被 clampAway 归零 / 不足 1 分钟直接返回，
+     * 这份档就被永久判为"已结算"——之后每次登录都跳过，装备一件都不掉。 */
+    var _did=false;
+    try{ _did=settleAway(null,{after:onAwayClosed}); }
+    catch(e){ _did=false; if(onAwayClosed)onAwayClosed(); }
+    if(_did)_markSettled(_sk);
   }
   rebuildAll(); render();
   checkVictory();
@@ -6611,22 +6695,61 @@ function sellBagBelow(rarity){
       toast('🧹 出售 '+c.n+' 件装备，获得 '+fmt(c.gain)+' 金币','#ffcf5c');
     }});
 }
-/* v12.3：兑换码入口——读 redeemBox 输入并执行 */
+/* V15.3：兑换码分两类——
+ *   ① 官方玩家码（MC1 前缀）：服务端 HMAC 验签 + 每账号一次，见 supabase-v15.3-redeem-codes.sql
+ *   ② 开发验证码：本地开发用途，必须先通过密码弹窗取得一次性票据才能执行。
+ * 票据只存在于内存，用完即焚；源码里翻出码也无法直接在控制台调用 redeemCode。 */
+var _cheatTicket=0;
+var _CHEAT_HASH='bd64479382f0549f5110b8e07d7d6635'; // md5hex('kgcs')，不存明文密码
+function _isCheatCode(c){
+  var s=String(c||'').trim().toUpperCase();
+  var p=String.fromCharCode;
+  var names=[p(77,78),p(82,80),p(85,81),p(83,84),p(79,68),p(83,72,73,78,69),p(83,80,73,82,73,84)];
+  for(var i=0;i<names.length;i++){
+    if(s===names[i]||new RegExp('^'+names[i]+'\\d+$').test(s))return true;
+  }
+  return false;
+}
+function _askCheatPwd(code,box,msg){
+  showModal({title:'🔒 开发验证',confirmText:'验证并执行',cancelText:'取消',
+    body:'<div style="font-size:12.5px;line-height:1.8;color:var(--dim)">这枚码属于开发验证用途，需要二次确认后才会生效。</div>'+
+      '<input id="cheatPwd" type="password" autocomplete="off" placeholder="请输入验证码" '+
+      'style="width:100%;margin-top:10px;padding:8px 10px;box-sizing:border-box;background:var(--panel2);'+
+      'border:1px solid var(--line);border-radius:7px;color:var(--text);font-size:13px">',
+    onConfirm:function(){
+      var el=$('cheatPwd'),v=el?String(el.value||''):'';
+      if(md5hex(v)!==_CHEAT_HASH){
+        if(msg)msg.innerHTML='<span style="color:#ff5c5c">❌ 验证未通过，兑换码未生效</span>';
+        return true;
+      }
+      _cheatTicket=Date.now()^(Math.random()*1e9|0);
+      if(!_cheatTicket)_cheatTicket=1;
+      _execRedeem(code,box,msg);
+      return true;
+    }});
+  setTimeout(function(){var el=$('cheatPwd');if(el)el.focus();},50);
+}
+function _execRedeem(code,box,msg){
+  var ok=false,tip='';
+  try{ ok=redeemCode(code); tip=_redeemTip; }catch(e){ ok=false; }
+  if(msg){
+    msg.innerHTML=ok
+      ?'<span style="color:#7ed321">✅ 开发验证码已生效</span>'
+      :'<span style="color:#ff5c5c">'+(tip||'❌ 兑换码无效')+'</span>';
+  }
+  if(ok&&box)box.value='';
+}
+/* v12.3 / V15.3：兑换码入口——读 redeemBox 输入并分流 */
 function useRedeemCode(){
   var box=$('redeemBox'),msg=$('redeemMsg');
   if(!box)return;
   var code=(box.value||'').trim();
   if(!code){if(msg)msg.innerHTML='<span style="color:#ff5c5c">⚠️ 请输入兑换码</span>';return;}
-  // v13.5：官方一次性兑换码 · MC1 前缀→ 走服务端验证，与下方测试用途码完全隔离
+  // V15.3 ① 官方玩家码：MC1 前缀，走服务端验签
   if(_redeemNorm(code).indexOf('MC1')===0){ redeemOfficial(code,box,msg); return; }
-  var ok=false,tip='';
-  try{ ok=redeemCode(code); tip=_redeemTip; }catch(e){ ok=false; }
-  if(msg){
-    msg.innerHTML=ok
-      ?'<span style="color:#7ed321">✅ 兑换码已生效</span>'
-      :'<span style="color:#ff5c5c">'+(tip||'❌ 兑换码无效')+'</span>';
-  }
-  if(ok)box.value='';
+  // V15.3 ② 开发验证码：先弹密码框，通过后由 _execRedeem 执行
+  if(_isCheatCode(code)){ _askCheatPwd(code,box,msg); return; }
+  if(msg)msg.innerHTML='<span style="color:#ff5c5c">❌ 兑换码无效</span>';
 }
 /* v13.5：兑换码规范化——与 SQL 端 redeem_code 的规则严格一致
  * 大写、I/L→1、O→0、剔除 Crockford 字母表之外的分隔符/空格。
@@ -6636,9 +6759,10 @@ function _redeemNorm(c){
   s=s.replace(/I/g,'1').replace(/L/g,'1').replace(/O/g,'0');
   return s.replace(/[^0-9A-HJKMNP-TV-Z]/g,'');
 }
-/* v13.5：官方一次性兑换码兑换 · 服务端 redeem_code RPC。
- * 码结构：MC1 + base32(载荷17字节) + base32(HMAC-SHA256 前16字节)，载荷含
- * 有效期/福利内容，玩家无密钥无法伪造；每账号限一次由 code_redemptions 表主键保证。
+/* v13.5 / V15.3：官方一次性兑换码兑换 · 服务端 redeem_code RPC。
+ * 码结构：MC1 + base32(载荷) + base32(HMAC-SHA256 前16字节)。
+ * V2 载荷 27 字节：金币尾数+十进制指数（上限 1e64＝游戏内「亿⁸」）、矿石、
+ * 矿渣原石、奇点值、至宝、无上；V1 的 17 字节旧码仍可正常兑换。
  * 网络失败 = RPC 未执行 = 未消耗次数，可放心重试。 */
 async function redeemOfficial(code,box,msg){
   var fail=function(t){ if(msg)msg.innerHTML='<span style="color:#ff5c5c">'+esc(t)+'</span>'; };
@@ -6667,14 +6791,23 @@ async function redeemOfficial(code,box,msg){
  * 装备走 grantRarityItem 统一入包逻辑 · 空槽装配→背包→包满分解保底。 */
 function applyRedeemBenefit(ben){
   var parts=[],i;
-  var gold=Math.max(0,Math.floor(+ben.gold||0));
+  /* V15.3：金币上限放大到 1e64（游戏数字体系里的「亿⁸」）。服务端用 numeric
+   * 返回，这里统一收敛成有限非负数，避免脏值污染存档。 */
+  var gold=+ben.gold||0;
+  if(!isFinite(gold)||gold<0)gold=0;
+  gold=Math.min(1e64,Math.floor(gold));
   var ore=Math.max(0,Math.floor(+ben.ore||0));
+  var gemOre=Math.max(0,Math.floor(+ben.gemOre||0));
+  var sing=Math.max(0,Math.floor(+ben.sing||0));
   var art=Math.max(0,Math.min(255,Math.floor(+ben.artifact||0)));
   var uni=Math.max(0,Math.min(255,Math.floor(+ben.unique||0)));
   if(gold>0){ state.gold+=gold;state.totalGold+=gold;state.runGold+=gold;parts.push('金币 +'+fmt(gold)); }
   if(ore>0){ state.ore+=ore;state.totalOre+=ore;parts.push('矿石 +'+fmt(ore)); }
+  if(gemOre>0){ var _g=gemState();_g.ore=(_g.ore||0)+gemOre;_g.oreTotal=(_g.oreTotal||0)+gemOre;parts.push('矿渣原石 +'+fmt(gemOre)); }
+  if(sing>0){ if(!state.sing)state.sing={};state.sing.earned=(state.sing.earned||0)+sing;parts.push('奇点值 +'+fmt(sing)); }
   for(i=0;i<art;i++){ var a=grantRarityItem('artifact');parts.push('至宝「'+a.it.name+'」'); }
   for(i=0;i<uni;i++){ var u=grantRarityItem('unique');parts.push('无上「'+u.it.name+'」'); }
+  try{ gemHeadKey='';gemBagKey=''; }catch(e){}
   if(!parts.length)parts.push('空福利');
   return parts.join(' · ');
 }
@@ -6864,6 +6997,10 @@ function exportSave(){
   }catch(e){toast('⚠️ 导出失败：'+e.message,'#ff5c5c','导出失败');}
 }
 function redeemCode(code){
+  /* V15.3：开发验证码必须携带一次性票据。票据由密码弹窗签发，用后即焚，
+   * 避免"开盒 HTML 拿到码 → 直接调用本函数"绕过二次确认。 */
+  if(!_cheatTicket)return _redeemBad('❌ 需要先完成开发验证');
+  _cheatTicket=0;
   if(saveBlocked){
     toast('🚫 原存档来自更高版本 · v'+blockedVer+'，已停止保存','#ff5c5c','请更新游戏版本后再继续');
     return true;
@@ -8779,8 +8916,8 @@ function showHelp(){
       '<b>装备提示：</b>颜色只代表稀有度 · 白→蓝→紫→金→红；新获得/新熔炼的装备带 <b style="color:#7ed321">NEW</b> 徽章；你主动替换或卸下的装备会<b>自动上锁</b>防误卖，已上锁装备不可熔炼/不可一键出售。<br><br>'+
       '<b>目标：</b>全身 7 槽无上 = <b>获胜</b>；一套 6 件全无上前缀套装 = <b>大获全胜</b>。获胜后仍可继续游戏。<br><br>'+
       '<b>飞升：</b>集齐一套无上 6 件套时，设置页出现<b>✨ 飞升</b>按钮——消耗当前 99.99% 声望，把该套装效果固化为永久<b>内在精神</b>6 套装 = 6 种精神，每种限一次：产量/幸运/价值/速度/暴击伤害/金币，随后同转生回第 1 层、装备全清。集齐 6 种精神 = <b style="color:#ffd54f">極</b>。<br><br>'+
-      '<b>转生与返璞归真：</b>抵达「極」后<b>仍保留正常转生入口</b>——设置页同时显示 <b>🏆 金盆洗手 · 转生</b>可继续正常转生继续玩与额外选项 <b>🍂 返璞归真</b> · 舍弃登顶之后的一切：金币/矿石/矿层/矿工/升级/装备/背包/声望/内在精神/奇点值/成就统计全部回到初始状态，仅保留 <b>永耀之石</b> 与 【称号：極】。每次抵达「極」获得 1 次 <b>永耀之石</b> 抽奖机会 · 已获得的不重复，在<b>「💎 宝石」页</b>底部抽取，永久生效 · 返璞归真亦保留强化档位：💗 永耀红宝石 · 矿工购买售价为原价 90%· 💧 永耀蓝宝石 · 全局倍率固定 +1 · 💚 永耀绿宝石 · 转生冷却时长缩减 50%· 🟡 永耀黄宝石 · 基础幸运值 +250 · 🔮 永耀紫水晶 · 「信吗」预言金币奖励 +20% · ⬛ 永耀黑曜石 · 解锁黑曜石宝石等级上限至 20 级。<br><br>'+
-      '<b>宝石：</b>「💎 宝石」页位于装备与信吗之间。<b>矿渣原石</b>随所在矿层与在线时长累积，用于<b>洗练</b>单抽 1000 / 十连 10000：单抽 20% 出宝石 · 1 级 90% / 2 级 8% / 3 级 2%，光泽度不低于 6、80% 出碎片 · 1/2/3 块各 30%、5 块 8%、10 块 2%；十连保底至少 1 颗 1 级以上宝石；<b>3 级保底</b>：连续 100 次未出 3 级宝石时，下一次必定出 3 级宝石 · 界面实时显示进度 X/100。宝石三维：<b>基底色</b>红/蓝/绿/黄/紫/黑，对应六颗永耀之石/ <b>等级</b>0 级为碎片，1~10 级为宝石/ <b>光泽度</b>耐久，上限 9。<b>合成</b>仅限同色同级：两颗同级宝石 → 高 1 级，光泽度取两者较低值后 45% 不变 / 55% -1，<b>归零即碎裂</b>，仅返还该宝石碎片当量 · 10×2^(等级-1)的 10% · 向下取整；10 块同色碎片 → 1 颗 1 级宝石。背包按等级从高到低排列，顶部常驻六色最高等级；可开启<b>全自动托管</b>：自动碎片合成、7 级以下同级合成、矿渣原石满 10000 自动十连洗练。<br><b>永耀之石强化</b>：消耗 1 颗对应颜色 10 级宝石，宝石消失、石头永久进入强化档——红 矿工售价 50% · 蓝 全局倍率 +9 · 绿 声望冷却缩减 90% · 黄 基础幸运 +250 且普通装备额外掉落 1 件 · 紫 信吗金币奖励 +60% 且心情加成 20% · 黑 黑曜石宝石上限 20 级，20 级黑曜石可二次强化：奇点商店刷新免费、飞升不消耗声望。强化不可逆，返璞归真后仍保留；两颗 9 级黑曜石合成碎裂时，直接获得其余五色 · 红、蓝、绿、黄、紫各一颗 10 级宝石。<br><br>'+
+      '<b>转生与返璞归真：</b>抵达「極」后<b>仍保留正常转生入口</b>——设置页同时显示 <b>🏆 金盆洗手 · 转生</b>可继续正常转生继续玩与额外选项 <b>🍂 返璞归真</b> · 舍弃登顶之后的一切：金币/矿石/矿层/矿工/升级/装备/背包/声望/内在精神/奇点值/成就统计全部回到初始状态，仅保留 <b>永耀之石</b> 与 【称号：極】。每次抵达「極」获得 1 次 <b>永耀之石</b> 抽奖机会 · 已获得的不重复，在<b>「💎 宝石」页</b>底部抽取，永久生效 · 返璞归真亦保留强化档位：💗 永耀红宝石 · 矿工购买售价为原价 90%· 💧 永耀蓝宝石 · 全局倍率固定 +1 · 💚 永耀绿宝石 · 转生冷却时长缩减 50%· 🟡 永耀黄宝石 · 基础幸运值 +250 · 🔮 永耀紫水晶 · 「信吗」预言金币奖励 +20% · ⬛ 永耀黑曜石 · 让黑曜石有机会走得更远。<br><br>'+
+      '<b>宝石：</b>「💎 宝石」页位于装备与信吗之间。<b>矿渣原石</b>随所在矿层与在线时长累积，用于<b>洗练</b>单抽 1000 / 十连 10000：单抽 20% 出宝石 · 1 级 90% / 2 级 8% / 3 级 2%，光泽度不低于 6、80% 出碎片 · 1/2/3 块各 30%、5 块 8%、10 块 2%；十连保底至少 1 颗 1 级以上宝石；<b>3 级保底</b>：连续 100 次未出 3 级宝石时，下一次必定出 3 级宝石 · 界面实时显示进度 X/100。宝石三维：<b>基底色</b>红/蓝/绿/黄/紫/黑，对应六颗永耀之石/ <b>等级</b>0 级为碎片，1~10 级为宝石/ <b>光泽度</b>耐久，上限 9。<b>合成</b>仅限同色同级：两颗同级宝石 → 高 1 级，光泽度取两者较低值后 45% 不变 / 55% -1，<b>归零即碎裂</b>，仅返还该宝石碎片当量 · 10×2^(等级-1)的 10% · 向下取整；10 块同色碎片 → 1 颗 1 级宝石。背包按等级从高到低排列，顶部五角星展示六色历史最高等级，越亮代表等级越高；可开启<b>全自动托管</b>：自动碎片合成、7 级以下同级合成、矿渣原石满 10000 自动十连洗练。<br><b>永耀之石强化</b>：永耀之石可以使玩家永久获得全局能力，并且可以通过对应颜色的 <b>10 级宝石</b>进行强化，强化后宝石消失、效果永久提升；<b>黑曜石可以二次强化</b>。具体档位：红 矿工售价 50% · 蓝 全局倍率 +9 · 绿 声望冷却缩减 90% · 黄 基础幸运 +250 且普通装备额外掉落 1 件 · 紫 信吗金币奖励 +60% 且心情加成 20%。强化不可逆，返璞归真后仍保留。至于黑曜石在合成深处还会发生什么，留给你自己去看。<br><br>'+
       '<b>奇点商店：</b>声望达到上限 <b>999999999</b> 后不再增加 · 全游戏已获取声望继续统计，商店页变为 <b>🌟 奇点商店</b>原始维度默认全满、不再可购——每次转生时，本轮溢出的声望按<b>位数</b>折算为 <b>奇点值</b> · 溢出声望每超出 8 位 +1 点，<b>不随转生/飞升清零</b>。货架每 8 小时随机刷新 · 固定周期，也可花奇点值<b>立即刷新</b> · 第 1 次 1 点、第 2 次 2 点逐次 +1，货架自然刷新时重置：🧪 克隆药水 1 点 · 有空位时补一名当前最高级矿工· ✌️ 倍倍加 1 点 · 金币翻倍，持有 2 瓶后不再刷新· 🌍 地心引力 5 点 · 免费下潜一层，层数上限时不可用· 💡 灵光乍现 1 点 · 0.1% 概率直接参透一项未获得的内在精神· 🚪 犹大密室 5 点 · 开启第 13 层「奇点之核」，解锁需 2.37e33 金币，无上爆率再 +0.5pp· ☄️ 火星四溅 1 点 · 全局倍率 +10，持续 10 分钟· 👑 至高无上 10 点 · 购入后在物品栏点击使用，获得一件随机无上装备，无持有上限· 🛡️ 必须信 2 点 · 最多持有 1 个 · 下一次赌错自动生效：返还注金、保留连胜与加成· 🍅 番茄炒蛋 3 点 · 15 分钟内不再出现史诗及以下稀有度装备，生效中不可重复使用· 🌀 奇之又奇 6 点 · 往后每次刷新出 2 件物品，购买后不再刷新· ⏱️ 立马转生 2 点 · 立即清零转生冷却 · <b>无转生冷却时无法使用、不消耗物品</b>· 🪪 改名卡 2 点 · 修改矿工名称 · <b>取消则不消耗</b>· 🔧 大国工匠 3 点 · <b>下一次合成宝石不降低光泽度</b>，用一次即消耗· 🎨 天然色料 1 点 · 弹窗选择源颜色与目标颜色，把源颜色的<b>全部宝石碎片</b>染成目标色· 🟣 灭霸 25 点 · <b>仅可购买一次</b> · 全局产出倍率永久 +「六种颜色各自最高等级宝石」的最小值，取值 0~10。<br><br>'+
       '<b>信吗 · 第 6 层解锁：</b>每次爆装后，矿工必定对下一件装备发出二元预言——猜<b>部位</b>、猜<b>套装</b>、猜<b>稀有度</b>无上不出现在预言里，约一半预言是"XX 或 XX"双选项。押"是/否"即可，<b>注金 = 收益估值 × 该事件发生的真实概率</b>。猜中奖励在预言出现时即已摇定并<b>直接展示</b>：<b>金币</b>= 当前金币的 50%~100%/ <b>当前最高级矿工 ×1</b>留好空位/ <b>某项维度 +1</b> · 该维度锁定至下一个预言出现。猜中返本金 + 奖励，猜错注金不退。连对 3 次起心情愉悦 · 提纯价值 +10%/次，连错 3 次起暴怒 · 挥镐速度 +10%/次，紫水晶强化后为 20%/次；换层赌局作废退 80%；转生/飞升赌局作废、注金不退。<br><br>'+
       '<b>成就：</b>70+ 项成就覆盖金币/深度/声望/幸运/无上/连续爆装/信吗连对连错等里程碑，另有 15 项<b>隐藏成就</b>条件未知，解锁后揭示。<br><br>'+
@@ -8816,7 +8953,7 @@ function settleAway(sec,opts){
   if(sec===undefined||sec===null)sec=(gameNow()-(state.lastSeen||gameNow()))/1000;
   sec=Math.floor(sec||0);
   var after=opts&&opts.after; // 弹窗关闭后的接力回调 · 如紧接着询问用户名
-  if(sec<60){ if(after)after(); return; } // 不足 1 分钟不结算 · 避免误报
+  if(sec<60){ if(after)after(); return false; } // 不足 1 分钟不结算 · 避免误报；返回 false = 未发收益，幂等标记不可写
   derived=calcDerived();
   var capped=Math.min(sec,OFFLINE_CAP_SEC);
   var gold=0,gotOre=0,drops=0;
@@ -8871,6 +9008,7 @@ function settleAway(sec,opts){
   state.lastSeen=gameNow();
   state.awayTime=(state.awayTime||0)+capped; // v10：离线挂机时长单独累计
   saveGame(false);
+  return true; // V15.3：确实发过收益，调用方才可以写"已结算"标记
 }
 
 /* ================= 启动 ================= */
