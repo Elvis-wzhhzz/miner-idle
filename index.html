@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<!-- V15.5 · 由 build_v15.5.py 从 V15.3 生成；SAVE_V 保持 18 以兼容全部存量云档。
-     V15.5：返璞归真边界与统计页大整理 / 登录读档时间与离线结算基准修正 /
-     排行榜六维度 / 宝石五角星古金徽章 / 奇点商店固定时刻刷新 / 信吗心情数值修补。
+<!-- V15.6 · 由 build_v15.6.py 从 V15.5 生成；SAVE_V 保持 18 以兼容全部存量云档。
+     V15.6：修复返璞归真后矿工等级上限 / 矿层上限不回初始（新增本轮 runPrestigeCount）；
+     新增版本闸门——自动保存前比对云端游戏版本，落后则登出并提示刷新。
      纯编辑器工具样式（trae-previewer-tools-styles）已删除；第二个 style 块因含
      V15.1 新增的 #svcOverlay 存档选择界面样式而保留，确保视觉一致。 -->
 <html lang="zh-CN" style="--ore:#8d6e63; --depth-glow:rgba(141,110,99,0.28)"><head>
@@ -1268,7 +1268,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
         <button class="iconbtn" id="btnAbout">ⓘ 关于</button>
         <div class="about-panel" id="aboutPanel">
           <button class="iconbtn about-row" id="btnHelp">❓ 玩法</button>
-          <div class="chip about-row" id="verChip" title="游戏版本 v15.5" style="padding:5px 9px"><span style="color:var(--dim)">版本</span> <b id="verNum" style="margin-left:2px">v15.5</b></div>
+          <div class="chip about-row" id="verChip" title="游戏版本 v15.6" style="padding:5px 9px"><span style="color:var(--dim)">版本</span> <b id="verNum" style="margin-left:2px">v15.6</b></div>
           <!-- v13.6：原"云：上传中"状态行让位给排行榜入口 · 云状态仍在 ☁️ 按钮面板内展示-->
           <button class="iconbtn about-row" id="btnLeaderboard">🏆 排行榜</button>
           <!-- V15.3：游戏公告 · 内容在 Supabase 的 announcements 表里改，改完玩家点一下就是新的 -->
@@ -1443,7 +1443,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
             第 6 层起开放「🎲 信吗」赌局与「🏅 成就」系统 · 含 14 项隐藏成就。<br>
             商店「⏫ 所有维度升一级」需声望 &gt; 20 万解锁；装备页可购买永久背包格 · 声望 &gt; 100 万，价格 ×10，上限 31 格。<br>
             目标：全身 7 槽无上 = <b style="color:#fbbf24">获胜</b> · 一套 6 件全无上 = <b style="color:#fbbf24">大获全胜</b>。<br>
-            进度保存在云端，离线收益 50% · 上限 8 小时 · 爆装速度 1/6· 当前版本 <b id="aboutGameVer">v15.5</b>旧版本存档在 v12 起无法使用。
+            进度保存在云端，离线收益 50% · 上限 8 小时 · 爆装速度 1/6· 当前版本 <b id="aboutGameVer">v15.6</b>旧版本存档在 v12 起无法使用。
           </div>
           <!-- v13.6：重置游戏从"转生/兑换码之间"迁至设置页最底部危险区域——远离高频点击区，防误触 -->
           <div style="margin-top:16px; border-top:1px dashed var(--line); padding-top:10px">
@@ -1454,7 +1454,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
       </div>
     </aside>
   </main>
-  <div class="footer-note">矿工传说 · 纯云端存档 · v15.5</div>
+  <div class="footer-note">矿工传说 · 纯云端存档 · v15.6</div>
 </div>
 
 <div id="toasts"></div>
@@ -1465,7 +1465,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
 'use strict';
 /* ================= 基础工具 ================= */
 var SAVE_KEY='minerLegendSave_v3';
-var GAME_VER='15.5'; // V15.5：返璞归真边界 / 统计页大整理 / 读档时间与离线结算基准 / 排行榜六维度 / 古金宝石徽章 / 奇点商店固定时刻刷新。
+var GAME_VER='15.6'; // V15.6：返璞归真上限修复（runPrestigeCount）/ 自动保存版本闸门。
 // 以下为历史版本摘要（保留不改）：V15.1：存档选择界面 + 保底重试 + 每日快照 SQL + 狭义神秘套产出 ×10000。V15 大版本收口：S1 黄宝石额外掉落重新 roll 稀有度 · S2 集齐六颗后多余抽奖次数实时折算全局倍率 · S3 極中極与狭义套装 + V14.9.2 宝石锻造：① 永耀之石可用 10 级宝石强化 · 宝石消失、效果升级、不可逆；黑曜石强化后宝石上限解锁 20 级，20 级黑曜石可二次强化 · 奇点刷新免费/飞升免声望② 宝石页全自动托管 · 自动碎片合成/同级合成/十连洗练+ 界面精简重排 ③ 返璞归真可带走一颗 10 级宝石 ④ 全站面向玩家文案去除括号内机制解释。V14.9.1 摘要：① 标签页 icon/文字改上下两行排版 · 窄屏不错乱② 抵达「極」后保留正常转生入口 · 返璞归真作为额外选项，二选一或都不选③ 黑曜石特例修正：两颗9级黑曜碎裂只给其余五色10级宝石④ 奇点商店新增🔧大国工匠 · 3点消耗品：下次合成不降光泽、🎨天然色料 · 1点消耗品：全量碎片换色、🟣灭霸 · 25点一次：全局倍率+六色最低最高级；🪪改名卡权重降至0.34 ⑤ 宝石机制：碎裂只返还碎片当量10% · 向下取整、宝石页按钮改事件委托 · 连点可靠、3级保底改为「连续100次未出3级→下次必出3级」并显示进度 · 取消每10次十连赠3级⑥ 「原石」全部显示改「矿渣原石」 · 字段名不动⑦ 信吗串关连胜奖励5%→10%。V14.9 宝石系统：新增「宝石」标签页 · 洗练/合成台/宝石背包，原石与碎片经济，6基底色×0~10级×光泽度0~9，10级宝石将对应永耀之石效果翻倍，永耀之石展示迁入本页且更名加「永耀」前缀+ 保底存档 · 30分钟制+playtime守卫+可回滚+ 信吗修复 · 双选预言完整展示两选项结果、奖励为矿工且满员时按全价定价。V14 抵極终章：奇点商店新增⏱️立马转生 · 2点，清零转生CD，无CD不可用与🪪改名卡 · 2点，必须交互完成的对话框改矿工名，不点确定不消耗；矿工格子效率上亿后改用万亿/亿亿后缀计数防撑爆；抵达「極」后飞升/转生按钮变为「返璞归真」 · 除永耀之石外全部重置+诗文，内在精神界面下新增「永耀之石」 · 6宝石：红=购买价90%/蓝=全局倍率+1/绿=声望CD减半/黄=幸运+250/紫=信吗金币奖励+20%仅进入那一下/黑=无效果，每次抵極抽奖1次 · 已获得不重复；v13.6.3 转生CD条件补回矿工等级上限≥50 · 矿工等级上限≥50且声望达到上限才进CD，缺一不进CD且已有CD清零、飞升不受CD影响；v13.6.2 转生CD仅限声望达到上限 · 未达上限不进CD且清零、飞升不受CD影响+ 奇点商店8小时固定刷新周期 · 手动刷新/购买不重新计时，到期无条件重刷且刷新花费重置回1奇点值；v13.6 全服排行榜 · lb_profile 投影表 + lb_push/lb_board RPC + 关于面板入口；v13.5 一次性兑换码 · 服务端HMAC验证+每账号一次+ 锁屏 savedAt 漏刷 playtime 裁决 + 番茄炒蛋第六层起可用；v13.4 自动存档：本地崩溃缓冲+30s节流云同步+里程碑强存+断网退避重试
 var SAVE_V=18;         // 存档迁移计数 · SAVE_V=18：v13 强制云存档。V14 起不再递增——永曜之石/宝石等新字段均为附加字段，normalize 默认回填即可平滑迁移；递增会让 cloudFetch 的 save_version!==SAVE_V 校验拒掉全部存量云档
 var MIN_SAVE_VER='13.0'; // v13 起拒绝更早版本存档 · 本地存档完全废弃
@@ -2474,7 +2474,7 @@ function doAscend(){
   var g=victoryInfo().grand;
   if(!g||(state.spirits&&state.spirits[g.set]))return;
   var d=SPIRIT_DEFS[g.set];
-  state.prestige-=(oldStoneTier('obsidian')>=2?0:ascendCost());state.prestigeCount++;state.ascensions++; // v14.9.2 黑曜二阶：飞升不消耗声望
+  state.prestige-=(oldStoneTier('obsidian')>=2?0:ascendCost());state.prestigeCount++;state.ascensions++;state.runPrestigeCount=(state.runPrestigeCount||0)+1; // v14.9.2 黑曜二阶：飞升不消耗声望；V15.6 本轮次数同步 +1
   if(!state.spirits)state.spirits={};
   state.spirits[g.set]=true;
   state.prestigeCdUntil=0; // v13.6.2：飞升消耗 99.99% 声望，声望远未达上限——按新规则清零转生 CD · 飞升本身也从不被 CD 拦截
@@ -3315,6 +3315,8 @@ function defaultState(){
     totalOre:0,totalGold:0,runGold:0,
     depth:1,maxDepth:1,
     prestige:0,prestigeCount:0,
+    runPrestigeCount:0,   // V15.6：本轮转生+飞升次数，只驱动矿工等级/矿层上限；返璞归真归零
+                          // prestigeCount 是跨轮生涯累计，留给统计页/成就/排行榜/_AS_MONO
     prestigeCdUntil:0,    // v12.2.1：转生冷却截止时间戳 · v13.6.3 起：矿工等级上限≥50 且声望达到上限的转生才进入 CD
     totalPrestige:0,      // v12：全游戏已获取声望 · 统计口径；prestige 达上限后只累计此项
     user:'',              // v12：用户名 · ≤5 字，绑定本机浏览器；左上角标题常驻
@@ -3415,12 +3417,12 @@ function minerData(){
 }
 function minerSlots(){return MINER_SLOTS;}
 // v9：矿工等级上限随转生提升 · 每次转生 +1——转生的长期成长线之一
-function minerLevelCap(){return MINER_LEVEL_CAP+state.prestigeCount;}
+function minerLevelCap(){return MINER_LEVEL_CAP+(state.runPrestigeCount||0);} // V15.6：只认本轮次数
 /* v9：矿层上限 = min(12, 8+转生次数)：未转生最多第 8 层，每次转生 +1 层，第 4 次转生开满 */
 /* 矿层上限：转生每次 +1 · 基础 8 层，封顶第 12 层；
  * v11.2：第 13 层 · 奇点之核仅由奇点商店"犹大密室"开启，不走转生成长线 */
 function depthCap(){
-  var cap=Math.min(12,8+state.prestigeCount);
+  var cap=Math.min(12,8+(state.runPrestigeCount||0)); // V15.6：只认本轮次数
   if(state.sing&&state.sing.judas)cap=13;
   return Math.min(cap,DEPTHS.length);
 }
@@ -4548,6 +4550,7 @@ var _AS_MONO=['totalGold','totalOre','totalPrestige','prestigeCount',
   'bestStreakMax','uniqueStreakMax',
   /* V15.5 记录层：跨返璞归真保留，多端合并取 max 保证单调 */
   'runPlaytime','runAwayTime','maxMinerLvEver','uniqueDropped','gemObtained'];
+/* V15.6：runPrestigeCount 刻意不在此列——它是本轮次数，会被返璞归真归零，取 max 会复活旧上限。 */
 /* 本地缓冲 key 按 uid 隔离——绝不把 A 的缓冲露给 B；未登录返回 null · 守红线 */
 function _asLocalKey(){
   try{ return (cloudUser&&cloudUser.id)?('minerLocalBuf_v1_'+cloudUser.id):null; }
@@ -5715,9 +5718,55 @@ function _kickOutUser(){
   _showLoginDiag('检测到账号在另一台设备登录，本机已自动退出并回到登录界面。直接重新登录即可接管进度，无需操作另一台设备。');
   try{ console.error('[V15.2.5][异地登录] 存档设备码与本机不符，已退出'); }catch(e){}
 }
+/* ================= V15.6 · 版本闸门（每次自动保存前比对云端游戏版本） =================
+ * 规则：只在「服务器版本高于本机」时登出。服务器比本机旧（刚部署新前端、
+ * 数据库版本还没改）必须放行，否则会把刚上线的这一版自己踢掉。
+ * RPC 失败 / 函数未部署 / 超时一律放行，绝不因版本闸门阻断存档。
+ * 命中后：停看门狗 → 上写锁 → 登出 → 冻结游戏 → 弹不可关闭提示，且不写这一份档。 */
+var _versionKickDone=false;
+function _verParts(v){
+  return String(v||'').split('.').map(function(x){var n=parseInt(x,10);return isFinite(n)?n:0;});
+}
+function _verCmp(a,b){
+  var x=_verParts(a),y=_verParts(b),n=Math.max(x.length,y.length),i,d;
+  for(i=0;i<n;i++){d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}
+  return 0;
+}
+function _versionKick(serverVer){
+  if(_versionKickDone)return;
+  _versionKickDone=true;
+  try{ if(_sessionWatchdogId){clearInterval(_sessionWatchdogId);_sessionWatchdogId=null;} }catch(e){}
+  _as.pulling=true;   // 上写锁：从这一刻起不再有任何自动保存
+  _as.dirty=false;
+  try{ supabaseClient.auth.signOut({scope:'local'}).catch(function(){}); }catch(e){}
+  cloudUser=null;
+  freezeGame();
+  /* locked + hideActions：无按钮、无 ✕、点遮罩也关不掉，玩家只能刷新页面 */
+  showModal({_login:true,locked:true,hideActions:true,title:'🔄 游戏已更新',
+    body:'<div class="cloud-modal">'+
+      '<div style="font-size:13.5px;line-height:1.9">游戏已更新到 <b class="g">v'+esc(String(serverVer||''))+'</b>，'+
+      '当前打开的还是旧版 <b>v'+esc(GAME_VER)+'</b>。</div>'+
+      '<div style="font-size:12.5px;line-height:1.9;margin-top:10px;color:var(--dim)">'+
+      '请按 <b class="g">Ctrl + F5</b> 强制刷新网页（或关掉本页重新打开网址），然后重新登录，即可从云端存档继续游戏。</div>'+
+      '</div>'});
+  try{ console.warn('[V15.6][版本闸门] 本机 v'+GAME_VER+' 落后于服务器 v'+serverVer+'，已登出'); }catch(e){}
+}
+async function _versionGateBlocked(){
+  try{
+    var r=await withTimeout(supabaseClient.rpc('get_game_version'),4000,'版本检查');
+    if(!r||r.error)return false;                 // 检查不可用 → 放行，不阻断存档
+    var d=r.data;if(Array.isArray(d))d=d[0];
+    var sv=(typeof d==='string')?d:((d&&(d.ver||d.game_ver))||'');
+    if(!sv)return false;
+    if(_verCmp(sv,GAME_VER)>0){ _versionKick(sv); return true; }
+  }catch(e){}
+  return false;
+}
 async function cloudPush(){
   if(!cloudEnabled()){ cloudSync.lastErr='云端未配置'; return; }
   if(!cloudUser){ cloudSync.ok=false; cloudSync.lastErr='未登录云端 · 请先登录再上传'; return; }
+  /* V15.6：每次自动保存前比对云端游戏版本；落后则登出并弹窗，且不写这一份档。 */
+  if(await _versionGateBlocked())return;
   /* V15.5：档内 lastSeen = 玩家最后一次在线的时刻。它才是离线结算的基准，
    * 云端行的 updated_at 只是「这行最后被写的时间」，登录/回写都会刷新它，不能当基准。 */
   state.lastSeen=gameNow();
@@ -6682,6 +6731,8 @@ function doKiReset(keepIdx){
   _n.spiritFullAt=_o.spiritFullAt||0;
   _n.totalGold=_o.totalGold||0;_n.totalOre=_o.totalOre||0;
   _n.totalPrestige=_o.totalPrestige||0;_n.prestigeCount=_o.prestigeCount||0;
+  /* V15.6：runPrestigeCount 是本轮次数，刻意不保留、走 defaultState 归零 ——
+   * 返璞归真后矿工等级上限回到 Lv.15、矿层上限回到第 8 层。 */
   _n.ascensions=_o.ascensions||0;
   _n.drops=_o.drops||0;_n.taps=_o.taps||0;_n.merges=_o.merges||0;
   _n.recruits=_o.recruits||0;_n.smelts=_o.smelts||0;
@@ -7284,10 +7335,15 @@ function normalizeStateAfterMigration(s){
     if(_sc>=Object.keys(SPIRIT_DEFS).length){s.kiCount=1;s.stoneDraws=1;}
   }
   if(!s.ver)s.ver=GAME_VER;
+  /* V15.6 一次性迁移：老档没有 runPrestigeCount，从累计转生次数继承一次，
+   * 否则已经转生多次的老玩家上限会瞬间掉回 Lv.15 / 第 8 层。
+   * 字段一旦写入就不再重复继承；返璞归真后的新档自带 0，也不会走这里。 */
+  if(!('runPrestigeCount' in s))
+    s.runPrestigeCount=(typeof s.prestigeCount==='number'&&s.prestigeCount>0)?s.prestigeCount:0;
   // 默认值回填 · 从 defaultState 拷缺失字段
   var d=defaultState();
   for(var k in d){if(!(k in s))s[k]=d[k];}
-  ['gold','ore','totalOre','totalGold','runGold','depth','maxDepth','prestige','prestigeCount','totalPrestige','recruits','merges','drops','dropStreak','dropCd','taps'].forEach(function(k){
+  ['gold','ore','totalOre','totalGold','runGold','depth','maxDepth','prestige','prestigeCount','runPrestigeCount','totalPrestige','recruits','merges','drops','dropStreak','dropCd','taps'].forEach(function(k){
     if(typeof s[k]!=='number')s[k]=d[k];
   });
   var du={};for(var u in d.up){var _uv=Number(s.up&&s.up[u]);du[u]=(isFinite(_uv)&&_uv>=0)?Math.floor(_uv):0;}s.up=du;
@@ -7904,7 +7960,7 @@ function doPrestige(){
   var singGain=singDaysPoints(days);
   state.prestige=Math.min(PRESTIGE_CAP,(state.prestige||0)+g); // 声望达到上限即封顶，不再增加
   state.totalPrestige=(state.totalPrestige||0)+g;             // 统计口径：全游戏已获取声望
-  state.prestigeCount++;
+  state.prestigeCount++;state.runPrestigeCount=(state.runPrestigeCount||0)+1;
   // v13.6.3：转生冷却——"矿工等级上限≥50 且声望达到上限"奇点商店态才进入 CD · 1 小时起，每 +5 级再 +1 小时；
   // 两个条件缺一不进 CD，已有 CD 一并清零 · 没有需要冷却的理由
   var cdH=(singMode()&&minerLevelCap()>=50)?prestigeCdHours(minerLevelCap()):0;
