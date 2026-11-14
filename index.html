@@ -1,4 +1,7 @@
 <!DOCTYPE html>
+<!-- V15.7 · 由 build_v15.7.py 从 V15.6 生成；SAVE_V 保持 18 以兼容全部存量云档。
+     V15.7：宝石托管前置条件 / 大国工匠停托管 / 关服倒计时 / 4·12·20 刷新 / 络绎不绝自动填充。
+     新增字段一律走「类型检查式补默认值」，见 V15.7-字段变更登记册.html。
 <!-- V15.6 · 由 build_v15.6.py 从 V15.5 生成；SAVE_V 保持 18 以兼容全部存量云档。
      V15.6：修复返璞归真后矿工等级上限 / 矿层上限不回初始（新增本轮 runPrestigeCount）；
      新增版本闸门——自动保存前比对云端游戏版本，落后则登出并提示刷新。
@@ -1247,7 +1250,29 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
   .m-tip-row b{display:block;color:var(--gold);font-size:12px}
   .m-tip-row span{color:var(--dim)}
 }
-</style></head>
+</style>
+<style data-v157="1">
+/* V15.7 · 宝石托管前置条件 */
+.gem-auto-ctl{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim);flex-wrap:wrap}
+.gem-auto-ctl>span:first-child{color:var(--gold);font-weight:700}
+.gem-auto-ctl input[type=range]{width:104px;accent-color:#4a9eff;cursor:pointer}
+.gem-auto-ctl input[type=range]:disabled{opacity:.4;cursor:not-allowed}
+.gem-auto-ctl button{padding:0 7px;font-size:13px;line-height:1.5}
+.gem-auto-ctl button:disabled{opacity:.4;cursor:not-allowed}
+.gem-auto-ctl b{color:var(--gold);font-size:13px;min-width:16px;text-align:center}
+.gem-auto-cap{font-size:11px;color:var(--dim)}
+.gem-auto-lock{font-size:11px;color:#e0a030}
+/* V15.7 · 矿工团队头部两行，给两个按钮腾位置 */
+.crew-head{display:block!important}
+.crew-line1{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;flex-wrap:wrap;margin-bottom:7px}
+.crew-line1 .slots-info,.crew-line1 .power-info{font-size:12px;font-weight:400}
+.crew-line2{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.crew-line2 button{margin-left:0!important}
+.crew-head button.on{border-color:#7ed321;color:#7ed321}
+/* V15.7 · 页脚倒计时 */
+.footer-note b{color:var(--gold);font-weight:700}
+</style>
+</head>
 <body>
 <div id="app">
   <header>
@@ -1268,7 +1293,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
         <button class="iconbtn" id="btnAbout">ⓘ 关于</button>
         <div class="about-panel" id="aboutPanel">
           <button class="iconbtn about-row" id="btnHelp">❓ 玩法</button>
-          <div class="chip about-row" id="verChip" title="游戏版本 v15.6" style="padding:5px 9px"><span style="color:var(--dim)">版本</span> <b id="verNum" style="margin-left:2px">v15.6</b></div>
+          <div class="chip about-row" id="verChip" title="游戏版本 v15.7" style="padding:5px 9px"><span style="color:var(--dim)">版本</span> <b id="verNum" style="margin-left:2px">v15.7</b></div>
           <!-- v13.6：原"云：上传中"状态行让位给排行榜入口 · 云状态仍在 ☁️ 按钮面板内展示-->
           <button class="iconbtn about-row" id="btnLeaderboard">🏆 排行榜</button>
           <!-- V15.3：游戏公告 · 内容在 Supabase 的 announcements 表里改，改完玩家点一下就是新的 -->
@@ -1296,10 +1321,15 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
       <!-- 矿工团队 -->
       <div class="crew">
         <div class="crew-head">
-          👷 矿工团队
-          <span class="slots-info" id="crewSlots">1 / 16 格</span>
-          <span class="power-info" id="crewPower">产出效率 ×1.00 · 最高 Lv.1 / 上限 Lv.15</span>
-          <button disabled id="btnMergeAll"><span class="bmain">⚡ 一键合成至 Lv.1</span><small class="bsub">点选两个同级矿工手动升至 Lv.2</small></button>
+          <div class="crew-line1">
+            👷 矿工团队
+            <span class="slots-info" id="crewSlots">1 / 16 格</span>
+            <span class="power-info" id="crewPower">产出效率 ×1.00 · 最高 Lv.1 / 上限 Lv.15</span>
+          </div>
+          <div class="crew-line2">
+            <button disabled id="btnMergeAll"><span class="bmain">⚡ 一键合成至 Lv.1</span><small class="bsub">点选两个同级矿工手动升至 Lv.2</small></button>
+            <button class="sec" id="btnAutoCrew" style="display:none"><span class="bmain">🤖 自动填充/升级</span><small class="bsub">需在奇点商店购买「络绎不绝」</small></button>
+          </div>
         </div>
         <div class="crew-list" id="crewList"><div class="mslot" data-i="0" data-id="1" data-lv="1" draggable="true" title="Lv.1 矿工 · 单人效率 ×1.0"><span class="slv">Lv.1</span><span class="seff">×1.0</span></div><div class="mslot empty" data-i="1" title="空格子 · 招募矿工填入">+</div><div class="mslot empty" data-i="2" title="空格子 · 招募矿工填入">+</div><div class="mslot empty" data-i="3" title="空格子 · 招募矿工填入">+</div><div class="mslot empty" data-i="4" title="空格子 · 招募矿工填入">+</div><div class="mslot empty" data-i="5" title="空格子 · 招募矿工填入">+</div><div class="mslot empty" data-i="6" title="空格子 · 招募矿工填入">+</div><div class="mslot empty" data-i="7" title="空格子 · 招募矿工填入">+</div><div class="mslot empty" data-i="8" title="空格子 · 招募矿工填入">+</div><div class="mslot empty" data-i="9" title="空格子 · 招募矿工填入">+</div><div class="mslot empty" data-i="10" title="空格子 · 招募矿工填入">+</div><div class="mslot empty" data-i="11" title="空格子 · 招募矿工填入">+</div><div class="mslot empty" data-i="12" title="空格子 · 招募矿工填入">+</div><div class="mslot empty" data-i="13" title="空格子 · 招募矿工填入">+</div><div class="mslot empty" data-i="14" title="空格子 · 招募矿工填入">+</div><div class="mslot empty" data-i="15" title="空格子 · 招募矿工填入">+</div></div>
         <div class="crew-actions">
@@ -1307,7 +1337,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
           <button class="sec" disabled id="btnFill"><span id="fillMain">👥 一键填满 · +15 格 · Lv.1</span><small id="fillSub">💰 900 · 金币不足</small></button>
           <button class="sec" disabled id="btnDelSel"><span id="delMain">🗑️ 删除所选</span><small id="delSub">先在左侧点选一名矿工</small></button>
         </div>
-        <div class="crew-hint">💡 <b>拖动</b>两个同级矿工到一起即可合成高一级；也可<b>点选</b>一个后再点另一个同级矿工。⚡ 一键合成只补足到<b>当前最高等级</b> · 上限 Lv.15 · 每次转生 +1· 新矿工 = 最高等级-3 · 🗑️ 删除所选 = 点选后解散、返还 20% 投入 · 最低级仅剩 1 名无法合成时用· 👥 一键填满 = 按当前级别买满 16 格</div>
+        <div class="crew-hint">💡 <b>拖动</b>两个同级矿工到一起即可合成高一级；也可<b>点选</b>一个后再点另一个同级矿工。⚡ 一键合成只补足到<b>当前最高等级</b> · 上限 Lv.15 · 每次转生 +1· 新矿工 = 最高等级-3 · 🗑️ 删除所选 = 点选后解散、返还 20% 投入 · 最低级仅剩 1 名无法合成时用· 👥 一键填满 = 按当前级别买满 16 格 · 🤖 自动填充/升级 = 需先在奇点商店购买「络绎不绝」，开启后自动招募 / 合成 / 满格清孤矿 / 逐级升级</div>
         <div class="summary crew-stats" id="crewStats">👷 矿工 <b>1</b> 名 · 最高 Lv.1· 挥镐 <b class="g">×1.00</b><br>🪨 单镐产量 <b class="g">1</b> · 暴击 <b class="g">8.0%</b>×2.0</div>
       </div>
 
@@ -1389,7 +1419,23 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
                旧版节点在鼠标按下与抬起之间被换掉，change 事件丢失，表现为"点了没反应"。 -->
           <div class="gem-auto-row" id="gemAutoRow" style="margin-top:10px">
             <label class="gem-auto-sw"><input type="checkbox" id="gemAutoChk" data-gem-auto><span>全自动托管</span></label>
+            <label class="gem-auto-sw"><input type="checkbox" id="gemShardChk" data-gem-shard-auto><span>碎片自动合成</span></label>
+            <div class="gem-auto-ctl">
+              <span>等级限制</span>
+              <button type="button" data-gem-step="lv:-1" aria-label="减一">−</button>
+              <input type="range" id="gemLvRange" min="2" max="14" step="1" value="7" data-gem-cfg="lv">
+              <button type="button" data-gem-step="lv:1" aria-label="加一">+</button>
+              <b id="gemLvVal">7</b><span class="gem-auto-cap" id="gemLvDesc">Lv.7 以下</span>
+            </div>
+            <div class="gem-auto-ctl">
+              <span>光泽差上限</span>
+              <button type="button" data-gem-step="lu:-1" aria-label="减一">−</button>
+              <input type="range" id="gemLuRange" min="0" max="8" step="1" value="8" data-gem-cfg="lu">
+              <button type="button" data-gem-step="lu:1" aria-label="加一">+</button>
+              <b id="gemLuVal">8</b><span class="gem-auto-cap" id="gemLuDesc">不限制</span>
+            </div>
             <span class="gem-auto-tip" id="gemAutoTip">自动碎片合成 / 7 级以下同级合成 / 满 10000 洗练十连</span>
+            <span class="gem-auto-lock" id="gemAutoLock" style="display:none">⏸ 请先关闭「全自动托管」再修改两个限制</span>
           </div>
           <div class="summary" id="gemBag" style="margin-top:10px"></div>
           <div class="summary" id="gemFeed" style="margin-top:10px"></div>
@@ -1443,7 +1489,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
             第 6 层起开放「🎲 信吗」赌局与「🏅 成就」系统 · 含 14 项隐藏成就。<br>
             商店「⏫ 所有维度升一级」需声望 &gt; 20 万解锁；装备页可购买永久背包格 · 声望 &gt; 100 万，价格 ×10，上限 31 格。<br>
             目标：全身 7 槽无上 = <b style="color:#fbbf24">获胜</b> · 一套 6 件全无上 = <b style="color:#fbbf24">大获全胜</b>。<br>
-            进度保存在云端，离线收益 50% · 上限 8 小时 · 爆装速度 1/6· 当前版本 <b id="aboutGameVer">v15.6</b>旧版本存档在 v12 起无法使用。
+            进度保存在云端，离线收益 50% · 上限 8 小时 · 爆装速度 1/6· 当前版本 <b id="aboutGameVer">v15.7</b>旧版本存档在 v12 起无法使用。
           </div>
           <!-- v13.6：重置游戏从"转生/兑换码之间"迁至设置页最底部危险区域——远离高频点击区，防误触 -->
           <div style="margin-top:16px; border-top:1px dashed var(--line); padding-top:10px">
@@ -1454,7 +1500,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
       </div>
     </aside>
   </main>
-  <div class="footer-note">矿工传说 · 纯云端存档 · v15.6</div>
+  <div class="footer-note">矿工传说 · <span id="footVer">v15.7</span> · 距离关服至少还有 <b id="footDown">—</b> · WZHHZZ出品</div>
 </div>
 
 <div id="toasts"></div>
@@ -1465,7 +1511,7 @@ textarea { width: 100%; height: 70px; background: rgb(21, 16, 9); border: 1px so
 'use strict';
 /* ================= 基础工具 ================= */
 var SAVE_KEY='minerLegendSave_v3';
-var GAME_VER='15.6'; // V15.6：返璞归真上限修复（runPrestigeCount）/ 自动保存版本闸门。
+var GAME_VER='15.7'; // V15.7：宝石托管前置条件 / 关服倒计时 / 4·12·20 刷新 / 络绎不绝自动填充。
 // 以下为历史版本摘要（保留不改）：V15.1：存档选择界面 + 保底重试 + 每日快照 SQL + 狭义神秘套产出 ×10000。V15 大版本收口：S1 黄宝石额外掉落重新 roll 稀有度 · S2 集齐六颗后多余抽奖次数实时折算全局倍率 · S3 極中極与狭义套装 + V14.9.2 宝石锻造：① 永耀之石可用 10 级宝石强化 · 宝石消失、效果升级、不可逆；黑曜石强化后宝石上限解锁 20 级，20 级黑曜石可二次强化 · 奇点刷新免费/飞升免声望② 宝石页全自动托管 · 自动碎片合成/同级合成/十连洗练+ 界面精简重排 ③ 返璞归真可带走一颗 10 级宝石 ④ 全站面向玩家文案去除括号内机制解释。V14.9.1 摘要：① 标签页 icon/文字改上下两行排版 · 窄屏不错乱② 抵达「極」后保留正常转生入口 · 返璞归真作为额外选项，二选一或都不选③ 黑曜石特例修正：两颗9级黑曜碎裂只给其余五色10级宝石④ 奇点商店新增🔧大国工匠 · 3点消耗品：下次合成不降光泽、🎨天然色料 · 1点消耗品：全量碎片换色、🟣灭霸 · 25点一次：全局倍率+六色最低最高级；🪪改名卡权重降至0.34 ⑤ 宝石机制：碎裂只返还碎片当量10% · 向下取整、宝石页按钮改事件委托 · 连点可靠、3级保底改为「连续100次未出3级→下次必出3级」并显示进度 · 取消每10次十连赠3级⑥ 「原石」全部显示改「矿渣原石」 · 字段名不动⑦ 信吗串关连胜奖励5%→10%。V14.9 宝石系统：新增「宝石」标签页 · 洗练/合成台/宝石背包，原石与碎片经济，6基底色×0~10级×光泽度0~9，10级宝石将对应永耀之石效果翻倍，永耀之石展示迁入本页且更名加「永耀」前缀+ 保底存档 · 30分钟制+playtime守卫+可回滚+ 信吗修复 · 双选预言完整展示两选项结果、奖励为矿工且满员时按全价定价。V14 抵極终章：奇点商店新增⏱️立马转生 · 2点，清零转生CD，无CD不可用与🪪改名卡 · 2点，必须交互完成的对话框改矿工名，不点确定不消耗；矿工格子效率上亿后改用万亿/亿亿后缀计数防撑爆；抵达「極」后飞升/转生按钮变为「返璞归真」 · 除永耀之石外全部重置+诗文，内在精神界面下新增「永耀之石」 · 6宝石：红=购买价90%/蓝=全局倍率+1/绿=声望CD减半/黄=幸运+250/紫=信吗金币奖励+20%仅进入那一下/黑=无效果，每次抵極抽奖1次 · 已获得不重复；v13.6.3 转生CD条件补回矿工等级上限≥50 · 矿工等级上限≥50且声望达到上限才进CD，缺一不进CD且已有CD清零、飞升不受CD影响；v13.6.2 转生CD仅限声望达到上限 · 未达上限不进CD且清零、飞升不受CD影响+ 奇点商店8小时固定刷新周期 · 手动刷新/购买不重新计时，到期无条件重刷且刷新花费重置回1奇点值；v13.6 全服排行榜 · lb_profile 投影表 + lb_push/lb_board RPC + 关于面板入口；v13.5 一次性兑换码 · 服务端HMAC验证+每账号一次+ 锁屏 savedAt 漏刷 playtime 裁决 + 番茄炒蛋第六层起可用；v13.4 自动存档：本地崩溃缓冲+30s节流云同步+里程碑强存+断网退避重试
 var SAVE_V=18;         // 存档迁移计数 · SAVE_V=18：v13 强制云存档。V14 起不再递增——永曜之石/宝石等新字段均为附加字段，normalize 默认回填即可平滑迁移；递增会让 cloudFetch 的 save_version!==SAVE_V 校验拒掉全部存量云档
 var MIN_SAVE_VER='13.0'; // v13 起拒绝更早版本存档 · 本地存档完全废弃
@@ -1477,6 +1523,25 @@ var MIN_SAVE_VER='13.0'; // v13 起拒绝更早版本存档 · 本地存档完�
  * 行为与 V15.1 完全一致——保证"没跑 SQL 也能正常玩"。 */
 var _serverOffset=0;
 function gameNow(){ return Date.now()+_serverOffset; }
+/* V15.7 · 关服倒计时 —— 按 Elvis 要求，页面上只显示「还剩多久」，不显示最终关服日期。
+ * 截止 2036-11-01 00:00 北京时间 = UTC 戳 2109081600000（构建脚本已核算）。
+ * 用 gameNow()（服务器校时）而非 Date.now()，玩家改本机时间不会让倒计时乱跳。
+ * 主循环每帧调用，但只在文本变化时才写 DOM，开销可忽略。 */
+var SERVER_END_AT=2109081600000;
+var _footDownKey='';
+function renderFooterCountdown(){
+  var el=$('footDown');if(!el)return;
+  var left=SERVER_END_AT-gameNow();
+  var txt;
+  if(left<0)txt='维护中';
+  else{
+    var d=Math.floor(left/86400000);
+    var h=Math.floor((left-d*86400000)/3600000);
+    var m=Math.floor((left-d*86400000-h*3600000)/60000);
+    txt=d+' 天 '+h+' 小时 '+m+' 分钟';
+  }
+  if(txt!==_footDownKey){_footDownKey=txt;el.textContent=txt;}
+}
 /* V15.2 · 离线结算幂等（P1-3）：同一份云端存档只允许结算一次。
  * 键按"账号 + 该档 updated_at"存 localStorage，反复点「从云端恢复」
  * 或反复选同一份保底档，不再重复发金币 / 矿石 / 装备。 */
@@ -2020,7 +2085,7 @@ var PRESTIGE_CAP=999999999;     // 声望生效上限 · 达到即封顶
 var SING_DIGIT_BASE=8;          // 天数位数基准：超出 8 位的部分折算奇点值
 /* V15.5：自然刷新改为固定时刻（北京时间 UTC+8 的 8:00 / 16:00 / 24:00）。
  * 24 点归一为次日 0 点，数组里只放 [0,8,16]，跨日由 dayStart + 86400000 自然进位。 */
-var SING_REFRESH_HOURS=[0,8,16];
+var SING_REFRESH_HOURS=[4,12,20]; // V15.7：北京时间 4:00 / 12:00 / 20:00，间隔仍是 8 小时
 var SING_TZ_MS=8*3600*1000;   // 固定 UTC+8；_serverOffset 是时钟偏差，不能当 +8h 用
 var SING_MARS_MULT=10;          // 火星四溅：全局倍率 +10 · 加法
 var SING_MARS_MS=10*60*1000;    // 火星四溅持续 10 分钟
@@ -2050,7 +2115,9 @@ var SING_ITEMS={
   // v14.9.1：天然色料——消耗品：弹窗选源/目标颜色，把源颜色全部宝石碎片染成目标色
   dye      :{name:'天然色料',icon:'🎨',cost:1  ,kind:'use',desc:'使用后弹出对话框：选择源颜色与目标颜色，把源颜色的全部宝石碎片转换为目标颜色碎片'},
   // v14.9.1：灭霸——25 奇点仅可购买一次；全局倍率 +min(六色各自最高等级宝石)，随宝石变化动态生效
-  thanos   :{name:'灭霸'    ,icon:'🟣',cost:25 ,kind:'perm',once:true,desc:'全局产出倍率永久 +「六种颜色各自最高等级宝石」的最小值 · 某色无宝石按 0 计，取值 0~10——随宝石成长动态生效 · 仅可购买一次，购买后从商店消失'}
+  thanos   :{name:'灭霸'    ,icon:'🟣',cost:25 ,kind:'perm',once:true,desc:'全局产出倍率永久 +「六种颜色各自最高等级宝石」的最小值 · 某色无宝石按 0 计，取值 0~10——随宝石成长动态生效 · 仅可购买一次，购买后从商店消失'},
+  // V15.7：络绎不绝 —— 买断型，解锁矿工团队「自动填充/升级」；返璞归真随 sing 失效，转生/飞升不影响
+  endless  :{name:'络绎不绝',icon:'🔁',cost:15 ,kind:'perm',once:true,desc:'解锁矿工团队「自动填充/升级」：开启后自动招募、自动合成、自动清理孤矿并持续把团队推向更高等级 · 仅可购买一次，购买后从商店消失 · 返璞归真后失效'}
 };
 
 /* ---------- 奇点商店逻辑 ----------
@@ -2091,14 +2158,14 @@ function singNextRefreshAt(ts){
     var p=base+SING_REFRESH_HOURS[i]*3600000;
     if(p>t)return p;
   }
-  return base+86400000;   // 次日 00:00（即当天的 24:00）
+  return base+86400000+SING_REFRESH_HOURS[0]*3600000; // V15.7：次日第一个刷新点，不能写死 0 点
 }
 /* 与计算同口径的北京时间 HH:MM，避免「算 16:00 显示 08:00」 */
 function singClock(ts){
   var d=new Date((Number(ts)||gameNow())+SING_TZ_MS);
   if(isNaN(d.getTime()))return '--:--';
   var hh=d.getUTCHours(),mm=d.getUTCMinutes();
-  if(hh===0&&mm===0)return '24:00'; // 次日 0 点按玩家口径显示为 24:00
+  /* V15.7：刷新点改为 4/12/20，不再有 0 点档，移除「24:00」特例 */
   return (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
 }
 function singRestockLeft(){return Math.max(0,singNextRefreshAt(gameNow())-gameNow());}
@@ -2177,6 +2244,10 @@ function singBuy(key){
       beep(110,0.2,'sawtooth',0.05);setTimeout(function(){beep(165,0.3,'sawtooth',0.05);},170);
       toast('🟣 灭霸降临！全局产出倍率 +'+thanosBonus(),'#e040fb',
         '一个响指之后，六色宝石的最低境界化为你的力量 · 当前 +'+thanosBonus()+' · 仅可购买一次');
+    }else if(key==='endless'){
+      state.sing.endless=true;   /* 按钮立即出现；once:true 让 singRollShop 不再刷出本商品 */
+      beep(523,0.1,'triangle',0.05);setTimeout(function(){beep(784,0.16,'triangle',0.05);},130);
+      toast('🔁 络绎不绝已解锁！','#7ed321','矿工团队页出现「自动填充/升级」按钮 · 返璞归真后失效');
     }
   }else{
     state.sing.inv[key]=(state.sing.inv[key]||0)+1;
@@ -2296,8 +2367,14 @@ function singUse(key){
     // v14.9.1：大国工匠——进入生效状态：下一次合成不降光泽度 · 用一次即消耗，生效提示见 gemCraftPair
     if(state.sing.craftNoDrop){toast('🔧 大国工匠已就位','#a89a86','下一次合成宝石不降低光泽度 · 无需重复使用');return;}
     state.sing.craftNoDrop=true;
+    /* V15.7：大国工匠是「下一次手动合成不降光泽」的道具，开着全自动托管会被托管瞬间用掉，
+       所以点击使用时自动停掉宝石托管，并明确告知玩家（不删道具、不改阈值）。 */
+    var _cgs=gemState();
+    if(_cgs.auto){_cgs.auto=false;gemAutoAcc=0;gemHeadKey='';}
     beep(392,0.1,'triangle',0.05);setTimeout(function(){beep(587,0.14,'triangle',0.05);},110);
-    toast('🔧 大国工匠已就位！','#ffd54f','下一次合成宝石时不降低光泽度 · 跳过 55% -1 扣减· 合成后自动消耗');
+    toast('🔧 大国工匠已就位！','#ffd54f',
+      '下一次合成宝石时不降低光泽度 · 跳过 55% -1 扣减· 合成后自动消耗'+
+      ' · 已自动停止宝石全自动托管');
   }else if(key==='dye'){
     // v14.9.1：天然色料——弹出必须交互完成的对话框；只有点确定才消耗 · 见 showDyeModal
     showDyeModal();
@@ -2962,16 +3039,31 @@ function gemAutoTick(dt){
   gemAutoAcc=0;
   var ov=$('overlay');
   if(ov&&ov.classList.contains('show'))return; // 有手动弹窗时暂停，避免抢操作
-  // 顺序：① 碎片合成 ② 7 级以下同级合成 ③ 矿渣原石满 10000 洗练十连
-  for(var ci=0;ci<GEM_COLOR_KEYS.length;ci++){
-    var c=GEM_COLOR_KEYS[ci];
-    if((gs.shards[c]||0)>=GEM_SHARD_CRAFT){gemCraftShard(c,true);return;}
+  /* V15.7：两个前置条件【独立判断】，各自读自己的配置，互不干扰；
+     等级不满足就不看光泽，光泽不满足也不放宽等级；两者都满足才合成。 */
+  var lvCap=Math.max(2,Math.min(14,Math.floor(Number(gs.autoLvCap)||7)));
+  /* 0 是合法值（仅同光泽），不能用 ||8 兜底；缺省才是 8（不限制） */
+  var luDiff=(typeof gs.autoLuDiff==='number'&&isFinite(gs.autoLuDiff))?gs.autoLuDiff:8;
+  luDiff=Math.max(0,Math.min(8,Math.floor(luDiff)));
+  // 顺序：① 碎片合成（可单独关） ② 符合两个条件的同级合成 ③ 矿渣原石满 10000 洗练十连
+  if(gs.autoShard!==false){
+    for(var ci=0;ci<GEM_COLOR_KEYS.length;ci++){
+      var c=GEM_COLOR_KEYS[ci];
+      if((gs.shards[c]||0)>=GEM_SHARD_CRAFT){gemCraftShard(c,true);return;}
+    }
   }
-  for(var lv=1;lv<=6;lv++){
+  for(var lv=1;lv<lvCap;lv++){
     for(var cj=0;cj<GEM_COLOR_KEYS.length;cj++){
       var c2=GEM_COLOR_KEYS[cj],idx=[];
       for(var i=0;i<gs.gems.length;i++)if(gs.gems[i].c===c2&&gs.gems[i].lv===lv)idx.push(i);
-      if(idx.length>=2){gemSel=[idx[0],idx[1]];gemCraftPair(true);return;}
+      if(idx.length<2)continue;
+      if(lv+1>gemLvCap(c2))continue; // 已达该色等级上限，合成会被 gemCraftPair 拒绝
+      for(var x=0;x<idx.length;x++)for(var y=x+1;y<idx.length;y++){
+        var ga=gs.gems[idx[x]],gb=gs.gems[idx[y]];
+        if(!ga||!gb)continue;
+        if(Math.abs((ga.lu||0)-(gb.lu||0))>luDiff)continue; // 光泽度差不达标
+        gemSel=[idx[x],idx[y]];gemCraftPair(true);return;
+      }
     }
   }
   if(gs.ore>=GEM_WASH10_COST)gemWash(10,true);
@@ -3154,13 +3246,30 @@ function gemStarHtml(){
 }
 /* V15.3：托管开关常驻 DOM，只同步状态，绝不重建节点 */
 function gemSyncAutoRow(gs){
-  var cb=$('gemAutoChk'),tip=$('gemAutoTip');
-  if(!cb)return;
+  var cb=$('gemAutoChk');if(!cb)return;
   var on=!!gs.auto;
   if(cb.checked!==on)cb.checked=on;
-  if(tip)tip.textContent=on
-    ?'运行中 · 碎片合成 → 7 级以下同级合成 → 满 10000 洗练十连'
-    :'自动碎片合成 / 7 级以下同级合成 / 满 10000 洗练十连';
+  /* V15.7：节点常驻 DOM，只同步值，绝不重建（V15.3 的 change 事件丢失教训） */
+  var lv=Math.max(2,Math.min(14,Math.floor(Number(gs.autoLvCap)||7)));
+  var lu=(typeof gs.autoLuDiff==='number'&&isFinite(gs.autoLuDiff))
+          ?Math.max(0,Math.min(8,Math.floor(gs.autoLuDiff))):8;
+  var lr=$('gemLvRange'),ur=$('gemLuRange'),sc=$('gemShardChk');
+  if(lr&&Number(lr.value)!==lv)lr.value=lv;
+  if(ur&&Number(ur.value)!==lu)ur.value=lu;
+  if(sc&&sc.checked!==(gs.autoShard!==false))sc.checked=(gs.autoShard!==false);
+  var lvV=$('gemLvVal'),luV=$('gemLuVal'),lvD=$('gemLvDesc'),luD=$('gemLuDesc');
+  if(lvV)lvV.textContent=lv;
+  if(luV)luV.textContent=lu;
+  if(lvD)lvD.textContent='Lv.'+lv+' 以下';
+  if(luD)luD.textContent=lu===0?'仅同光泽':(lu>=8?'不限制':'差 ≤ '+lu);
+  /* 两个阈值在托管开启时不可改；碎片开关按 Elvis 拍板随时可改 */
+  if(lr)lr.disabled=on; if(ur)ur.disabled=on;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-gem-step]'),function(b){b.disabled=on;});
+  var lk=$('gemAutoLock');if(lk)lk.style.display=on?'':'none';
+  var tip=$('gemAutoTip');
+  if(tip)tip.textContent=(on?'运行中 · ':'')+
+    (gs.autoShard!==false?'碎片合成 → ':'')+
+    '只合 Lv.'+lv+' 以下 · 光泽差 ≤ '+lu+' → 满 10000 洗练十连';
 }
 function renderGem(){
   var gs=gemState();
@@ -3355,6 +3464,7 @@ function defaultState(){
     // v14.9.1：craftNoDrop=大国工匠就位 · 下次合成不降光泽度；thanos=灭霸已购买 · 全局倍率+六色最低最高级
     sing:{spent:0,earned:0,lastGain:0,shop:[],judas:false,marsUntil:0,rollAt:0,
       shieldActive:false,tomatoUntil:0,duo:false,shopRefreshN:0,craftNoDrop:false,thanos:false,
+      endless:false,autoCrew:false, // V15.7：络绎不绝买断标记 / 自动填充开关（放 sing 内，避免旧页面顶层白名单删掉）
       inv:{clone:0,double:0,gravity:0,inspire:0,mars:0,supreme:0,shield:0,tomato:0,cdReset:0,rename:0,craftsman:0,dye:0}}, // V14：cdReset=立马转生 / rename=改名卡；v14.9.1：craftsman=大国工匠 / dye=天然色料
     // v10.2：成就系统
     ach:{},achFeed:[],
@@ -3377,7 +3487,11 @@ function defaultState(){
     // washes=累计洗练次数；oreTotal=累计获得矿渣原石；craftedMax=合成到达过的最高等级
     gem:{ore:0,oreAcc:0,shards:{r:0,b:0,g:0,y:0,p:0,k:0},gems:[],
       lv3Miss:0,shattered:0,washes:0,oreTotal:0,craftedMax:0,
-      hist:{r:0,b:0,g:0,y:0,p:0,k:0},auto:false,feed:[]},
+      hist:{r:0,b:0,g:0,y:0,p:0,k:0},auto:false,feed:[],
+      /* V15.7 托管前置条件：autoLvCap = 只自动合成 Lv.N 以下（不含 N），默认 7 = 维持旧版 1~6 级；
+         autoLuDiff = 同级两颗宝石光泽度差上限 0~8，默认 8 = 维持旧版「不限光泽」；
+         autoShard = 碎片是否自动合成，默认 true。三者都放在 gem 内部，避免旧页面顶层白名单删掉。 */
+      autoLvCap:7,autoLuDiff:8,autoShard:true},
     uniSoldFull:0, // 无上因满包且无可替换被直接卖掉的次数 · 隐藏成就用
     badges:{bet:false,equip:false,ach:false}, // 标签页红点 · 信吗/装备/成就
     playtime:0,awayTime:0,lastSeen:gameNow(),
@@ -3546,6 +3660,132 @@ function deleteSelectedMiner(){
       renderCrew();renderStage();renderShop();
       toast('🗑️ 已解散 Lv.'+m.lv+' 矿工'+(back>0?'，返还 '+fmt(back)+' 金币':''),'#ff5c5c');
     }});
+}
+
+/* ================= V15.7 · 络绎不绝：自动填充 / 升级 =================
+ * Elvis 定稿的四阶段状态机，每 0.6 秒只走一步（与宝石托管同节奏，保留合成爽感）：
+ *   ① 满 16 格且有孤矿 → 在下一次满格时把孤矿卖掉（复用「解散」口径：返还 20% 投入）
+ *   ② 空格 >= 2 → 复用「一键填满」逻辑买满，然后执行一次自动合成（补到当前最高级）
+ *   ③ 空格 = 1 → 若「当前可招募等级 == 团队最低等级」则招（不会产生孤矿）；
+ *      不同则说明当前最高级下已完成不产生孤矿的最大招募量，转去合成高一级
+ *   ④ 合成高一级成功（未触达上限）→ 回到阶段 ①
+ *
+ * 孤矿定义：等级 < 当前可招募等级 R（= 最高级 - 3），且该等级矿工数为奇数 ——
+ * 多出来的那一颗再也等不到同级矿工。Elvis 的例子：13 个 4 级 + 1 个 3 级 +
+ * 1 个 2 级 + 1 个 1 级，升出 5 级后只能招 2 级，那个 1 级就成了孤矿。
+ * ===================================================================== */
+var crewAutoAcc=0;
+function crewMinLv(){
+  var m=Infinity,i;
+  for(i=0;i<state.miners.length;i++)if(state.miners[i].lv<m)m=state.miners[i].lv;
+  return isFinite(m)?m:1;
+}
+function crewOrphanLvs(){
+  var R=recruitLevel(),cnt={},i,lv,out=[];
+  for(i=0;i<state.miners.length;i++){lv=state.miners[i].lv;cnt[lv]=(cnt[lv]||0)+1;}
+  for(lv in cnt){if(Number(lv)<R&&cnt[lv]%2===1)out.push(Number(lv));}
+  return out.sort(function(a,b){return a-b;});
+}
+/* 静默卖掉一个最低等级的孤矿；与手动「删除所选」完全同口径（20% 返还 + strandedCleaned） */
+function crewSellOneOrphan(){
+  var ls=crewOrphanLvs();if(!ls.length)return false;
+  var lv=ls[0],idx=-1,i;
+  for(i=state.miners.length-1;i>=0;i--)if(state.miners[i].lv===lv){idx=i;break;}
+  if(idx<0||state.miners.length<=1)return false;
+  var m=state.miners[idx],back=Math.floor((m.inv||0)*DELETE_REFUND);
+  state.miners.splice(idx,1);
+  if(back>0){state.gold+=back;state.totalGold+=back;state.runGold+=back;}
+  state.strandedCleaned=(state.strandedCleaned||0)+1;
+  return true;
+}
+/* 静默版「一键合成」：只补到当前最高级，口径与 mergeAll 完全一致但不弹 toast / 不响铃，
+   否则自动循环每 0.6 秒弹一次提示会刷屏。 */
+function mergeAllSilent(){
+  var cap=minerData().maxLv,total=0,lv,cnt,i,p;
+  for(lv=1;lv<cap;lv++){
+    for(;;){
+      cnt=0;for(i=0;i<state.miners.length;i++)if(state.miners[i].lv===lv)cnt++;
+      if(cnt<2)break;
+      p=mergeLevel(lv);if(p<=0)break;
+      total+=p;
+    }
+  }
+  return total;
+}
+/* 静默招募 1 名 / 买满；数值口径与 doRecruit / fillCrew 一致，但不弹 toast、不响铃 */
+function crewBuyOne(){
+  if(state.miners.length>=minerSlots())return false;
+  var c=recruitCost();if(state.gold<c)return false;
+  var lv=recruitLevel();
+  state.gold-=c;state.recruits++;
+  state.miners.push({lv:lv,inv:c,id:++state.minerSeq});
+  return true;
+}
+function crewFillSilent(){
+  var n=0;
+  while(state.miners.length<minerSlots()){
+    var c=recruitCost();if(state.gold<c)break;
+    var lv=recruitLevel();
+    state.gold-=c;state.recruits++;
+    state.miners.push({lv:lv,inv:c,id:++state.minerSeq});
+    n++;
+  }
+  return n;
+}
+/* 阶段 ④「向高一级的矿工进行合成」：
+ * 从最低等级到【当前最高等级】各合成一轮（本轮新产出的更高等级不再参与本轮，
+ * 因此每次调用整体只推进一级），最终一定至少产出一个 当前最高级+1 的矿工。
+ * 不能只合「两个当前最高级」——Elvis 举的场景里升出 5 级后最高的 Lv.5 只有 1 个，
+ * 只合最高级会凑不出一对、四个阶段全部无动作而卡死；逐级补齐能保证继续推进。
+ * 返回 >0 = 合成次数 / 0 = 当前无配对可做 / -1 = 已触达等级上限。 */
+function crewUpgradeOne(){
+  var cap=minerLevelCap(),maxLv=minerData().maxLv;
+  if(maxLv+1>cap)return -1;
+  var total=0,lv,p;
+  for(lv=1;lv<=maxLv;lv++){
+    if(lv+1>cap)break;
+    p=mergeLevel(lv);if(p>0)total+=p;
+  }
+  return total;
+}
+function crewAutoStop(reason){
+  state.sing.autoCrew=false;crewAutoAcc=0;
+  renderedCrewKey='';renderCrew();
+  toast('🤖 自动填充/升级已停止','#a89a86',reason);
+}
+function crewAutoAfter(){
+  derived=calcDerived();renderedCrewKey='';
+  renderCrew();renderStage();
+}
+function crewAutoStep(){
+  var md=minerData();
+  if(md.maxLv>=minerLevelCap()){crewAutoStop('已达到矿工等级上限 Lv.'+minerLevelCap());return false;}
+  var free=minerSlots()-md.total;
+  /* 阶段 ① 满格时清孤矿 */
+  if(free<=0&&crewOrphanLvs().length){
+    if(crewSellOneOrphan()){crewAutoAfter();return true;}
+  }
+  /* 阶段 ② 空格 >= 2：一键填满 + 一次自动合成（补到当前最高级）。
+     金币不足时买不动，不能就此 return，要继续交给 ③/④ 免费合成，否则会卡在有钱才动。 */
+  if(free>=2&&crewFillSilent()>0){mergeAllSilent();crewAutoAfter();return true;}
+  free=minerSlots()-state.miners.length;
+  /* 阶段 ③ 空格 = 1：只有招募等级 == 最低等级时才招，否则转去升一级 */
+  if(free===1&&recruitLevel()===crewMinLv()&&state.gold>=recruitCost()){
+    if(crewBuyOne()){mergeAllSilent();crewAutoAfter();return true;}
+  }
+  /* 阶段 ④ 向高一级合成（成功后下一拍自然回到阶段 ①） */
+  var up=crewUpgradeOne();
+  if(up>0){crewAutoAfter();return true;}
+  if(up<0){crewAutoStop('已达到矿工等级上限 Lv.'+minerLevelCap());return false;}
+  return false; // 金币不足或暂时无动作，原地等（开关保持开启）
+}
+function crewAutoTick(dt){
+  if(!(state.sing&&state.sing.endless&&state.sing.autoCrew))return;
+  crewAutoAcc+=dt;
+  if(crewAutoAcc<0.6)return;
+  crewAutoAcc=0;
+  var ov=$('overlay');if(ov&&ov.classList.contains('show'))return;
+  crewAutoStep();
 }
 
 /* ================= v10.3 信吗赌局 =================
@@ -6726,6 +6966,8 @@ function doKiReset(keepIdx){
   _n.zenith=!!_o.zenith;
   /* 账号偏好 */
   _n.user=_o.user;_n.settings=_o.settings;_n.gem.auto=keepAuto;_n.buyQty=_o.buyQty||1;
+  /* V15.7：三个托管前置条件属于玩家偏好，与 gem.auto 一样跨返璞归真保留 */
+  _n.gem.autoLvCap=_o.gem.autoLvCap;_n.gem.autoLuDiff=_o.gem.autoLuDiff;_n.gem.autoShard=_o.gem.autoShard;
   /* 记录层：全游戏累计 */
   _n.playtime=_o.playtime||0;_n.awayTime=_o.awayTime||0;
   _n.spiritFullAt=_o.spiritFullAt||0;
@@ -6865,6 +7107,7 @@ function bindAbout(){
   var vc=$('verChip');if(vc)vc.title='游戏版本 v'+GAME_VER;
   // v13.6：设置页"关于本游戏"里的版本号同样动态绑定 · v12.2.1 静态文本曾一直漏改
   var agv=$('aboutGameVer');if(agv)agv.textContent='v'+GAME_VER;
+  var fv=$('footVer');if(fv)fv.textContent='v'+GAME_VER; /* V15.7 页脚 */
   // v13.6：排行榜入口（占原"云：上传中"状态行的位置）
   var lb=$('btnLeaderboard');if(lb)lb.onclick=function(e){
     if(e&&e.stopPropagation)e.stopPropagation();
@@ -7280,6 +7523,9 @@ function normalizeStateAfterMigration(s){
     // v14.9.1：大国工匠就位标记 / 灭霸已购买标记 · 旧档缺省回填
     if(typeof s.sing.craftNoDrop!=='boolean')s.sing.craftNoDrop=false;
     if(typeof s.sing.thanos!=='boolean')s.sing.thanos=false;
+    /* V15.7：同样是类型检查式补默认值；老档 s.sing 整个替换，必须在这里显式补 */
+    if(typeof s.sing.endless!=='boolean')s.sing.endless=false;
+    if(typeof s.sing.autoCrew!=='boolean')s.sing.autoCrew=false;
   }
   if(typeof s.prestigeCdUntil!=='number'||!isFinite(s.prestigeCdUntil)||s.prestigeCdUntil<0)s.prestigeCdUntil=0;
   if(typeof s.lastSaveSource!=='string')s.lastSaveSource=''; // v15.1：旧档回填
@@ -7318,6 +7564,13 @@ function normalizeStateAfterMigration(s){
       if(typeof s.gem.hist[k]!=='number'||!isFinite(s.gem.hist[k])||s.gem.hist[k]<0)s.gem.hist[k]=0;
     });
     if(typeof s.gem.auto!=='boolean')s.gem.auto=false;
+    /* V15.7 类型检查式补默认值：老档的 s.gem 是【整个对象替换】，
+       光在 defaultState() 里写不够，这里必须逐个补；重跑幂等。 */
+    if(typeof s.gem.autoLvCap!=='number'||!isFinite(s.gem.autoLvCap))s.gem.autoLvCap=7;
+    s.gem.autoLvCap=Math.max(2,Math.min(14,Math.floor(s.gem.autoLvCap)));
+    if(typeof s.gem.autoLuDiff!=='number'||!isFinite(s.gem.autoLuDiff))s.gem.autoLuDiff=8;
+    s.gem.autoLuDiff=Math.max(0,Math.min(8,Math.floor(s.gem.autoLuDiff)));
+    if(typeof s.gem.autoShard!=='boolean')s.gem.autoShard=true;
     if(!Array.isArray(s.gem.feed))s.gem.feed=[];
     else s.gem.feed=s.gem.feed.filter(function(f){
       return f&&typeof f==='object'&&typeof f.t==='number'&&f.t>0&&
@@ -8072,6 +8325,8 @@ function tick(dt){
     }
   }
   gemAutoTick(dt); // v14.9.2：宝石全自动托管
+  crewAutoTick(dt);   // V15.7：络绎不绝 · 自动填充/升级（与宝石托管同节奏）
+  renderFooterCountdown(); // V15.7：页脚关服倒计时（内部按文本变化去重）
   derived=calcDerived();
   var mining=false;
   var room=derived.capacity-state.ore;
@@ -8336,6 +8591,17 @@ function renderCrew(){
   }
   ma.disabled=!mergeAny; // v10：合成免费，只取决于有没有可配对的同级矿工
   setBtn(ma,'⚡ 一键合成至 Lv.'+mergeCap,mergeAny?'合成免费':(mergeCap<=1?'点选两个同级矿工手动升至 Lv.2':'已全部合成至最高级'));
+  /* V15.7：买了「络绎不绝」才出现按钮；显示开/关状态 */
+  var ac=$('btnAutoCrew');
+  if(ac){
+    var _unlocked=!!(state.sing&&state.sing.endless);
+    var _on=!!(state.sing&&state.sing.autoCrew);
+    ac.style.display=_unlocked?'':'none';
+    ac.disabled=!_unlocked;
+    ac.classList.toggle('on',_on);
+    setBtn(ac,_on?'⏸ 停止自动填充':'🤖 自动填充/升级',
+      _on?'运行中 · 满格清孤矿 / 填满合成 / 逐级升级':(_unlocked?'自动招募 · 合成 · 升级':'需在奇点商店购买「络绎不绝」'));
+  }
   // V11-2：一键填满矿工
   var fillBtn=$('btnFill');
   var need=MINER_SLOTS-md.total;
@@ -8612,9 +8878,11 @@ function renderSingShop(){
     h+='<div class="sing-buff sing-buff-thanos">🟣 灭霸 · 全局倍率 +<b>'+thanosBonus()+'</b>六色最低最高级 · 随宝石成长动态提升</div>';
   if(state.sing.craftNoDrop)
     h+='<div class="sing-buff sing-buff-craft">🔧 大国工匠已就位 · 下一次合成宝石不降低光泽度</div>';
+  if(state.sing.endless)
+    h+='<div class="sing-buff">🔁 络绎不绝已解锁 · 矿工团队页可开启「自动填充/升级」'+(state.sing.autoCrew?'（运行中）':'')+'</div>';
   h+='</div>';
   var _nextAt=singNextRefreshAt(gameNow());
-  h+='<div class="sing-sub">🕗 每日 <b>8:00 / 16:00 / 24:00</b>（北京时间）轮刷 '+(state.sing.duo?'2':'1')+' 件 · 下次 <b class="g">'+singClock(_nextAt)+'</b> · 还有 <b>'+fmtDur(left/1000)+'</b></div>';
+  h+='<div class="sing-sub">🕗 每日 <b>4:00 / 12:00 / 20:00</b>（北京时间）轮刷 '+(state.sing.duo?'2':'1')+' 件 · 下次 <b class="g">'+singClock(_nextAt)+'</b> · 还有 <b>'+fmtDur(left/1000)+'</b></div>';
   var rfCost=(state.sing.shopRefreshN||0)+1; // v13.6.2：刷新花费逐次 +1，固定 8 小时自然刷新后重置为 1
   h+='<div class="sing-actions"><button class="sing-refresh-btn" data-sing-refresh="1"'+(pts>=rfCost?'':' disabled')+' title="花费 '+rfCost+' 奇点值立即刷新货架 · 每刷新一次 +1 点，固定时刻自然刷新后重置；立即刷新不改变下次刷新时刻">🔄 立即刷新货架 · '+rfCost+' 奇点值</button></div>';
   // 物品栏 · 购入的 use 型物品在此点击使用
@@ -8631,7 +8899,8 @@ function renderSingShop(){
   // 货架 · v12.2.1：奇之又奇生效后每次刷 2 件
   if(stock.length){
     stock.forEach(function(sk){
-      var it=SING_ITEMS[sk],afford=pts>=it.cost;
+      var it=SING_ITEMS[sk];if(!it)return; /* V15.7：兼容旧版本页面读到新版商品 */
+      var afford=pts>=it.cost;
       h+='<div class="card sing-stock"><div class="card-icon">'+it.icon+'</div>'+
          '<div class="card-body"><div class="card-title">'+it.name+' <span class="lv">售价 '+it.cost+' 奇点值</span></div>'+
          '<div class="card-desc">'+it.desc+'</div></div>'+
@@ -9223,6 +9492,15 @@ function bindUI(){
   $('btnRecruit').onclick=doRecruit;
   $('btnMergeAll').onclick=function(){mergeAll();renderedCrewKey='';renderCrew();renderStage();};
   $('btnFill').onclick=fillCrew; // V11-2：一键填满矿工
+  $('btnAutoCrew').onclick=function(){ /* V15.7 */
+    if(!(state.sing&&state.sing.endless))return;
+    state.sing.autoCrew=!state.sing.autoCrew;
+    crewAutoAcc=0;
+    renderedCrewKey='';renderCrew();
+    toast(state.sing.autoCrew?'🤖 自动填充/升级已开启':'🤖 自动填充/升级已关闭','#4a9eff',
+      state.sing.autoCrew?'每 0.6 秒一步 · 自动招募 / 合成 / 满格清孤矿 / 逐级升级':'已停止');
+    saveGame(false);
+  };
   $('btnAllDim').onclick=allDimLevelUp; // V11-12：所有维度升一级
   $('btnAscend').onclick=function(){ // V11-4：飞升
     if(!ascendReady())return;
@@ -9294,12 +9572,50 @@ function bindUI(){
   /* v14.9.2：全自动托管开关 · change 事件委托；切换后立即重渲染 */
   $('pane-gem').addEventListener('change',function(ev){
     var t=ev.target;
-    if(!t||!t.dataset||t.dataset.gemAuto===undefined)return;
-    var gs=gemState();gs.auto=!!t.checked;
-    gemHeadKey='';gemAutoAcc=0;
-    saveGame(false);renderGem();
-    toast(t.checked?'🤖 全自动托管已开启':'🤖 全自动托管已关闭','#4a9eff',
-      t.checked?'将自动碎片合成、7 级以下同级合成，矿渣原石满 10000 自动十连洗练':'已停止自动执行');
+    if(!t||!t.dataset)return;
+    var gs=gemState();
+    if(t.dataset.gemAuto!==undefined){
+      gs.auto=!!t.checked;
+      gemHeadKey='';gemAutoAcc=0;
+      saveGame(false);renderGem();
+      toast(t.checked?'🤖 全自动托管已开启':'🤖 全自动托管已关闭','#4a9eff',
+        t.checked?'按你设置的等级与光泽差条件自动合成，矿渣原石满 10000 自动十连洗练':'已停止自动执行');
+      return;
+    }
+    if(t.dataset.gemShardAuto!==undefined){
+      gs.autoShard=!!t.checked;   /* V15.7：碎片开关随时可改，不受托管状态限制 */
+      saveGame(false);gemSyncAutoRow(gs);
+      toast(t.checked?'💠 碎片自动合成已开启':'💠 碎片自动合成已关闭','#4a9eff');
+      return;
+    }
+    if(t.dataset.gemCfg){ /* 滑块：仅托管关闭时才可能触发（开启时已 disabled） */
+      var k=t.dataset.gemCfg,v=Math.floor(Number(t.value));
+      if(k==='lv'){v=Math.max(2,Math.min(14,v));gs.autoLvCap=v;}
+      else if(k==='lu'){v=Math.max(0,Math.min(8,v));gs.autoLuDiff=v;}
+      gemSyncAutoRow(gs);saveGame(false);
+    }
+  });
+  /* 拖动过程中实时刷新右侧数字（change 只在松手时触发，体验偏迟钝） */
+  $('pane-gem').addEventListener('input',function(ev){
+    var t=ev.target;if(!t||!t.dataset||!t.dataset.gemCfg||t.disabled)return;
+    var v=Math.floor(Number(t.value));
+    if(t.dataset.gemCfg==='lv'){
+      v=Math.max(2,Math.min(14,v));gemState().autoLvCap=v;
+    }else{
+      v=Math.max(0,Math.min(8,v));gemState().autoLuDiff=v;
+    }
+    gemSyncAutoRow(gemState());
+  });
+  /* V15.7：微调按钮 · 与滑块等价，同样只在托管关闭时可点 */
+  $('pane-gem').addEventListener('click',function(ev){
+    var b=ev.target&&ev.target.closest?ev.target.closest('[data-gem-step]'):null;
+    if(!b||b.disabled)return;
+    var p=String(b.dataset.gemStep||'').split(':'),k=p[0],d=Number(p[1])||0;
+    var gs=gemState();if(gs.auto)return;
+    if(k==='lv')gs.autoLvCap=Math.max(2,Math.min(14,Math.floor(Number(gs.autoLvCap)||7)+d));
+    else if(k==='lu')gs.autoLuDiff=Math.max(0,Math.min(8,(typeof gs.autoLuDiff==='number'?gs.autoLuDiff:8)+d));
+    else return;
+    saveGame(false);gemSyncAutoRow(gs);
   });
   // 矿工团队统计块内的"训练维护成本"说明 · V11-11：原商店摘要已移除，统计块移至 crewStats
   $('crewStats').addEventListener('pointerdown',function(ev){
