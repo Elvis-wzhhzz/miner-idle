@@ -374,10 +374,12 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 .r-normal{color:#d8dce3}.r-rare{color:#4a9eff}.r-epic{color:#b04efc}
 .r-legend{color:#ffb020}.r-artifact{color:#ff3c3c}
 .r-unique{color:#ff9f43;font-weight:800;animation:hueflow 3s linear infinite}
+.r-unique-plus{color:#ffd18a;font-weight:900;text-shadow:0 0 7px rgba(255,159,67,.4);animation:hueflow 3s linear infinite}
 @keyframes hueflow{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}
 .bd-normal{border-color:#6b7078!important}.bd-rare{border-color:#4a9eff!important}.bd-epic{border-color:#b04efc!important}
 .bd-legend{border-color:#ffb020!important}.bd-artifact{border-color:#ff3c3c!important}
 .bd-unique{border-color:#ff9f43!important;box-shadow:0 0 10px rgba(255,159,67,.4);animation:hueflow 3s linear infinite}
+.bd-unique-plus{border-color:#ffd18a!important;box-shadow:0 0 12px rgba(255,159,67,.52)!important}
 
 /* 均衡门控单行提示 */
 .gateline{background:#241c12;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:12.5px;color:var(--dim);margin-bottom:12px;line-height:1.6}
@@ -1092,14 +1094,6 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
   text-align: center;
 }
 
-#mTipBtn {
-  display: none;
-}
-
-#mTipPanel {
-  display: none;
-}
-
 @media (pointer:coarse),(max-width:700px) {
   .tab {
     min-height: 44px;
@@ -1110,79 +1104,6 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
     min-height: 44px;
   }
   
-  #mTipBtn {
-    display: flex;
-    position: fixed;
-    right: 14px;
-    bottom: 18px;
-    z-index: 120;
-    width: 46px;
-    height: 46px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    border: 1px solid var(--line);
-    background: var(--panel2);
-    color: var(--gold);
-    font-size: 20px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-  
-  #mTipPanel {
-    position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: 74px;
-    max-height: 60vh;
-    z-index: 121;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  
-  #mTipPanel.show {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .m-tip-head {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--line);
-    font-weight: 700;
-    display: flex;
-    justify-content: space-between;
-    flex: 0 0 auto;
-  }
-  
-  #mTipClose {
-    cursor: pointer;
-    color: var(--dim);
-  }
-  
-  .m-tip-body {
-    overflow-y: auto;
-    padding: 8px 14px 14px;
-    min-height: 0;
-  }
-  
-  .m-tip-row {
-    padding: 8px 0;
-    border-bottom: 1px solid var(--line);
-    font-size: 12.5px;
-    line-height: 1.6;
-  }
-  
-  .m-tip-row b {
-    display: block;
-    color: var(--gold);
-    font-size: 12px;
-  }
-  
-  .m-tip-row span {
-    color: var(--dim);
-  }
 }
 
 /* 游戏界面辅助样式 */
@@ -1250,6 +1171,7 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 .wild-item:hover{border-color:var(--gold)}
 .wild-item.selected{border-color:var(--gold);background:rgba(255,207,92,.10);box-shadow:0 0 0 1px rgba(255,207,92,.18) inset}
 .wild-item small{display:block;color:var(--dim);font-size:10px;margin-top:3px}
+.wild-item small.r-unique-plus,.wild-display-slot small.r-unique-plus{color:#ffd18a;font-weight:900;text-shadow:0 0 7px rgba(255,159,67,.4);animation:hueflow 3s linear infinite}
 .wild-display{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:8px 0}
 .wild-display button{min-height:50px;padding:4px 3px;border:1px dashed #66502d;border-radius:7px;background:#211910;color:var(--dim);font-size:10px;overflow-wrap:anywhere}
 .wild-display button:disabled{opacity:.45}
@@ -1406,7 +1328,7 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 
 /* 中等屏幕改为纵向排列 */
 @media(max-width:1120px){
- #wildView{display:block!important;overflow:visible!important;height:auto!important;min-height:0!important;padding:9px!important;}
+ #wildView{overflow:visible!important;height:auto!important;min-height:0!important;padding:9px!important;}
  .wild-layout{display:flex!important;flex-direction:column!important;height:auto!important;min-height:0!important;gap:10px!important;}
  .wild-layout .wild-profile{order:1!important;width:100%!important;height:auto!important;max-height:65vh!important;min-height:0!important;}
  .wild-layout .wild-control{order:2!important;width:100%!important;height:auto!important;max-height:70vh!important;min-height:430px!important;}
@@ -1453,6 +1375,65 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 .wild-layout.kit-expanded .wild-kit{max-height:min(72vh,600px)!important;}
 .wild-layout.kit-expanded .wild-kit-body{padding-bottom:3px;}
 @media(max-width:1120px){.wild-layout.kit-expanded .wild-kit{max-height:min(76vh,680px)!important;}}
+
+/* 矿野界面细化：档案物品图标、紧凑地图控制、返程血线滑动条 */
+.wild-item-with-icon{display:flex;align-items:center;gap:8px;text-align:left!important;min-height:43px;}
+.wild-item-icon{width:27px;height:27px;flex:0 0 27px;display:inline-flex;align-items:center;justify-content:center;border-radius:7px;background:rgba(255,207,92,.07);border:1px solid rgba(255,207,92,.14);font-size:17px;line-height:1;}
+.wild-item-icon-empty{color:#9d8d71;font-size:18px;}
+.wild-item-copy{display:flex;flex-direction:column;align-items:flex-start;min-width:0;gap:3px;}
+.wild-item-copy b{font-size:11.5px;line-height:1.3;overflow-wrap:anywhere;}
+.wild-item-copy small{font-size:10px;line-height:1.25;color:var(--dim);}
+.wild-display-slot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;}
+.wild-display-slot .wild-item-icon{width:23px;height:23px;flex:0 0 23px;font-size:15px;border:0;background:rgba(255,207,92,.055);}
+.wild-display-slot>b{max-width:100%;font-size:9.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wild-display-slot>small{font-size:9px;line-height:1.2;}
+.wild-consumable-equipped>div{display:flex;align-items:center;gap:6px;min-width:0;}
+.wild-equipped-consumable-icon{font-size:17px;line-height:1;}
+.wild-layout .wild-control .wild-map-toolbar{display:flex;align-items:center;gap:6px;min-width:0;margin:0 0 6px;}
+.wild-map-choice{display:flex;align-items:center;gap:4px;min-width:0;}
+.wild-map-series{flex:0 0 auto;}
+.wild-map-difficulty{flex:1 1 auto;}
+.wild-map-divider{width:1px;height:24px;flex:0 0 1px;background:rgba(255,207,92,.18);}
+.wild-map-toolbar .wild-btn{min-width:0;min-height:28px;padding:5px 7px;font-size:10.5px;line-height:1.1;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:4px;}
+.wild-map-difficulty .wild-btn{flex:1 1 0;}
+.wild-map-toolbar .wild-btn small{display:inline!important;margin:0;color:inherit!important;opacity:.72;font-size:8.5px;line-height:1;}
+.wild-map-preview{display:grid;grid-template-columns:minmax(105px,.72fr) minmax(0,2.25fr) minmax(92px,.8fr);align-items:center;gap:8px;margin:0 0 6px!important;padding:7px 9px!important;line-height:1.3!important;min-width:0;}
+.wild-map-preview-name,.wild-map-preview-effect,.wild-map-preview-cap{display:flex;align-items:center;gap:5px;min-width:0;font-size:10.5px;line-height:1.35;}
+.wild-map-preview-icon{font-size:17px;line-height:1;flex:0 0 auto;}
+.wild-map-preview-name>b{font-size:11.5px;color:#ffe0a0;white-space:nowrap;}
+.wild-map-preview-effect>span,.wild-map-preview-cap>span{flex:0 0 auto;color:#c5a66c;font-size:9.5px;}
+.wild-map-preview-effect>b{min-width:0;color:#e4d6c0;font-size:10px;font-weight:550;overflow-wrap:anywhere;}
+.wild-map-preview-cap>b{color:var(--gold);font-size:10.5px;white-space:nowrap;}
+.wild-return-setting{margin:0 0 3px;}
+.wild-return-setting .wild-section-label{margin:4px 0 3px;font-size:10.5px;}
+.wild-return-hint{font-size:9px;color:#94856e;font-weight:400;}
+.wild-return-row{display:flex;align-items:center;gap:10px;min-width:0;}
+.wild-return-range{flex:1 1 auto;min-width:60px;width:100%;height:20px;margin:0;accent-color:#d6a747;cursor:pointer;}
+.wild-return-number{flex:0 0 62px;display:flex;align-items:center;gap:3px;justify-content:flex-end;color:#e6c77f;font-size:11px;}
+.wild-return-number input{width:46px;height:27px;padding:3px 4px;text-align:right;border:1px solid #66502d;border-radius:6px;background:#17120d;color:#f6dfaa;font:inherit;font-size:12px;font-weight:750;outline:none;}
+.wild-return-number input:focus{border-color:#e3b85d;box-shadow:0 0 0 2px rgba(227,184,93,.13);}
+.wild-return-note{font-size:9px;line-height:1.35;margin-top:2px;}
+@media(max-width:700px){
+ .wild-layout .wild-control .wild-map-toolbar{flex-wrap:wrap;}
+ .wild-map-series{flex:1 1 100%;}
+ .wild-map-divider{display:none;}
+ .wild-map-series .wild-btn{flex:1 1 0;}
+ .wild-map-difficulty{flex:1 1 100%;}
+ .wild-map-preview{grid-template-columns:auto 1fr;gap:5px 8px;}
+ .wild-map-preview-effect{grid-column:1/-1;grid-row:2;}
+ .wild-map-preview-cap{grid-column:2;grid-row:1;justify-content:flex-end;}
+}
+
+/* 移动端交互：避免 Safari 双击缩放、触摸高亮和原生拖拽之间互相干扰。 */
+@media (pointer:coarse), (max-width:700px){
+  button,[role="button"],.tab,.slot,.bagitem,.mslot,.wild-item,.wild-display button{
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+  }
+  #crewList .mslot[draggable="true"]{touch-action:none;user-select:none;-webkit-user-select:none;}
+  #crewList{overscroll-behavior:contain;}
+  .wild-control,.wild-log,.wild-kit,.wild-profile{ -webkit-overflow-scrolling:touch; }
+}
 </style>
 <!-- v12.3 Supabase SDK · 云端存档——UMD bundle 直接内联，不依赖外网 CDN。
      v13.3：原先是 src="data:application/javascript;base64,…"，但部分页面容器/CSP
@@ -1591,6 +1572,7 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 <div class="depth-title" id="depthTitle">第 1 层 · 泥土层<small>矿石：碎土</small></div>
 <div class="depth-sub">矿石价值 <b id="depthMult" title="矿石价值 = 层数基础 ×2^(层数-1) × 矿石提纯(1+15%×等级) × 装备价值 × 装备金币 × 心情 × 精神
 当前有效 ×1 · 当前无加成">×1</b></div>
+<button type="button" id="wildInfoBtn" onclick="showWildInfo()" title="查看矿野玩法与数值说明" style="display:none;border:0;background:transparent;color:var(--dim);font-size:11px;padding:0;cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px">矿野信息</button>
 </div>
 <div id="mineView">
 <div class="stage" id="stage">
@@ -8771,27 +8753,19 @@ function doPrestige(){
   // 必须在 calcDerived/rebuildAll 前执行，界面立即反映满级数值。
   var nowSing=singMode();
   if(nowSing)fillUpgradesToMax();
-  // v8：身上装备保留 · 转生的回报就是带着神装重开；
-  // v10：装备背包清空——背包只是临时周转区，若保留会让"囤一身神装再转生"
-  // 成为无脑最优解，转生的资源重置意义被削弱
-  // v10.2：声望 >50 万后转生保留背包（大后期"带着积累继续冲"）；
-  // v12 修订：保留容量显式挂钩"永久背包格"bagBase 购买制底数——此前用
-  // equipBagSize() 依赖"up.bag 刚被重置为 0"的时序巧合，语义不清且数字会漂
-  var bagNote='背包已清空';
-  if(state.prestige>500000){
-    var cap=state.bagBase||10;
-    if(state.bag.length>cap){
-      var sorted=state.bag.slice().sort(function(a,b){
-        var d=(b.locked?1:0)-(a.locked?1:0);
-        return d||b.score-a.score;
-      });
-      var dropped=sorted.slice(cap);
-      state.bag=sorted.slice(0,cap);
-      bagNote='背包已保留 · 容量缩至 '+cap+' 格 · '+dropped.length+' 件超额弃置';
-    }else if(state.bag.length){
-      bagNote='背包已保留 · '+state.bag.length+' 件';
-    }
-  }else if(state.bag.length)state.bag=[];
+  // 普通转生始终保留装备背包；若超过永久保留容量，优先保留上锁装备及评分较高装备。
+  // 飞升与返璞归真仍按各自流程清空装备背包。
+  var cap=Math.max(0,Math.floor(Number(state.bagBase)||10));
+  var bagNote='装备背包保留 · 当前 '+state.bag.length+' 件';
+  if(state.bag.length>cap){
+    var sorted=state.bag.slice().sort(function(a,b){
+      var d=(b.locked?1:0)-(a.locked?1:0);
+      return d||((Number(b.score)||0)-(Number(a.score)||0));
+    });
+    var dropped=sorted.slice(cap);
+    state.bag=sorted.slice(0,cap);
+    bagNote='装备背包保留 '+cap+' 格 · '+dropped.length+' 件超额装备按上锁/评分优先级弃置';
+  }
   derived=calcDerived();applyTheme();rebuildAll();
   checkAchievements();
   lbPush(true); // v13.6：转生落幕后强推榜单——此刻转生次数已+1、背包已按规则清空/保留，
@@ -8858,6 +8832,7 @@ function tick(dt){
   gemAutoTick(dt); // v14.9.2：宝石全自动托管
   crewAutoTick(dt);   // V15.7：络绎不绝 · 自动填充/升级（与宝石托管同节奏）
   wildTick(dt);      // V16：矿野实时派遣与在家恢复
+  wildUpdateHealEta(); // V16：在家回血预计时间随主循环刷新
   renderFooterCountdown(); // V15.7：页脚关服倒计时（内部按文本变化去重）
   derived=calcDerived();
   var mining=false;
@@ -8914,7 +8889,8 @@ function tick(dt){
     if(singMode()&&gameNow()>=(state.sing.rollAt||0))singNaturalRestock(); // v13.6.2：固定 8 小时自然刷新——重刷物品 + 刷新花费重置回 1 · 手动刷新/购买不重置倒计时
   }
   renderAcc+=dt;
-  if(renderAcc>=0.1){renderAcc=0;render();}
+  var renderEvery=(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches)?0.2:0.1;
+  if(renderAcc>=renderEvery){renderAcc=0;render();}
 }
 
 /* ================= 渲染 ================= */
@@ -9045,6 +9021,69 @@ function hexA(hex,a){
   return 'rgba('+r+','+g+','+b+','+a+')';
 }
 var crewSel=-1; // 点击选中态 · 点击合成的 fallback 交互
+var crewPointerBound=false,crewPointerGesture=null,crewIgnoreClickUntil=0;
+function crewActivateIndex(index){
+  var cells=crewCells();
+  if(index<0||index>=cells.length)return;
+  if(crewSel>=0&&crewSel!==index&&cells[crewSel]&&cells[crewSel].lv===cells[index].lv){
+    var level=cells[index].lv;
+    if(mergePairAt(level)>0){
+      crewSel=-1;renderedCrewKey='';renderCrew();renderStage();
+      var pop=$('crewList').querySelector('.mslot[data-lv="'+(level+1)+'"]');
+      if(pop){pop.classList.add('pop');setTimeout(function(){pop.classList.remove('pop');},400);}
+      return;
+    }
+  }
+  crewSel=(crewSel===index)?-1:index;
+  renderedCrewKey='';renderCrew();
+}
+function bindCrewPointerInteractions(list){
+  if(!list||crewPointerBound)return;
+  crewPointerBound=true;
+  list.addEventListener('pointerdown',function(ev){
+    if(ev.pointerType==='mouse'||(ev.button!==undefined&&ev.button!==0))return;
+    var el=ev.target&&ev.target.closest?ev.target.closest('.mslot[data-id]'):null;
+    if(!el||!list.contains(el))return;
+    crewPointerGesture={id:ev.pointerId,source:+el.dataset.i,level:+el.dataset.lv,x:ev.clientX,y:ev.clientY,moved:false};
+    try{list.setPointerCapture(ev.pointerId);}catch(e){}
+    ev.preventDefault();
+  },{passive:false});
+  list.addEventListener('pointermove',function(ev){
+    var g=crewPointerGesture;if(!g||g.id!==ev.pointerId)return;
+    if(Math.abs(ev.clientX-g.x)+Math.abs(ev.clientY-g.y)>9)g.moved=true;
+    if(!g.moved)return;
+    var el=document.elementFromPoint(ev.clientX,ev.clientY);
+    var target=el&&el.closest?el.closest('#crewList .mslot[data-id]'):null;
+    Array.prototype.forEach.call(list.querySelectorAll('.mslot.over-ok'),function(x){x.classList.remove('over-ok');});
+    if(target&&+target.dataset.i!==g.source&&+target.dataset.lv===g.level)target.classList.add('over-ok');
+  });
+  list.addEventListener('pointerup',function(ev){
+    var g=crewPointerGesture;if(!g||g.id!==ev.pointerId)return;
+    crewPointerGesture=null;crewIgnoreClickUntil=Date.now()+650;
+    Array.prototype.forEach.call(list.querySelectorAll('.mslot.over-ok'),function(x){x.classList.remove('over-ok');});
+    if(g.moved){
+      var el=document.elementFromPoint(ev.clientX,ev.clientY);
+      var target=el&&el.closest?el.closest('#crewList .mslot[data-id]'):null;
+      if(target&&+target.dataset.i!==g.source&&+target.dataset.lv===g.level&&mergePairAt(g.level)>0){
+        crewSel=-1;renderedCrewKey='';renderCrew();renderStage();
+        var pop=list.querySelector('.mslot[data-lv="'+(g.level+1)+'"]');
+        if(pop){pop.classList.add('pop');setTimeout(function(){pop.classList.remove('pop');},400);}
+      }else crewActivateIndex(g.source);
+    }else crewActivateIndex(g.source);
+    try{if(list.hasPointerCapture(ev.pointerId))list.releasePointerCapture(ev.pointerId);}catch(e){}
+    ev.preventDefault();
+  },{passive:false});
+  list.addEventListener('pointercancel',function(ev){
+    if(crewPointerGesture&&crewPointerGesture.id===ev.pointerId)crewPointerGesture=null;
+    Array.prototype.forEach.call(list.querySelectorAll('.mslot.over-ok'),function(x){x.classList.remove('over-ok');});
+  });
+  /* 鼠标仍使用 click；触屏已由 pointerup 处理，忽略 Safari 随后合成的 click。 */
+  list.addEventListener('click',function(ev){
+    if(Date.now()<crewIgnoreClickUntil)return;
+    var el=ev.target&&ev.target.closest?ev.target.closest('.mslot[data-id]'):null;
+    if(el&&list.contains(el))crewActivateIndex(+el.dataset.i);
+  });
+}
 /* 把矿工字典展开为格子数组 · 高等级在前 */
 function crewCells(){
   // 矿工数组按等级降序展开为格子数组 · 高等级在前
@@ -9059,6 +9098,7 @@ function renderCrew(){
   var rebuild=key!==renderedCrewKey;
   if(rebuild)renderedCrewKey=key;
   var list=$('crewList');
+  bindCrewPointerInteractions(list);
   if(rebuild){
     var total=Math.max(MINER_SLOTS,cells.length);
     var h='';
@@ -9100,14 +9140,6 @@ function renderCrew(){
             if(pop){pop.classList.add('pop');setTimeout(function(){pop.classList.remove('pop');},400);}
           }
         }
-      });
-      // 点击 fallback · 触屏/不便拖拽时：点选一个，再点同级另一个
-      el.addEventListener('click',function(){
-        var i=+el.dataset.i;
-        if(crewSel>=0&&crewSel!==i&&cells[crewSel].lv===cells[i].lv){
-          if(mergePairAt(cells[i].lv)>0){crewSel=-1;renderedCrewKey='';renderCrew();renderStage();}
-        }else if(crewSel===i){crewSel=-1;renderedCrewKey='';renderCrew();}
-        else{crewSel=i;renderedCrewKey='';renderCrew();}
       });
     });
   }
@@ -9628,7 +9660,7 @@ function renderBagSlot(){
   if(!unlocked){
     showPre('🔒 声望达到 100 万解锁 · 当前 '+fmt(state.prestige));
     setBtn(btn,'','未解锁');btn.disabled=true;btn.classList.remove('done');
-    btn.title='永久背包格需要声望达到 100 万 · 当前 '+fmt(state.prestige)+'\n解锁后每次购买 +1 格 · 价格 ×10 · 声望 >50 万转生时保留数同步 +1';
+    btn.title='永久背包格需要声望达到 100 万 · 当前 '+fmt(state.prestige)+'\n解锁后每次购买 +1 格 · 价格 ×10 · 普通转生时背包保留容量同步 +1';
     $('card-bagslot').classList.add('locked');
     return;
   }
@@ -9643,7 +9675,7 @@ function renderBagSlot(){
   var c=bagSlotCost();
   showPre(''); // v12.2：涨价说明移入悬停，不再占版面
   // v12.2：按钮只显示价格 · .cost 留空自动隐藏，价格落入 .bamt 大字
-  var tip='购买 +1 永久背包格 · 当前 '+base+' → '+(base+1)+' 格 · 总背包 '+equipBagSize()+' 格\n下次价格 = 本次 ×10\n声望 >50 万转生时保留数同步 +1';
+  var tip='购买 +1 永久背包格 · 当前 '+base+' → '+(base+1)+' 格 · 总背包 '+equipBagSize()+' 格\n下次价格 = 本次 ×10\n普通转生时背包保留容量同步 +1';
   if(state.gold<c){
     setBtn(btn,'',fmt(c));btn.disabled=true;
     tip+='\n金币不足 · 还需 '+fmt(c-state.gold)+'';
@@ -10234,7 +10266,7 @@ function bindUI(){
     showModal({title:'🏆 金盆洗手 · 转生',confirmText:'获得 '+g+' 声望',
       // v12 修订：信息精简——声望收益只告知"永久提升全局产出"删幂曲线/幸运值括号说明；
       // 背包保留容量显式与永久背包格 · bagBase挂钩，不再硬编码 10
-      body:'重置金币、矿石、升级、矿工与矿层 · <b>身上装备保留 · 背包清空</b>'+(state.prestige>500000?' · <b>声望 >50 万：背包保留</b> · 容量缩至 '+(state.bagBase||10)+' 格，超额弃置':'')+'，换取 <b class="g">'+g+'</b> 点声望。<br>声望永久提升全局产出。'+
+      body:'重置金币、矿石、升级、矿工与矿层 · <b>身上装备保留 · 装备背包保留 '+(state.bagBase||10)+' 格</b>'+(state.bag.length>(state.bagBase||10)?' · 超额装备按上锁优先、评分其次的顺序保留':'')+'，换取 <b class="g">'+g+'</b> 点声望。普通转生不再要求声望达到门槛；飞升与返璞归真仍按各自规则清空背包。<br>声望永久提升全局产出。'+
       (state.prestige>=PRESTIGE_CAP?singPrestigeHint(g):'')+
       '<br>每次转生：矿工等级上限 +1 · → Lv.'+minerLevelCap()+'、矿层上限 +1 · → 第 '+depthCap()+' 层，全游戏共 '+DEPTHS.length+' 层。'+
       (cdH>0?'<br>⏳ <b>转生冷却提示</b>：本次转生后矿工等级上限 ≥50 · → Lv.'+(minerLevelCap()+1)+'且声望达到上限，将进入 <b>'+cdH+'</b> 小时转生冷却 · 此后上限每 +5 级，冷却再 +1 小时。':''),
@@ -10299,7 +10331,7 @@ function showHelp(){
       '<b>奇点商店：</b>声望达到上限 <b>999999999</b> 后不再增加 · 全游戏已获取声望继续统计，商店页变为 <b>🌟 奇点商店</b>原始维度默认全满、不再可购——每次转生时，本轮溢出的声望按<b>位数</b>折算为 <b>奇点值</b> · 溢出声望每超出 8 位 +1 点，<b>不随转生/飞升清零</b>。货架每日 <b>8:00 / 16:00 / 24:00</b>（北京时间）固定刷新，也可花奇点值<b>立即刷新</b> · 第 1 次 1 点、第 2 次 2 点逐次 +1，货架自然刷新时重置：🧪 克隆药水 1 点 · 有空位时补一名当前最高级矿工· ✌️ 倍倍加 1 点 · 金币翻倍，持有 2 瓶后不再刷新· 🌍 地心引力 3 点 · 免费下潜一层，层数上限时不可用· 💡 灵光乍现 1 点 · 0.1% 概率直接参透一项未获得的内在精神· 🚪 犹大密室 13 点 · 开启第 13 层「奇点之核」，解锁需 2.37e33 金币，无上爆率再 +0.5pp· ☄️ 火星四溅 1 点 · 全局倍率 +10，持续 30 分钟· 👑 至高无上 9 点 · 购入后在物品栏点击使用，获得一件随机无上装备，无持有上限· 🛡️ 必须信 2 点 · 最多持有 1 个 · 下一次赌错自动生效：返还注金、保留连胜与加成· 🍅 番茄炒蛋 5 点 · 15 分钟内不再出现史诗及以下稀有度装备，生效中不可重复使用· 🌀 奇之又奇 8 点 · 往后每次刷新出 2 件物品，购买后不再刷新· ⏱️ 立马转生 2 点 · 立即清零转生冷却 · <b>无转生冷却时无法使用、不消耗物品</b>· 🪪 改名卡 2 点 · 修改矿工名称 · <b>取消则不消耗</b>· 🔧 大国工匠 3 点 · <b>下一次合成宝石不降低光泽度</b>，用一次即消耗· 🎨 天然色料 1 点 · 弹窗选择源颜色与目标颜色，把源颜色的<b>全部宝石碎片</b>染成目标色· 🟣 灭霸 25 点 · <b>仅可购买一次</b> · 全局产出倍率永久 +「六种颜色各自最高等级宝石」的最小值，取值 0~10。<br><br>'+
       '<b>信吗 · 第 6 层解锁：</b>每次爆装后，矿工必定对下一件装备发出二元预言——猜<b>部位</b>、猜<b>套装</b>、猜<b>稀有度</b>无上不出现在预言里，约一半预言是"XX 或 XX"双选项。押"是/否"即可，<b>注金 = 收益估值 × 该事件发生的真实概率</b>。猜中奖励在预言出现时即已摇定并<b>直接展示</b>：<b>金币</b>= 当前金币的 50%~100%/ <b>当前最高级矿工 ×1</b>留好空位/ <b>某项维度 +1</b> · 该维度锁定至下一个预言出现。猜中返本金 + 奖励，猜错注金不退。连对 3 次起心情愉悦 · 提纯价值 +10%/次，连错 3 次起暴怒 · 挥镐速度 +10%/次，紫水晶强化后为 20%/次；换层赌局作废退 80%；转生/飞升赌局作废、注金不退。<br><br>'+
       '<b>成就：</b>70+ 项成就覆盖金币/深度/声望/幸运/无上/连续爆装/信吗连对连错等里程碑，另有 15 项<b>隐藏成就</b>条件未知，解锁后揭示。<br><br>'+
-      '<b>下潜转生：</b>共 13 层 · 第 13 层「奇点之核」需奇点商店的犹大密室开启· 未转生最多下潜第 8 层，每次转生 +1 层上限 · 越深价值越高 · ×2/层· 第 6 层后可转生换声望 · 全局产出幂曲线封顶 ×8：10 万≈×1.8 · 100 万≈×3 · 500 万≈×5 · 幸运分段成长：10 万≈+200 → 收敛 +1300 · <b>转生保留身上装备、清空背包</b> · <b>声望 >50 万后背包保留</b>，且每次转生 +1 矿工等级上限 · <b>矿工等级上限达到 50 级、且声望达到上限后，每次转生进入 1 小时冷却，之后上限每 +5 级冷却再 +1 小时；两个条件缺一时转生不进入冷却 · 已有冷却也清零，飞升不受转生冷却影响</b>。<br><br>'+
+      '<b>下潜转生：</b>共 13 层 · 第 13 层「奇点之核」需奇点商店的犹大密室开启· 未转生最多下潜第 8 层，每次转生 +1 层上限 · 越深价值越高 · ×2/层· 第 6 层后可转生换声望 · 全局产出幂曲线封顶 ×8：10 万≈×1.8 · 100 万≈×3 · 500 万≈×5 · 幸运分段成长：10 万≈+200 → 收敛 +1300 · <b>普通转生没有声望门槛，始终保留身上装备和装备背包</b>（背包按永久背包格容量保留，超额时优先保留上锁及高评分装备）；飞升与返璞归真仍按各自规则清空背包 · 每次转生 +1 矿工等级上限 · <b>矿工等级上限达到 50 级、且声望达到上限后，每次转生进入 1 小时冷却，之后上限每 +5 级冷却再 +1 小时；两个条件缺一时转生不进入冷却 · 已有冷却也清零，飞升不受转生冷却影响</b>。<br><br>'+
       '<b>矿野：</b>在矿野界面购买星酌邀约并招募一位探险者，使用矿工装备为其配置装备；通过地图系列与难度选择目的地，设置返程生命线后即可出发。探险者会自动探索、战斗和返程，途中可能获得陈列品、消耗品、矿渣原石与金币；陈列品放入家中陈列位后生效，智识晶粒可用于提升六项永久属性。出发前装入消耗品槽的药剂会在出发时生效，医疗包与护盾会在战斗中自动触发；旅途中拾取的消耗品会保留到返程后，供下一趟探险使用。<br><br>'+
       '<b>离线：</b>关页面/切后台均会结算，离线收益按 50% 效率计算 · 最多 8 小时，不足 1 分钟不结算 · 离线<b>爆装速度为在线的 1/6</b>掉落间隔 ×6，作为平衡代价，<b>无上品质离线也可掉落</b>。'});
 }
@@ -10428,28 +10460,6 @@ function mobileAdapt(){
   }catch(e){}
   if(!isMobile)return;
   document.body.classList.add('is-mobile');
-  /* ① 88 处 title 悬停说明在触屏上看不到 → 汇总成一个可点开的「?」面板。
-   *    不给任何现有元素绑定事件，避免干扰购买 / 出售 / 升级等原有点击。 */
-  var tips=[],els=document.querySelectorAll('[title]');
-  for(var i=0;i<els.length;i++){
-    var t=els[i].getAttribute('title');
-    if(!t)continue;
-    tips.push({label:(els[i].textContent||'').trim().slice(0,18)||'说明',tip:t});
-    els[i].removeAttribute('title');
-  }
-  var btn=document.createElement('button');
-  btn.id='mTipBtn';btn.type='button';btn.textContent='?';
-  btn.setAttribute('aria-label','查看玩法说明');
-  var panel=document.createElement('div');panel.id='mTipPanel';
-  var html='<div class="m-tip-head">📖 玩法说明 <span id="mTipClose">✕</span></div><div class="m-tip-body">';
-  for(var j=0;j<tips.length;j++){
-    html+='<div class="m-tip-row"><b>'+esc(tips[j].label)+'</b><span>'+esc(tips[j].tip)+'</span></div>';
-  }
-  html+='</div>';
-  panel.innerHTML=html;
-  document.body.appendChild(btn);document.body.appendChild(panel);
-  btn.onclick=function(){ panel.classList.toggle('show'); };
-  panel.onclick=function(e){ if(e.target&&e.target.id==='mTipClose')panel.classList.remove('show'); };
   /* ② 拖拽提示改成"点选为主"，只改文案；点选交互原本就存在，逻辑不动。 */
   var hint=document.querySelector('.crew-hint');
   if(hint){
@@ -10553,7 +10563,18 @@ function wildIsAway(){return !!(wildState().trip&&wildState().trip.phase);}
 function wildLog(text,kind,delayMs){var w=wildState();if(!Array.isArray(w.logs))w.logs=[];var delay=document.hidden?0:Math.max(0,Number(delayMs)||0),entry={t:gameNow(),text:String(text),kind:kind||'',revealAt:delay?Date.now()+delay:0};w.logs.unshift(entry);if(w.logs.length>500)w.logs.length=500;wildLogDirty=true;if(delay)setTimeout(function(){wildLogDirty=true;if(wildState().mode==='wild')renderWild();},delay+20);}
 function wildNum(n){if(!isFinite(n))return '0';return Math.abs(n)>=1000?fmt(n):Number(n).toFixed(1);}
 function wildRarityRank(r){return WILD_RARITIES.indexOf(r);}
+function wildRarityCssClass(r){return r==='unique+'?'unique-plus':(r||'normal');}
+function wildCollectionIcon(c){
+ var id=c&&c.id;
+ var icons={shell:'🐚',pink_sand:'🏖️',jellyfish:'🪼',pearl:'🦪',wreck:'⚓',sail:'⛵',water_seed:'💧',moss:'🌿',glow_cap:'🍄',dew_bead:'💎',butterfly:'🦋',root_remnant:'🌳',treant_arm:'🪵',wood_seed:'🌱',waterheart:'💧',woodheart:'🌳'};
+ return icons[id]||'✨';
+}
+function wildConsumableIcon(c){
+ var icons={medkit:'🩹',shield:'🛡️',potion:'🧪'};
+ return c&&icons[c.type]||'🎒';
+}
 function wildHasCollection(id){var w=wildState(),meta=WILD_COLLECTIONS.find(function(x){return x.id===id;}),heart=meta?(meta.series==='sea'?'waterheart':'woodheart'):null;if(w.homeCollections.indexOf(id)>=0||(w.displaySlots||[]).indexOf(id)>=0||!!(w.trip&&w.trip.lootCollections&&w.trip.lootCollections.some(function(x){return x.id===id;})))return true;return !!(heart&&(w.homeCollections.indexOf(heart)>=0||(w.displaySlots||[]).indexOf(heart)>=0));}
+function wildAttractionCollectionNames(){var w=wildState(),ids=(w.homeCollections||[]).concat(w.displaySlots||[]);if(w.trip&&Array.isArray(w.trip.lootCollections))w.trip.lootCollections.forEach(function(x){if(x&&x.id)ids.push(x.id);});var names=[];if(ids.indexOf('waterheart')>=0)names.push(WILD_HEARTS.waterheart.name);else if(ids.indexOf('water_seed')>=0)names.push('水之心');if(ids.indexOf('woodheart')>=0)names.push(WILD_HEARTS.woodheart.name);else if(ids.indexOf('wood_seed')>=0)names.push('木之心');return names;}
 function wildRandomGrowth(){var out,tries=0;do{out={};var sum=0;for(var i=0;i<5;i++){var v=Math.round((.5+Math.random()*1)*100)/100;out[WILD_KEYS[i]]=v;sum+=v;}var last=Math.round((6-sum)*100)/100;out.per=last;tries++;}while((last<.5||last>1.5)&&tries<10000);if(last<.5||last>1.5){out={str:1,agi:1,int:1,end:1,loy:1,per:1};}return out;}
 function wildHire(name){var w=wildState(),clean=String(name||'').trim(),len=Array.from(clean).length;if(w.explorer||w.invites<=0||wildIsAway())return false;if(!clean||len>5){toast('请填写 1 至 5 个字的探险者代号','#ff5c5c');return false;}w.invites--;var lv=Math.max(1,minerData().maxLv);var g=wildRandomGrowth();var hp=100+5*lv+10*(g.end*lv+w.book.end);w.explorer={name:clean,level:lv,growth:g,hp:hp,maxHp:hp,gear:{pickaxe:null,helmet:null,gloves:null,boots:null,ring:null,amulet:null,belt:null},battles:0,kills:0,trips:0,returns:0,createdAt:gameNow()};wildLog('🍻 星酌邀约生效，'+clean+' 正式加入探险队，当前等级 Lv.'+lv+'。六维成长系数已固定且不可修改。','good');wildUiDirty=true;saveGame(false);return true;}
 function wildPromptHire(){var w=wildState();if(w.explorer||w.invites<=0||wildIsAway())return;showModal({title:'🍻 为新探险者取一个代号',confirmText:'确认招募',cancelText:'取消',body:'<p class="wild-muted" style="margin-bottom:9px">代号创建后无法修改，最多 5 个字。</p><input id="wildExplorerName" type="text" maxlength="10" autocomplete="off" placeholder="输入探险者代号（1 至 5 字）" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--line);background:#17120d;color:var(--text);font:inherit;font-size:14px">',onConfirm:function(){var input=$('wildExplorerName'),name=input?input.value.trim():'';var len=Array.from(name).length;if(!len||len>5){toast('探险者代号必须为 1 至 5 个字','#ff5c5c');return false;}return wildHire(name);}});var field=$('wildExplorerName');if(field)setTimeout(function(){field.focus();},40);}
@@ -10562,6 +10583,62 @@ function wildTavernEnsure(){var w=wildState(),t=w.tavern,now=gameNow(),next=(sta
 function wildInviteCost(q){var cost=q===1?10:q===2?19:28;if(wildHomeEffect('inviteDiscount'))cost=Math.max(0,cost-3);return cost;}
 function wildBuyInvite(q){var w=wildState();wildTavernEnsure();if(![1,2,3].includes(q)||q>w.tavern.stock)return;var cost=wildInviteCost(q);if(singPoints()<cost){toast('🌟 奇点值不足','#ff5c5c','购买 '+q+' 张星酌邀约需要 '+cost+' 奇点值');return;}state.sing.spent=(state.sing.spent||0)+cost;w.invites+=q;w.tavern.stock-=q;wildLog('🃏 从酒馆代销购买 '+q+' 张星酌邀约，消耗 '+cost+' 奇点值。','good');wildUiDirty=true;renderShop();saveGame(false);}
 function wildHomeEffect(key){var sum=0,w=wildState();(w.displaySlots||[]).forEach(function(id){var c=WILD_COLLECTIONS.find(function(x){return x.id===id;})||WILD_HEARTS[id];if(c&&c[key])sum+=c[key];});return sum;}
+/* V16：矿野信息弹框 —— 汇总战斗算法、陈列品掉落与套装加成，帮玩家理解玩法 */
+function showWildInfo(){
+ var w=wildState(),ex=w.explorer;
+ var td='<td style="padding:3px 8px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top">';
+ var th='<th style="text-align:left;padding:4px 8px;color:#f0d28e;border-bottom:1px solid rgba(255,207,92,.32)">';
+ /* 掉落地图按稀有度收窄：远足只有普通怪（最高史诗），探索起有稀有怪（传说），
+    惊险起有精英怪（至宝），绝境才有终极怪（无上）。不能把同系列所有地图都列上。 */
+ var diffs=['hike','explore','thrilling','despair'];
+ function infoMaps(c){
+  var minIdx=c.rarity==='unique'?3:c.rarity==='artifact'?2:c.rarity==='legend'?1:0;
+  return Object.keys(WILD_MAPS).filter(function(k){var m=WILD_MAPS[k];return m.series===c.series&&diffs.indexOf(m.diff)>=minIdx;})
+   .map(function(k){return WILD_MAPS[k].name+'（'+WILD_DIFF[WILD_MAPS[k].diff].name+'）';});
+ }
+ var h='<div style="font-size:12px;line-height:1.7">';
+ h+='<b style="color:#f0d28e">① 探险者战斗与恢复</b><br>'+
+  '· 最大生命 = 100 + 5×等级 + 10×耐久'+(ex?'（当前 '+Math.round(ex.hp)+' / '+Math.round(wildMaxHp(wildStats(false),ex.level))+'）':'')+'。<br>'+
+  '· 家中回血 = （感知成长×等级 + 山海杂记感知）÷ 60 × 秒数 ×（1 + 陈列品回血加成）。<br>'+
+  '· 攻击力 = 10 + 等级 + 2×力量；攻击间隔 = max(1, 5 − 0.005×等级 − 0.02×敏捷) 秒。<br>'+
+  '· 闪避率：己方智力 ≥ 敌方智力时 = min(95%, (己智−敌智)÷己智 + 感知÷400)，否则为 0。<br>'+
+  '· 压制率：己方智力 &gt; 敌方智力时 = min(100%, (己智−敌智)÷100)，否则为 0；压制会提高伤害。<br>'+
+  '· 感知怪物：感知 ≥ max(敌方智力, 普通10 / 稀有40 / 精英65 / 终极100) 时提前一轮发现怪物，战斗推迟到下一步；否则当场开战。<br><br>';
+ h+='<b style="color:#f0d28e">② 陈列品与掉落地图</b><br>'+
+  '· 只有放进陈列位的陈列品才生效；同系列集齐 7 件会自动合成 1 件更强的无上+陈列品，同样需摆上陈列位。<br>'+
+  '· 打赢该类最高怪后直接判定掉落：常规最高怪 30% 史诗；罕见最高怪 20% 传说 / 30% 史诗；精英最高怪 15% 至宝 / 25% 传说；终极最高怪 10% 无上 / 20% 至宝。<br>'+
+  '· 远足难度只有普通怪，最高掉史诗；无上陈列品只在绝境难度出现。下表已按稀有度列出真正可能掉落的地图。<br>'+
+  '<table style="width:100%;border-collapse:collapse;font-size:11px;margin:5px 0 10px"><tr>'+th+'名称</td>'+th+'稀有度</td>'+th+'可能掉落地图</td></tr>';
+ var allCols=WILD_COLLECTIONS.slice();Object.keys(WILD_HEARTS).forEach(function(k){allCols.push(WILD_HEARTS[k]);});
+ allCols.forEach(function(c){
+  var maps=WILD_HEARTS[c.id]?'集齐该系列 7 件自动合成':(infoMaps(c).join('、')||'-');
+  var rarityLabel=WILD_RNAME[c.rarity]||c.rarity;
+  var rarityClass='r-'+wildRarityCssClass(c.rarity);
+  h+='<tr>'+td+esc(c.name)+'</td>'+td+'<span class="'+rarityClass+'">'+esc(rarityLabel)+'</span></td>'+td+maps+'</td></tr>';
+ });
+ h+='</table>';
+ h+='<b style="color:#f0d28e">③ 套装加成对照表</b><br>'+
+  '· 同一套装穿满 2 / 4 / 6 件时，对应属性获得加成；按下表基础倍率 × 套装内最低稀有度倍率计算。<br>'+
+  '<table style="width:100%;border-collapse:collapse;font-size:11px;margin:5px 0 6px"><tr>'+th+'套装</td>'+th+'加成属性</td>'+th+'2 件</td>'+th+'4 件</td>'+th+'6 件</td></tr>';
+ Object.keys(WILD_SET_STAT).forEach(function(k){
+  h+='<tr>'+td+WILD_SET_NAME[k]+'</td>'+td+WILD_LABEL[WILD_SET_STAT[k]]+'</td>';
+  [1,2.5,6].forEach(function(v){h+=td+'+'+v.toFixed(1)+'</td>';});
+  h+='</tr>';
+ });
+ h+='</table><div style="color:var(--dim);font-size:11px">稀有度倍率：普通 ×1 · 稀有 ×1.2 · 史诗 ×1.5 · 传说 ×2.5 · 至宝 ×4 · 无上 ×10。</div><br>';
+ h+='<b style="color:#f0d28e">④ 其他要知道的</b><br>'+
+  '· 忠诚：探险背包 = 3 + floor(忠诚 ÷ 25) 格；忠诚也计入六维，参与套装与感知判定。<br>'+
+  '· 保全：安全返程按背包容量把战利品全部带回；身亡时装备与战利品逐件按 min(85%, 20% + 0.45%×忠诚) 判定保全，<b>无上陈列品必定遗失</b>。<br>'+
+  '· 正向探索每步遇怪 30%，返程为去程的 1/4 = 7.5%；持有无上陈列品时返程翻倍为 15%，返程开始会提示。<br>'+
+  '· 生命低于返程血线会自动回家；远足难度遇险触发「走为上」，立即保留 1 点生命并带战利品返程。<br>'+
+  '· 出发前装进槽位的消耗品才在本次旅途生效；途中捡到的留到返程后入包。<br>'+
+  '· 智识晶粒用于「山海杂记」永久提升六维；至宝、无上装备可在矿野之笈祈献换成晶粒。<br>'+
+  '· 探险收益按出发瞬间的金币与矿渣产能快照结算，途中升级不影响本次收益。<br>'+
+  '· 探险者等级跟随矿工团队最高等级自动同步；返璞归真会清空矿野进度，当前智识晶粒归零，生涯累计获得/消耗保留。<br>'+
+  '· 星酌邀约可在奇点商店酒馆代销购买，也可由官方兑换码发放。';
+ h+='</div>';
+ showModal({title:'🌿 矿野信息',confirmText:'知道了',body:h});
+}
 function wildSyncLevel(){var w=wildState(),ex=w.explorer;if(!ex||wildIsAway())return;var lv=Math.max(1,minerData().maxLv);if(ex.level!==lv){ex.level=lv;var st=wildStats(false);var mh=100+5*lv+10*st.end;if(ex.hp>mh)ex.hp=mh;ex.maxHp=mh;wildLog('📈 探险者等级已与矿工团队最高等级同步至 Lv.'+lv+'。');wildUiDirty=true;}}
 function wildSetCount(ex){var counts={},lowest={};Object.keys(WILD_SET_STAT).forEach(function(k){counts[k]=0;lowest[k]=6;});Object.keys(ex.gear||{}).forEach(function(slot){var it=ex.gear[slot];if(it&&it.set&&counts[it.set]!==undefined){counts[it.set]++;lowest[it.set]=Math.min(lowest[it.set],wildRarityRank(it.rarity));}});return {counts:counts,lowest:lowest};}
 function wildCollectionBonus(){var w=wildState(),out={str:0,agi:0,int:0,end:0,loy:0,per:0,gold:0,ore:0};(w.displaySlots||[]).forEach(function(id){var c=WILD_COLLECTIONS.find(function(x){return x.id===id;})||WILD_HEARTS[id];if(!c)return;if(c.effect)Object.keys(c.effect).forEach(function(k){out[k]=(out[k]||0)+c.effect[k];});out.gold+=c.gold||0;out.ore+=c.ore||0;});return out;}
@@ -10571,7 +10648,23 @@ function wildPlayerAttack(stats,lv){return 10+lv+2*stats.str;}
 function wildPlayerInterval(stats,lv){return Math.max(1,5-.005*lv-.02*stats.agi);}
 function wildSeriesItems(series,rarity){return WILD_COLLECTIONS.filter(function(x){return x.series===series&&x.rarity===rarity&&!wildHasCollection(x.id);});}
 function wildMaybeMerge(series,arr){var ids=WILD_COLLECTIONS.filter(function(c){return c.series===series;}).map(function(c){return c.id;});var all=ids.every(function(id){return arr.some(function(x){return x.id===id;})||wildState().homeCollections.indexOf(id)>=0;});if(!all)return arr;arr=arr.filter(function(x){return ids.indexOf(x.id)<0;});arr.push({id:series==='sea'?'waterheart':'woodheart',name:series==='sea'?'水之仁心':'木之灵心',rarity:'unique+',series:series});return arr;}
-function wildDropCollection(trip,tier){var chance=0,ranks=[];if(tier==='common'){chance=.30;ranks=[['epic',1]];}else if(tier==='rare'){chance=.60;ranks=[['legend',25/60],['epic',35/60]];}else if(tier==='elite'){chance=.50;ranks=[['artifact',.4],['legend',.6]];}else{chance=.40;ranks=[['unique',.375],['artifact',.625]];}if(Math.random()>=chance)return;var roll=Math.random(),acc=0,rarity='epic';for(var i=0;i<ranks.length;i++){acc+=ranks[i][1];if(roll<=acc){rarity=ranks[i][0];break;}}var choices=wildSeriesItems(trip.series,rarity);if(!choices.length)return;var item=choices[Math.floor(Math.random()*choices.length)];trip.lootCollections.push({id:item.id,name:item.name,rarity:item.rarity,series:item.series});wildLog('✨ 顶级怪掉落陈列品：'+item.name+'（'+WILD_RNAME[item.rarity]+'）。','good');wildState().stats.loot++;}
+/* 陈列品掉落概率 = 打赢该类最高怪后，直接掉落该稀有度的概率（文档 9.2-H 表），没有额外的"触发率"中间层。
+   常规最高怪 30% 史诗；罕见最高怪 20% 传说 / 30% 史诗；精英最高怪 15% 至宝 / 25% 传说；
+   终极最高怪 10% 无上 / 20% 至宝。 */
+function wildDropCollection(trip,tier){
+ var odds;
+ if(tier==='common')odds=[['epic',.30]];
+ else if(tier==='rare')odds=[['legend',.20],['epic',.30]];
+ else if(tier==='elite')odds=[['artifact',.15],['legend',.25]];
+ else odds=[['unique',.10],['artifact',.20]];
+ var roll=Math.random(),acc=0,rarity='';
+ for(var i=0;i<odds.length;i++){acc+=odds[i][1];if(roll<acc){rarity=odds[i][0];break;}}
+ if(!rarity)return;
+ var choices=wildSeriesItems(trip.series,rarity);if(!choices.length)return;
+ var item=choices[Math.floor(Math.random()*choices.length)];
+ trip.lootCollections.push({id:item.id,name:item.name,rarity:item.rarity,series:item.series});
+ wildLog('✨ 顶级怪掉落陈列品：'+item.name+'（'+WILD_RNAME[item.rarity]+'）。','good');wildState().stats.loot++;
+}
 function wildPotionItem(){var diff=wildState().trip.diff;var cap=WILD_DIFF[diff].cap;var max=wildRarityRank(cap);var rarity=WILD_RARITIES[Math.floor(Math.random()*(max+1))];var stat=WILD_KEYS[Math.floor(Math.random()*6)];var val={normal:2,rare:5,epic:10,legend:15,artifact:20}[rarity];return {id:'c'+gameNow()+'_'+Math.random().toString(36).slice(2),type:'potion',stat:stat,amount:val,rarity:rarity,name:WILD_RNAME[rarity]+WILD_LABEL[stat]+'药剂'};}
 function wildConsumableDrop(trip){var r=Math.random(),item;if(r<1/3)item={type:'medkit',rarity:'rare',name:'应急医疗包',id:'c'+gameNow()+Math.random()};else if(r<2/3)item={type:'shield',rarity:'rare',name:'简易护盾',id:'c'+gameNow()+Math.random()};else item=wildPotionItem();trip.lootConsumables.push(item);wildLog('🎒 发现消耗品：'+item.name+'。','good');}
 function wildStepReward(trip){if(Math.random()>=.03)return;var r=Math.random();if(r<1/3){wildConsumableDrop(trip);wildState().stats.loot++;return;}if(r<2/3){var mins=WILD_DIFF[trip.diff].minute,amount=(trip.snapOrePerMin||0)*(mins[0]+Math.random()*(mins[1]-mins[0]));amount*=1+(trip.collection.ore||0);trip.ore+=amount;wildLog('🪨 步行途中发现矿渣原石：+'+fmt(amount)+'。','good');}else{var mm=WILD_DIFF[trip.diff].minute,gold=(trip.snapGoldPerMin||0)*(mm[0]+Math.random()*(mm[1]-mm[0]));gold*=1+(trip.collection.gold||0);trip.gold+=gold;wildLog('💰 步行途中拾获金币：+'+fmt(gold)+'。','good');}wildState().stats.loot++;}
@@ -10583,7 +10676,7 @@ function wildCarryCollection(item){
    w.homeCollections=w.homeCollections.filter(function(id){return ids.indexOf(id)<0;});
    w.displaySlots=w.displaySlots.map(function(id){return ids.indexOf(id)>=0?null:id;});
    if(w.homeCollections.indexOf(heart)<0&&w.displaySlots.indexOf(heart)<0)w.homeCollections.push(heart);
-   wildLog('🌟 集齐七件'+(item.series==='sea'?'海洋':'森林')+'陈列品，自动合成「'+WILD_HEARTS[heart].name+'」。','good');return;
+   wildLog('🌟 集齐七件'+(item.series==='sea'?'海洋':'森林')+'陈列品，自动合成一件更强的无上+陈列品「'+(WILD_HEARTS[heart]&&WILD_HEARTS[heart].name||'合成陈列品')+'」。','good');return;
  }
  if(w.homeCollections.indexOf(item.id)<0&&(w.displaySlots||[]).indexOf(item.id)<0)w.homeCollections.push(item.id);
  var all=WILD_COLLECTIONS.filter(function(c){return c.series===item.series;}).every(function(c){return w.homeCollections.indexOf(c.id)>=0||(w.displaySlots||[]).indexOf(c.id)>=0;});
@@ -10601,14 +10694,19 @@ function wildCarryAtHome(trip){
  if(trip.gold>0&&slots>0){state.gold+=trip.gold;state.totalGold+=trip.gold;state.runGold+=trip.gold;slots--;keptGold=true;}
  wildLog('🏠 探险结束，背包容量 '+cap+' 格。带回陈列品 '+keptC+' 件、消耗品 '+keptU+' 件'+(keptOre?'、矿渣原石 '+fmt(trip.ore):'')+(keptGold?'、金币 '+fmt(trip.gold):'')+'。'+(discardC+discardU>0?' 背包容量不足，丢弃：'+discardNames.join('、')+'。':'')+(trip.ore>0&&!keptOre?' 矿渣原石因背包已满未能带回。':'')+(trip.gold>0&&!keptGold?' 金币因背包已满未能带回。':''),'good');return {collections:keptC,consumables:keptU,ore:keptOre?trip.ore:0,gold:keptGold?trip.gold:0};
 }
-function wildDeath(trip){var w=wildState(),stats=wildStats(true)||wildStats(false),loy=stats?stats.loy:0,p=Math.min(.85,.2+.0045*loy),keptEq=0,lostEq=0;if(!trip.guaranteedConsumableDone){wildConsumableDrop(trip);trip.guaranteedConsumableDone=true;w.stats.loot++;}Object.keys(trip.explorerGear||{}).forEach(function(k){var it=trip.explorerGear[k];if(!it)return;if(Math.random()<p){state.bag.push(it);keptEq++;}else lostEq++;});
- (trip.lootCollections||[]).forEach(function(it){if(Math.random()<p)wildCarryCollection(it);});
+function wildDeath(trip){var w=wildState(),stats=wildStats(true)||wildStats(false),loy=stats?stats.loy:0,p=Math.min(.85,.2+.0045*loy),keptEq=0,lostEq=0,lostUnique=0;if(!trip.guaranteedConsumableDone){wildConsumableDrop(trip);trip.guaranteedConsumableDone=true;w.stats.loot++;}Object.keys(trip.explorerGear||{}).forEach(function(k){var it=trip.explorerGear[k];if(!it)return;if(Math.random()<p){state.bag.push(it);keptEq++;}else lostEq++;});
+ /* 无上陈列品必定无法保全；其余逐件判定。
+    这里直接入包而不走 wildCarryCollection，避免死亡时凑齐七件又合成出无上陈列品。 */
+ (trip.lootCollections||[]).forEach(function(it){
+  if(it.rarity==='unique'||it.id==='waterheart'||it.id==='woodheart'){lostUnique++;return;}
+  if(Math.random()<p&&w.homeCollections.indexOf(it.id)<0&&(w.displaySlots||[]).indexOf(it.id)<0)w.homeCollections.push(it.id);
+ });
  (trip.lootConsumables||[]).forEach(function(it){if(Math.random()<p)wildCarryConsumable(it);});
  if(trip.activeConsumable&&Math.random()<p)wildCarryConsumable(trip.activeConsumable);
  if(trip.ore>0&&Math.random()<p){gemState().ore+=trip.ore;gemState().oreTotal+=trip.ore;}
  if(trip.gold>0&&Math.random()<p){state.gold+=trip.gold;state.totalGold+=trip.gold;state.runGold+=trip.gold;}
- w.explorer=null;w.trip=null;w.stats.deaths++;wildLog('💀 探险者在途中身亡，保全率 '+(p*100).toFixed(1)+'%。装备逐件判定：保全 '+keptEq+' 件、遗失 '+lostEq+' 件；旅途收获也逐项判定。需要重新招募探险者。','bad');wildUiDirty=true;renderEquip(true);saveGame(false);}
-function wildReturnStart(reason){var t=wildState().trip;if(!t||t.phase==='return')return;var w=wildState();if(!t.guaranteedConsumableDone){wildConsumableDrop(t);t.guaranteedConsumableDone=true;w.stats.loot++;}t.phase='return';t.returnLeft=Math.max(1,t.steps);t.pendingFight=null;t.returnReason=reason||'探索结束';t.nextAt=gameNow()+wildNextStepMs(t,true);wildLog('↩️ '+t.returnReason+'，开始返程。预计沿原路返回 '+t.returnLeft+' 步。');wildUiDirty=true;}
+ w.explorer=null;w.trip=null;w.stats.deaths++;wildLog('💀 探险者在途中身亡，保全率 '+(p*100).toFixed(1)+'%。装备逐件判定：保全 '+keptEq+' 件、遗失 '+lostEq+' 件；旅途收获也逐项判定'+(lostUnique?'；无上陈列品无法保全，已随探险者消散':'')+'。需要重新招募探险者。','bad');wildUiDirty=true;renderEquip(true);saveGame(false);}
+function wildReturnStart(reason){var t=wildState().trip;if(!t||t.phase==='return')return;var w=wildState();if(!t.guaranteedConsumableDone){wildConsumableDrop(t);t.guaranteedConsumableDone=true;w.stats.loot++;}t.phase='return';t.returnLeft=Math.max(1,t.steps);t.pendingFight=null;t.returnReason=reason||'探索结束';t.nextAt=gameNow()+wildNextStepMs(t,true);wildLog('↩️ '+t.returnReason+'，开始返程。预计沿原路返回 '+t.returnLeft+' 步。');var _hn=wildAttractionCollectionNames();if(_hn.length)wildLog('✨ 你手中的「'+_hn.join('、')+'」似乎散发出一股强大的吸引力，归途的怪物变得格外活跃。','good');wildUiDirty=true;}
 function wildNextStepMs(t,isReturn){var cfg=WILD_DIFF[t.diff],sec=cfg.step[0]+Math.random()*(cfg.step[1]-cfg.step[0]);var map=WILD_MAPS[t.map];sec*=map.step||1;if(t.routeDelay){sec*=1.15;t.routeDelay=false;}return Math.max(1000,sec*1000);}
 function wildMakeMonster(series,tier){var pool=WILD_MONSTERS.filter(function(m){return m.series===series&&m.tier===tier;});if(!pool.length)return null;var b=pool[Math.floor(Math.random()*pool.length)],fh=.9+Math.random()*.2;var f=function(v){return v*(.9+Math.random()*.2);};return {name:b.name,series:b.series,tier:b.tier,hp:b.hp*fh,maxHp:b.hp*fh,atk:f(b.atk),interval:f(b.interval),int:f(b.int),skill:b.skill,desc:b.desc,skillData:b};}
 function wildChooseMonster(t,boss){var cfg=WILD_DIFF[t.diff],tier;if(boss)tier=cfg.boss;else{var allowed=cfg.commonPool; tier=allowed[Math.floor(Math.random()*allowed.length)];}return wildMakeMonster(t.series,tier);}
@@ -10630,7 +10728,7 @@ function wildBattle(trip,m,sensed,isReturn){
  if(m.name==='逆潮涡鲛')eNext=Math.max(.1,enemyInterval*.8)+(sensed?1:0);
  if(m.name==='蘑菇伞兔')eNext=Math.max(.1,enemyInterval*.75)+(sensed?1:0);
  var dodgeRate=pInt<mInt?0:Math.min(.95,Math.max(0,(pInt-mInt)/Math.max(1,pInt)+st.per/400));var suppressRate=pInt>mInt?Math.min(1,(pInt-mInt)/100):0;trip.encounters=(trip.encounters||0)+1;
- var battleStartAt=Date.now();wildLog('⚔️ 第 0.0 秒 · '+(ex.name||'探险者')+' 遭遇 '+m.name+'，战斗开始。闪避率 '+(dodgeRate*100).toFixed(1)+'% · 压制率 '+(suppressRate*100).toFixed(1)+'%。','battle');
+ var battleStartAt=Date.now();wildLog('⚔️ 第 0.0 秒 · '+(ex.name||'探险者')+(sensed?' 靠近 ':' 遭遇 ')+m.name+'，战斗开始。闪避率 '+(dodgeRate*100).toFixed(1)+'% · 压制率 '+(suppressRate*100).toFixed(1)+'%。','battle');
  var battleDur=0,won=false,dead=false,limit=240;
  function medTrigger(){
    if(pHp/maxHp>=.5||medUsed)return;
@@ -10707,7 +10805,7 @@ function wildBattle(trip,m,sensed,isReturn){
 function wildEvent(trip){var map=WILD_MAPS[trip.map],badMul=map.bad||1;var weights=[60,25,15*badMul],r=Math.random()*(weights[0]+weights[1]+weights[2]);var type=r<weights[0]?'neutral':r<weights[0]+weights[1]?'good':'bad';var pools=WILD_SCENES.global.concat(WILD_SCENES[trip.series]||[]);var scene=pools[Math.floor(Math.random()*pools.length)];var pref=WILD_PREFIX[trip.diff][Math.floor(Math.random()*WILD_PREFIX[trip.diff].length)];var sentence=scene.scene;
  if(type==='neutral'){wildLog('📖 '+pref+sentence+' '+scene.neutral,'');return;}
  if(type==='good'){var gw=[28*(map.healWeight||1),24,18,18,12],x=Math.random()*gw.reduce(function(a,b){return a+b;},0),idx=0;while(x>gw[idx]){x-=gw[idx];idx++;}var text='';if(idx===0){var amount=trip.maxHp*(.08+Math.random()*.08);wildState().explorer.hp=Math.min(trip.maxHp,wildState().explorer.hp+amount);text='回复泉恢复 '+amount.toFixed(0)+' 点生命。';}else if(idx===1){var mm=WILD_DIFF[trip.diff].minute;var g=trip.snapGoldPerMin*(mm[0]+Math.random()*(mm[1]-mm[0]))*(1+(trip.collection.gold||0));trip.gold+=g;text='拾获钱袋，获得 '+fmt(g)+' 金币。';}else if(idx===2){var mm2=WILD_DIFF[trip.diff].minute;var o=trip.snapOrePerMin*(mm2[0]+Math.random()*(mm2[1]-mm2[0]))*(1+(trip.collection.ore||0));trip.ore+=o;text='找到原石，获得 '+fmt(o)+' 矿渣原石。';}else if(idx===3){var key=['str','agi','int','end'][Math.floor(Math.random()*4)],v=3+Math.floor(Math.random()*5);trip.nextBuff={stat:key,amount:v};text='获得战斗启发，下一场战斗 '+WILD_LABEL[key]+' +'+v+'。';}else{trip.filmHits=2;text='获得临时护膜，下一场战斗前两次受击各减伤 10%。';}wildLog('📖 '+pref+sentence+' '+scene.good+' '+text,'good');return;}
- var bw=[45,30,25],br=Math.random()*100;var badText='';if(br<45){var dmg=trip.maxHp*.03*(.8+Math.random()*.4);wildState().explorer.hp-=dmg;badText='擦伤使你损失 '+dmg.toFixed(0)+' 点生命。';}else if(br<75){var k=['str','agi','int','end'][Math.floor(Math.random()*4)],v=3+Math.floor(Math.random()*3);trip.nextDebuff={stat:k,amount:v};badText='状态受扰：下一场战斗 '+WILD_LABEL[k]+' -'+v+'。';}else{trip.routeDelay=true;badText='路线受阻，下一步耗时增加 15%。';}wildLog('📖 '+pref+sentence+' '+scene.bad+' '+badText,'bad');}
+ var bw=[45,30,25],br=Math.random()*100;var badText='';if(br<45){var dmg=trip.maxHp*.03*(.8+Math.random()*.4);wildState().explorer.hp-=dmg;badText='这次意外造成 '+dmg.toFixed(0)+' 点生命损失。';}else if(br<75){var k=['str','agi','int','end'][Math.floor(Math.random()*4)],v=3+Math.floor(Math.random()*3);trip.nextDebuff={stat:k,amount:v};badText='状态受扰：下一场战斗 '+WILD_LABEL[k]+' -'+v+'。';}else{trip.routeDelay=true;badText='路线受阻，下一步耗时增加 15%。';}wildLog('📖 '+pref+sentence+' '+scene.bad+' '+badText,'bad');}
 function wildFlushPendingBattleLogs(){
  var logs=wildState().logs||[],changed=false;
  logs.forEach(function(x){if(x&&String(x.kind||'').indexOf('battle')===0&&x.revealAt){x.revealAt=0;changed=true;}});
@@ -10725,7 +10823,7 @@ function wildProcessForward(trip){
  if(encounter&&m){
    wildLog('第 '+trip.steps+' 步 · '+(wasPending?'与 '+m.name+' 战斗':(wildSense(wildStats(true),m)?'发现 '+m.name+' 的踪迹':'与 '+m.name+' 战斗'))+'。','step');
    var st=wildStats(true);
-   if(!wasPending&&wildSense(st,m)){trip.pendingFight=m;trip.pendingBoss=!!trip.currentIsBoss;trip.currentIsBoss=false;wildLog('🔎 感知成功，提前发现 '+m.name+'：HP '+m.hp.toFixed(0)+' / 攻击 '+m.atk.toFixed(1)+' / 间隔 '+m.interval.toFixed(2)+' 秒 / 智力 '+m.int.toFixed(1)+'。战斗将在下一节点开始。');wildStepReward(trip);}
+   if(!wasPending&&wildSense(st,m)){trip.pendingFight=m;trip.pendingBoss=!!trip.currentIsBoss;trip.currentIsBoss=false;wildLog('🔎 感知成功，提前发现 '+m.name+'：HP '+m.hp.toFixed(0)+' / 攻击 '+m.atk.toFixed(1)+' / 间隔 '+m.interval.toFixed(2)+' 秒 / 智力 '+m.int.toFixed(1)+'。'+(ex.name||'探险者')+' 开始靠近 '+m.name+'。');wildStepReward(trip);}
    else{var battle=wildBattle(trip,m,!!wasPending,false);trip.currentIsBoss=false;if(battle.dead)return;if(battle.won&&trip.phase==='return')return;}
  }else{wildLog('第 '+trip.steps+' 步 · '+(Math.random()<.5?'继续前进':'向深处探索')+'。','step');if(Math.random()<.50)wildEvent(trip);wildStepReward(trip);}
  if(!wildState().trip)return;
@@ -10738,15 +10836,17 @@ function wildProcessForward(trip){
 function wildProcessReturn(trip){
  wildFlushPendingBattleLogs();
  trip.returnLeft--;wildLog('返程第 '+(trip.steps-trip.returnLeft)+' 步 · 还剩 '+trip.returnLeft+' 步。','step');
- if(Math.random()<.075){var m=wildChooseMonster(trip,false);if(m){wildLog('↩️ 归途遭遇 '+m.name+'，拦路战斗开始。','battle');var b=wildBattle(trip,m,false,true);if(b.dead)return;}}
+ /* 持有水之心、木之心或其系列合成体时，返程遭遇率翻倍。 */
+ var heartNames=wildAttractionCollectionNames();
+ if(Math.random()<(heartNames.length ? .15 : .075)){var m=wildChooseMonster(trip,false);if(m){wildLog('↩️ 归途遭遇 '+m.name+'，拦路战斗开始。','battle');var b=wildBattle(trip,m,false,true);if(b.dead)return;}}
  if(!wildState().trip)return;
  if(trip.returnLeft<=0)wildFinish(trip);
  else if(Math.random()<.22){var pool=(WILD_RETURN[WILD_MAPS[trip.map].name]||[]).concat(WILD_RETURN._shared||[]),used=trip.returnLinesUsed||(trip.returnLinesUsed=[]),available=pool.filter(function(line){return used.indexOf(line)<0;});if(available.length){var line=available[Math.floor(Math.random()*available.length)];used.push(line);wildLog('↩️ '+line,'event');}else wildLog('↩️ 继续沿来路前进，离家越来越近。','step');}
 }
-function wildFinish(trip){var w=wildState(),exName=w.explorer?(w.explorer.name||'探险者'):'探险者',carried=wildCarryAtHome(trip),summary='📋 '+exName+' 归来：正向探索 '+trip.steps+' 步，遭遇怪物 '+(trip.encounters||0)+' 只，击败 '+(trip.kills||0)+' 只；实际带回陈列品 '+carried.collections+' 件、消耗品 '+carried.consumables+' 件、矿渣原石 '+fmt(carried.ore)+'、金币 '+fmt(carried.gold)+'。';if(trip.activeConsumable&&trip.activeConsumable.type==='potion'){};w.trip=null;w.stats.returns++;if(w.explorer){var ex=w.explorer;ex.returns=(ex.returns||0)+1;wildSyncLevel();var stats=wildStats(false),max=wildMaxHp(stats,ex.level);ex.maxHp=max;ex.hp=Math.min(max,ex.hp);if(ex.hp<=0)ex.hp=1;}wildLog('✅ 探险者已安全回家，装备、等级、学习与陈列位重新解锁。','good');wildLog(summary,'good');wildUiDirty=true;renderEquip(true);saveGame(false);}
+function wildFinish(trip){var w=wildState(),exName=w.explorer?(w.explorer.name||'探险者'):'探险者',carried=wildCarryAtHome(trip),summary='📋 '+exName+' 归来：正向探索 '+trip.steps+' 步，遭遇怪物 '+(trip.encounters||0)+' 只，击败 '+(trip.kills||0)+' 只；实际带回陈列品 '+carried.collections+' 件、消耗品 '+carried.consumables+' 件、矿渣原石 '+fmt(carried.ore)+'、金币 '+fmt(carried.gold)+'。';w.trip=null;w.stats.returns++;if(w.explorer){var ex=w.explorer;ex.returns=(ex.returns||0)+1;wildSyncLevel();var stats=wildStats(false),max=wildMaxHp(stats,ex.level);ex.maxHp=max;ex.hp=Math.min(max,ex.hp);if(ex.hp<=0)ex.hp=1;}wildLog('✅ 探险者已安全回家，装备、等级、学习与陈列位重新解锁。','good');wildLog(summary,'good');wildUiDirty=true;renderEquip(true);saveGame(false);}
 function wildStart(){var w=wildState(),ex=w.explorer;if(!ex||wildIsAway())return;wildKitCollapsed=true;var map=WILD_MAPS[w.selectedMap],diff=w.selectedDiff,cfg=WILD_DIFF[diff];if(!map||map.diff!==diff){toast('🗺️ 地图与难度不匹配','#ff5c5c');return;}if(ex.level<cfg.level){toast('🔒 探险者等级不足','#ff5c5c','该难度需要 Lv.'+cfg.level);return;}var st=wildStats(false),co=wildCollectionBonus(),temp={str:map.effects.str||0,agi:map.effects.agi||0,int:map.effects.int||0,end:map.effects.end||0,loy:map.effects.loy||0,per:map.effects.per||0};var active=w.equippedConsumable||null;w.equippedConsumable=null;
  if(active&&active.type==='potion'){temp[active.stat]=(temp[active.stat]||0)+active.amount;active=null;}
- w.logs=[];var trip={phase:'forward',startedAt:gameNow(),map:w.selectedMap,series:map.series,diff:diff,steps:0,returnLeft:0,nextAt:gameNow()+wildNextStepMs({diff:diff,map:w.selectedMap},false),bossP:.28,bossDone:false,pendingFight:null,lootCollections:[],lootConsumables:[],ore:0,gold:0,encounters:0,kills:0,returnLinesUsed:[],guaranteedConsumableDone:false,guaranteedConsumableStep:1+Math.floor(Math.random()*15),snapGoldPerMin:Math.max(0,(derived.goldPerSec||0)*60),snapOrePerMin:Math.max(0,gemOreRate()*60),collection:co,temp:temp,explorerGear:JSON.parse(JSON.stringify(ex.gear||{})),activeConsumable:active,shieldHits:active&&active.type==='shield'?3:0,filmHits:0,routeDelay:false,nextBuff:null,nextDebuff:null};
+ /* 保留当前浏览器内的历史日志；saveEncode 会在压缩快照中仅保留本次旅途记录。 */var trip={phase:'forward',startedAt:gameNow(),map:w.selectedMap,series:map.series,diff:diff,steps:0,returnLeft:0,nextAt:gameNow()+wildNextStepMs({diff:diff,map:w.selectedMap},false),bossP:.28,bossDone:false,pendingFight:null,lootCollections:[],lootConsumables:[],ore:0,gold:0,encounters:0,kills:0,returnLinesUsed:[],guaranteedConsumableDone:false,guaranteedConsumableStep:1+Math.floor(Math.random()*15),snapGoldPerMin:Math.max(0,(derived.goldPerSec||0)*60),snapOrePerMin:Math.max(0,gemOreRate()*60),collection:co,temp:temp,explorerGear:JSON.parse(JSON.stringify(ex.gear||{})),activeConsumable:active,shieldHits:active&&active.type==='shield'?3:0,filmHits:0,routeDelay:false,nextBuff:null,nextDebuff:null};
  w.trip=trip;w.stats.trips++;ex.trips=(ex.trips||0)+1;trip.snapshotStats=wildStats(true);var max=wildMaxHp(trip.snapshotStats,ex.level);ex.maxHp=max;ex.hp=Math.min(max,ex.hp);trip.maxHp=max;
  wildLog('🚩 '+map.name+' · '+cfg.name+' 出发！场地效果「'+map.terrain+'」已生效。'+(active?'携带 '+active.name+'。':'')+' 六维、装备、产能与陈列品效果已快照锁定。');wildUiDirty=true;saveGame(false);}
 function wildHomeHeal(sec){var w=wildState(),ex=w.explorer;if(!ex||sec<=0)return;wildSyncLevel();var per=ex.growth.per*ex.level+(w.book.per||0),heal=per/60*sec*(1+wildHomeEffect('homeHeal')),mh=wildMaxHp(wildStats(false),ex.level);ex.maxHp=mh;if(ex.hp<mh){ex.hp=Math.min(mh,ex.hp+heal);}}
@@ -10831,17 +10931,20 @@ function wildRenderHomeCollections(w,locked){
  h+='<div class="wild-display">';
  (w.displaySlots||[]).forEach(function(id,i){
    var c=WILD_COLLECTIONS.find(function(x){return x.id===id;})||WILD_HEARTS[id];
-   h+='<button class="wild-display-slot'+(locked?' wild-locked':'')+'" data-wcmd="display-slot" data-slot="'+i+'" data-wild-tip="'+esc(wildCollectionTip(c)).replace(/\n/g,'&#10;')+'" '+(locked?'aria-disabled="true"':'')+'>'+(c?'<b>'+esc(c.name)+'</b><small>'+WILD_RNAME[c.rarity]+'</small>':'陈列位 '+(i+1)+'<small>空</small>')+'</button>';
+   var icon=c?wildCollectionIcon(c):'✧';
+   h+='<button class="wild-display-slot'+(locked?' wild-locked':'')+'" data-wcmd="display-slot" data-slot="'+i+'" data-wild-tip="'+esc(wildCollectionTip(c)).replace(/\n/g,'&#10;')+'" '+(locked?'aria-disabled="true"':'')+'>'+
+     (c?'<span class="wild-item-icon" aria-hidden="true">'+icon+'</span><b>'+esc(c.name)+'</b><small class="r-'+wildRarityCssClass(c.rarity)+'">'+WILD_RNAME[c.rarity]+'</small>':'<span class="wild-item-icon wild-item-icon-empty" aria-hidden="true">'+icon+'</span><b>陈列位 '+(i+1)+'</b><small>空</small>')+'</button>';
  });
  h+='</div>'+wildActiveCollectionEffectsHTML(w)+'<div class="wild-grid">';
  (w.homeCollections||[]).forEach(function(id){
    var c=WILD_COLLECTIONS.find(function(x){return x.id===id;})||WILD_HEARTS[id];
-   if(c)h+='<button class="wild-item'+(locked?' wild-locked':'')+'" data-wcmd="display-item" data-id="'+id+'" data-wild-tip="'+esc(wildCollectionTip(c)).replace(/\n/g,'&#10;')+'" '+(locked?'aria-disabled="true"':'')+'><b>'+esc(c.name)+'</b><small>'+WILD_RNAME[c.rarity]+' · 点击装备至空位</small></button>';
+   if(c)h+='<button class="wild-item wild-item-with-icon'+(locked?' wild-locked':'')+'" data-wcmd="display-item" data-id="'+id+'" data-wild-tip="'+esc(wildCollectionTip(c)).replace(/\n/g,'&#10;')+'" '+(locked?'aria-disabled="true"':'')+'><span class="wild-item-icon" aria-hidden="true">'+wildCollectionIcon(c)+'</span><span class="wild-item-copy"><b>'+esc(c.name)+'</b><small class="r-'+wildRarityCssClass(c.rarity)+'">'+WILD_RNAME[c.rarity]+' · 点击装备至空位</small></span></button>';
  });
  if(!(w.homeCollections||[]).length)h+='<div class="wild-muted">尚未收集陈列品</div>';
  h+='</div>';
  return h;
 }
+
 function wildSetPanelHTML(el,html){if(!el)return;if(el.dataset.wildRenderedHTML!==html){el.innerHTML=html;el.dataset.wildRenderedHTML=html;}}
 function wildRenderProfile(){
  var el=$('wildProfile');if(!el)return;var w=wildState(),ex=w.explorer;
@@ -10853,7 +10956,7 @@ function wildRenderProfile(){
  var healPerMin=(ex.growth.per*ex.level+(w.book.per||0))*(1+wildHomeEffect('homeHeal'));
  var trip=w.trip,status=trip?(trip.phase==='forward'?'正向探索中':'返程途中'):'在家休整',hpPct=max?hp/max*100:0;
  var coop=Math.max(0,(gameNow()-(ex.createdAt||gameNow()))/1000),name=esc(ex.name||'探险者');
- var h='<div class="wild-title">🧭 探险者档案 <span class="wild-muted">'+name+' · Lv.'+ex.level+' <small class="wild-level-note">等级=矿工团队最高等级</small></span></div><div class="wild-tripstatus">状态：<b>'+status+'</b>'+(trip?'<br>'+WILD_MAPS[trip.map].name+' · '+WILD_DIFF[trip.diff].name+' · '+(trip.phase==='forward'?'持续深入探索中':'正沿来路返程'):'<br>家中自然恢复 '+healPerMin.toFixed(1)+' HP/分钟 · 预计回满 '+fmtDur(Math.max(0,(max-hp)/Math.max(.0001,healPerMin)*60)) )+'</div>';
+ var h='<div class="wild-title">🧭 探险者档案 <span class="wild-muted">'+name+' · Lv.'+ex.level+' <small class="wild-level-note">等级=矿工团队最高等级</small></span></div><div class="wild-tripstatus">状态：<b>'+status+'</b>'+(trip?'<br>'+WILD_MAPS[trip.map].name+' · '+WILD_DIFF[trip.diff].name+' · '+(trip.phase==='forward'?'持续深入探索中':'正沿来路返程'):'<br><span id="wildHomeHealInfo">家中自然恢复 '+healPerMin.toFixed(1)+' HP/分钟 · 预计回满 '+wildEta((max-hp)/Math.max(.0001,healPerMin)*60)+'</span>' )+'</div>';
  h+='<div class="wild-section-label"><span>生命值</span><b id="wildHpValue">'+hp.toFixed(0)+' / '+max.toFixed(0)+'</b></div><div class="wild-bar"><i id="wildHpBarFill" style="width:'+hpPct+'%"></i></div>';
  h+='<div class="wild-section-label">探险者履历</div><div class="wild-history"><div>星酌邀约库存：<b>'+w.invites+' 张</b></div><div>已合作时间：<b id="wildCoopTime"></b></div><div>探险次数：<b>'+(ex.trips||0)+'</b></div><div>击败怪物：<b>'+(ex.kills||0)+'</b></div><div>战斗场次：<b>'+(ex.battles||0)+'</b></div><div>安全返程：<b>'+(ex.returns||0)+'</b></div></div>';
  h+=wildChartSvg(stats,temp)+'<div class="wild-legend"><span style="--sw:#ffcf5c">基础属性</span><span style="--sw:#ffffff">当前属性（含临时加成）</span></div>';
@@ -10913,11 +11016,12 @@ function wildRenderKit(){
 }
 function wildRenderConsumables(w,locked){
  var h='<div class="wild-section-label"><span>🧪 探险消耗品</span><span>'+(w.consumables||[]).length+' 件</span></div>';
- h+='<div class="wild-gear-row"><span>消耗品槽位</span><div>'+(w.equippedConsumable?'<b data-wild-tip="'+esc(wildConsumableTip(w.equippedConsumable)).replace(/\n/g,'&#10;')+'">'+esc(w.equippedConsumable.name)+'</b>':'<span class="wild-muted">空槽位</span>')+'</div><button class="wild-btn small" data-wcmd="unuse" '+(!w.equippedConsumable||locked?'disabled':'')+'>卸下</button></div><div class="wild-inventory">';
- (w.consumables||[]).forEach(function(c){h+='<button class="wild-item'+(locked?' wild-locked':'')+'" data-wcmd="usecons" data-id="'+c.id+'" data-wild-tip="'+esc(wildConsumableTip(c)).replace(/\n/g,'&#10;')+'" '+(locked?'aria-disabled="true"':'')+'>'+esc(c.name)+'<small>'+WILD_RNAME[c.rarity]+' · 点击装入槽位</small></button>';});
+ h+='<div class="wild-gear-row wild-consumable-equipped"><span>消耗品槽位</span><div>'+(w.equippedConsumable?'<span class="wild-equipped-consumable-icon">'+wildConsumableIcon(w.equippedConsumable)+'</span><b data-wild-tip="'+esc(wildConsumableTip(w.equippedConsumable)).replace(/\n/g,'&#10;')+'">'+esc(w.equippedConsumable.name)+'</b>':'<span class="wild-muted">空槽位</span>')+'</div><button class="wild-btn small" data-wcmd="unuse" '+(!w.equippedConsumable||locked?'disabled':'')+'>卸下</button></div><div class="wild-inventory">';
+ (w.consumables||[]).forEach(function(c){h+='<button class="wild-item wild-item-with-icon'+(locked?' wild-locked':'')+'" data-wcmd="usecons" data-id="'+esc(String(c.id))+'" data-wild-tip="'+esc(wildConsumableTip(c)).replace(/\n/g,'&#10;')+'" '+(locked?'aria-disabled="true"':'')+'><span class="wild-item-icon" aria-hidden="true">'+wildConsumableIcon(c)+'</span><span class="wild-item-copy"><b>'+esc(c.name)+'</b><small>'+WILD_RNAME[c.rarity]+' · 点击装入槽位</small></span></button>';});
  if(!(w.consumables||[]).length)h+='<div class="wild-muted">消耗品背包为空</div>';
  h+='</div>';return h;
 }
+
 function wildLogLineHTML(x){
  var kind=x.kind||'',battle=kind.indexOf('battle')===0,tone=(kind==='good'||kind==='battle-good')?'good':(kind==='bad'||kind==='battle-bad')?'bad':'';
  var safe=esc(x.text||'');if(tone)safe=safe.replace(/([+\-]?\d+(?:\.\d+)?%?)/g,'<b class="wild-log-number '+tone+'">$1</b>');
@@ -10938,11 +11042,20 @@ function wildRenderControl(){
  var w=wildState(),t=w.trip,h='<div class="wild-title">🗺️ 探险路线与日志</div>';
  if(!t){
    var map=WILD_MAPS[w.selectedMap],cfg=WILD_DIFF[w.selectedDiff];
-   h+='<div class="wild-section-label">地图系列</div><div class="wild-controls"><button class="wild-btn '+(map.series==='sea'?'primary':'')+'" data-wcmd="series" data-series="sea">🌊 海洋系列</button><button class="wild-btn '+(map.series==='forest'?'primary':'')+'" data-wcmd="series" data-series="forest">🌲 森林系列</button></div>';
-   h+='<div class="wild-section-label">探险难度</div><div class="wild-controls">';
-   Object.keys(WILD_DIFF).forEach(function(d){h+='<button class="wild-btn '+(d===w.selectedDiff?'primary':'')+'" data-wcmd="diff" data-diff="'+d+'">'+WILD_DIFF[d].name+'<small style="display:block;color:var(--dim)">'+WILD_DIFF[d].level+'级起</small></button>';});
-   h+='</div><div class="wild-tripstatus wild-map-preview"><span class="wild-muted">当前自动匹配地图</span><br><b>'+map.icon+' '+map.name+'</b><br>场地效果：<b>'+map.terrain+'</b><br>'+Object.keys(map.effects).map(function(k){return WILD_LABEL[k]+' '+(map.effects[k]>0?'+':'')+map.effects[k];}).join(' · ')+(map.step?' · 步长 ×'+map.step:'')+(map.bad?' · 负面事件 ×'+map.bad:'')+(map.bothAtk?' · 双方攻击 ×'+map.bothAtk:'')+'<br>最高可掉落：'+WILD_RNAME[cfg.cap]+'</div>';
-   h+='<div class="wild-section-label">返程最低生命比例</div><input class="wild-select" type="number" min="5" max="90" step="5" value="'+w.returnHp+'" data-winput="returnhp"><div class="wild-muted">默认 30%。每个节点结束后检查；战斗后医疗包若将生命恢复至血线以上，则继续探索。</div>';
+   var effectParts=[map.terrain];
+   var statEffects=Object.keys(map.effects||{}).map(function(k){var v=Number(map.effects[k]||0);return WILD_LABEL[k]+' '+(v>0?'+':'')+v;});
+   if(statEffects.length)effectParts.push(statEffects.join(' · '));
+   if(map.step)effectParts.push('步长 ×'+map.step);
+   if(map.bad)effectParts.push('负面事件 ×'+map.bad);
+   if(map.bothAtk)effectParts.push('双方攻击 ×'+map.bothAtk);
+   if(map.healWeight&&map.healWeight!==1)effectParts.push('回复泉 ×'+map.healWeight);
+   var returnHp=Math.max(5,Math.min(90,Math.round(Number(w.returnHp)||30)));
+   h+='<div class="wild-map-toolbar"><div class="wild-map-choice wild-map-series">'+
+     '<button class="wild-btn '+(map.series==='sea'?'primary':'')+'" data-wcmd="series" data-series="sea">🌊 海洋</button>'+
+     '<button class="wild-btn '+(map.series==='forest'?'primary':'')+'" data-wcmd="series" data-series="forest">🌲 森林</button></div><span class="wild-map-divider"></span><div class="wild-map-choice wild-map-difficulty">';
+   Object.keys(WILD_DIFF).forEach(function(d){h+='<button class="wild-btn '+(d===w.selectedDiff?'primary':'')+'" data-wcmd="diff" data-diff="'+d+'"><span>'+WILD_DIFF[d].name+'</span><small>Lv.'+WILD_DIFF[d].level+'+</small></button>';});
+   h+='</div></div><div class="wild-tripstatus wild-map-preview"><div class="wild-map-preview-name"><span class="wild-map-preview-icon">'+map.icon+'</span><b>'+esc(map.name)+'</b></div><div class="wild-map-preview-effect"><span>场地效果</span><b title="'+esc(effectParts.join(' · '))+'">'+esc(effectParts.join(' · '))+'</b></div><div class="wild-map-preview-cap"><span>最高可掉落</span><b>'+WILD_RNAME[cfg.cap]+'</b></div></div>';
+   h+='<div class="wild-return-setting"><div class="wild-section-label"><span>返程最低生命比例</span><span class="wild-return-hint">节点结束时检查</span></div><div class="wild-return-row"><input class="wild-return-range" type="range" min="5" max="90" step="1" value="'+returnHp+'" id="wildReturnHpRange" data-winput="returnhp-range" aria-label="返程最低生命比例滑动条"><label class="wild-return-number"><input type="number" min="5" max="90" step="1" value="'+returnHp+'" id="wildReturnHpNumber" data-winput="returnhp-number" aria-label="返程最低生命比例百分比"><span>%</span></label></div><div class="wild-muted wild-return-note">战斗后医疗包若将生命恢复至血线以上，探险会继续。</div></div>';
    h+='<button class="wild-btn primary" style="width:100%;margin-top:9px;padding:11px" data-wcmd="start" '+(!w.explorer||w.explorer.level<cfg.level?'disabled':'')+'>🚩 出发探险</button>';
  }else{
    var cfg=WILD_DIFF[t.diff],remain=Math.max(0,(t.nextAt-gameNow())/1000);
@@ -10971,6 +11084,24 @@ function renderTavernShelf(){
  }
  var cd=$('tavernCountdown');if(cd)cd.textContent='刷新倒计时 '+fmtDur(Math.max(0,t.refreshAt-gameNow())/1000);
 }
+/* 在家回血预计时间：只改一个 span 的文字，不重建任何 DOM，
+   由主循环 tick() 驱动，避免每帧重绘导致按钮点击丢失。 */
+function wildEta(sec){
+ sec=Math.max(0,Math.ceil(Number(sec)||0));
+ if(sec<60)return sec+' 秒';
+ if(sec<3600)return Math.floor(sec/60)+' 分 '+(sec%60)+' 秒';
+ if(sec<86400)return Math.floor(sec/3600)+' 小时 '+Math.floor((sec%3600)/60)+' 分 '+(sec%60)+' 秒';
+ return Math.floor(sec/86400)+' 天 '+Math.floor((sec%86400)/3600)+' 小时 '+Math.floor((sec%3600)/60)+' 分';
+}
+function wildUpdateHealEta(){
+ var el=$('wildHomeHealInfo'),w=wildState(),ex=w&&w.explorer;
+ if(!el||!ex||w.trip)return;
+ var hpm=(Number(ex.growth.per)||0)*ex.level+(Number((w.book||{}).per)||0);
+ hpm*=1+wildHomeEffect('homeHeal');
+ var max=wildMaxHp(wildStats(false),ex.level),hp=Math.max(0,Math.min(max,ex.hp));
+ var txt='家中自然恢复 '+hpm.toFixed(1)+' HP/分钟 · 预计回满 '+wildEta((max-hp)/Math.max(.0001,hpm)*60);
+ if(el.textContent!==txt)el.textContent=txt;
+}
 function wildUpdateLiveUI(w){
  var ex=w&&w.explorer;if(!ex)return;var stats=wildStats(true)||wildStats(false),max=wildMaxHp(stats,ex.level),hp=Math.max(0,Math.min(max,ex.hp)),pct=max?hp/max*100:0;
  var hpText=$('wildHpValue'),hpBar=$('wildHpBarFill'),coop=$('wildCoopTime');
@@ -10986,6 +11117,7 @@ function renderWild(){
  var shouldPin=on&&window.innerWidth>980;if(shouldPin&&!wildScenePinned&&scene){var baseH=Math.ceil(scene.getBoundingClientRect().height);if(baseH>0)scene.style.height=baseH+'px';wildScenePinned=true;}else if(!shouldPin&&wildScenePinned&&scene){scene.style.height='';wildScenePinned=false;}
  if(away)wildKitCollapsed=true;var layout=wild&&wild.querySelector('.wild-layout');if(layout){layout.classList.toggle('is-away',away);layout.classList.toggle('kit-collapsed',wildKitCollapsed||away);layout.classList.toggle('kit-expanded',!wildKitCollapsed&&!away);}
  if(scene)scene.classList.toggle('wild-mode',on);if(mine)mine.style.display=on?'none':'';if(wild)wild.style.display=on?'':'none';if(dt)dt.style.display=on?'none':'';if(ds)ds.style.display=on?'none':'';
+ var ib=$('wildInfoBtn');if(ib)ib.style.display=on?'':'none'; // 矿野信息入口只在矿野视图显示，位置与矿洞「矿石价值」同行
  document.querySelectorAll('.scene-toggle button').forEach(function(b){b.classList.toggle('active',b.dataset.mode===(on?'wild':'mine'));});if(!on)return;
  if(wildUiDirty){wildRenderProfile();wildRenderKit();wildRenderControl();wildUiDirty=false;wildControlDirty=false;wildLogDirty=false;}else if(wildControlDirty){wildRenderControl();wildControlDirty=false;wildLogDirty=false;}else if(wildLogDirty){wildRenderLog();wildLogDirty=false;}
  wildUpdateLiveUI(w);wildSchedulePendingLogReveal();
@@ -11003,8 +11135,41 @@ function wildShowHoverTip(target){
  wildHoverTipNode.style.left=left+'px';wildHoverTipNode.style.top=top+'px';
 }
 function wildHideHoverTip(target){if(target&&wildHoverTipTarget&&target!==wildHoverTipTarget&&!wildHoverTipTarget.contains(target))return;if(wildHoverTipNode)wildHoverTipNode.style.display='none';wildHoverTipTarget=null;}
-function initWildUI(){document.addEventListener('pointerover',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t&&t!==wildHoverTipTarget)wildShowHoverTip(t);});document.addEventListener('pointerout',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t&&(!e.relatedTarget||!t.contains(e.relatedTarget)))wildHideHoverTip(t);});document.addEventListener('focusin',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t)wildShowHoverTip(t);});document.addEventListener('focusout',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t)wildHideHoverTip(t);});document.addEventListener('visibilitychange',function(){if(document.hidden)return;var logs=wildState().logs||[];logs.forEach(function(x){if(x.revealAt)x.revealAt=0;});if(wildRevealTimer){clearTimeout(wildRevealTimer);wildRevealTimer=null;wildRevealAt=0;}wildLogDirty=true;if(wildState().mode==='wild')renderWild();});document.addEventListener('click',function(e){if(e.target.closest('#wildControl')&&!wildKitCollapsed&&!wildIsAway()){wildKitCollapsed=true;wildUiDirty=true;renderWild();}});document.addEventListener('click',function(e){var action=e.target.closest('#btnPrestige,#btnAscend,#btnKiReset');if(action&&wildIsAway()){e.preventDefault();e.stopImmediatePropagation();showModal({title:'⛏️ 探险尚未结束',confirmText:'知道了',cancelText:'',body:'探险者仍在外执行任务。探险期间不能转生、飞升或返璞归真。请等待探险者安全返程后再进行这些操作。'});return;}},true);document.addEventListener('click',function(e){var b=e.target.closest('[data-wcmd]');if(!b)return;var w=wildState(),ex=w.explorer,cmd=b.dataset.wcmd;if(wildIsAway()&&['book','prayer','bagitem','unequip','explorer-slot','take-miner','usecons','unuse','display-slot','display-item','toggle-wild-lock'].indexOf(cmd)>=0)return;if(cmd==='mode'){w.mode=b.dataset.mode;wildUiDirty=true;renderWild();return;}else if(cmd==='toggle-kit'){if(wildIsAway()){toast('探险期间矿野之笈保持收起，装备已锁定','#a89a86');return;}wildKitCollapsed=!wildKitCollapsed;wildUiDirty=true;renderWild();return;}else if(cmd==='sort-bag'){bagSortMode=b.dataset.sort;wildUiDirty=true;renderWild();return;}else if(cmd==='explorer-slot'){if(wildKitCollapsed||wildIsAway()){toast('请先展开矿野之笈，再调整装备','#a89a86');return;}var slot=b.dataset.slot;if(ex&&ex.gear&&ex.gear[slot]){if(wildEquipSelected!==slot){wildEquipSelected=slot;wildUiDirty=true;toast('已选中装备槽，再次点击即可脱下','#a89a86');}else{wildEquipSelected=null;wildUnequip(slot);}}else{wildEquipSelected=slot;wildUiDirty=true;} } if(cmd==='hire')wildPromptHire();else if(cmd==='buy-invite'){wildBuyInvite(+b.dataset.qty);renderTavernShelf();}else if(cmd==='book')wildBookUpgrade(b.dataset.key);else if(cmd==='prayer')wildPrayer();else if(cmd==='bagitem')wildEquipFromBag(b.dataset.id);else if(cmd==='unequip')wildUnequip(b.dataset.slot);else if(cmd==='take-miner')wildTakeMinerGear(b.dataset.slot);else if(cmd==='usecons')wildEquipConsumable(b.dataset.id);else if(cmd==='unuse'){if(w.equippedConsumable){w.consumables.push(w.equippedConsumable);w.equippedConsumable=null;wildUiDirty=true;}}else if(cmd==='display-slot'){var s=+b.dataset.slot,id=w.displaySlots[s];if(id){w.displaySlots[s]=null;w.homeCollections.push(id);wildUiDirty=true;}}else if(cmd==='display-item'){var slot=w.displaySlots.indexOf(null);if(slot>=0)wildDisplay(b.dataset.id,slot);else toast('陈列位已满','#a89a86','先卸下一个陈列品');}else if(cmd==='toggle-wild-lock'){var item=state.bag.find(function(it){return String(it.id)===String(b.dataset.id);});if(item&&!wildIsAway()){item.locked=!item.locked;equipDirty=true;wildUiDirty=true;saveGame(false);}}else if(cmd==='start')wildStart();else if(cmd==='series'){wildSelectSeries(b.dataset.series);}else if(cmd==='diff'){wildSelectDifficulty(b.dataset.diff);}if(wildUiDirty||wildControlDirty||wildLogDirty)renderWild();});
- document.addEventListener('change',function(e){var el=e.target;if(el.dataset.winput==='returnhp'){var v=Number(el.value);if(isFinite(v))wildState().returnHp=Math.max(5,Math.min(90,v));wildControlDirty=true;renderWild();}});
+var wildLastTouchCommandAt=0;
+function initWildUI(){
+ document.addEventListener('pointerdown',function(e){
+   if(e.pointerType==='mouse')return;
+   var b=e.target&&e.target.closest?e.target.closest('#wildView [data-wcmd],.scene-toggle [data-wcmd]'):null;
+   if(!b||b.disabled)return;
+   wildLastTouchCommandAt=Date.now();
+   e.preventDefault();
+   b.click();
+ },true);
+ document.addEventListener('click',function(e){
+   if(e.detail>0&&Date.now()-wildLastTouchCommandAt<650&&e.target&&e.target.closest&&e.target.closest('#wildView [data-wcmd],.scene-toggle [data-wcmd]')){
+     e.preventDefault();e.stopImmediatePropagation();
+   }
+ },true);
+ document.addEventListener('pointerover',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t&&t!==wildHoverTipTarget)wildShowHoverTip(t);});document.addEventListener('pointerout',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t&&(!e.relatedTarget||!t.contains(e.relatedTarget)))wildHideHoverTip(t);});document.addEventListener('focusin',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t)wildShowHoverTip(t);});document.addEventListener('focusout',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t)wildHideHoverTip(t);});document.addEventListener('visibilitychange',function(){if(document.hidden)return;var logs=wildState().logs||[];logs.forEach(function(x){if(x.revealAt)x.revealAt=0;});if(wildRevealTimer){clearTimeout(wildRevealTimer);wildRevealTimer=null;wildRevealAt=0;}wildLogDirty=true;if(wildState().mode==='wild')renderWild();});document.addEventListener('click',function(e){if(e.target.closest('#wildControl')&&!wildKitCollapsed&&!wildIsAway()){wildKitCollapsed=true;wildUiDirty=true;renderWild();}});document.addEventListener('click',function(e){var action=e.target.closest('#btnPrestige,#btnAscend,#btnKiReset');if(action&&wildIsAway()){e.preventDefault();e.stopImmediatePropagation();showModal({title:'⛏️ 探险尚未结束',confirmText:'知道了',cancelText:'',body:'探险者仍在外执行任务。探险期间不能转生、飞升或返璞归真。请等待探险者安全返程后再进行这些操作。'});return;}},true);document.addEventListener('click',function(e){var b=e.target.closest('[data-wcmd]');if(!b)return;var w=wildState(),ex=w.explorer,cmd=b.dataset.wcmd;if(wildIsAway()&&['book','prayer','bagitem','unequip','explorer-slot','take-miner','usecons','unuse','display-slot','display-item','toggle-wild-lock'].indexOf(cmd)>=0)return;if(cmd==='mode'){w.mode=b.dataset.mode;wildUiDirty=true;renderWild();return;}else if(cmd==='toggle-kit'){if(wildIsAway()){toast('探险期间矿野之笈保持收起，装备已锁定','#a89a86');return;}wildKitCollapsed=!wildKitCollapsed;wildUiDirty=true;renderWild();return;}else if(cmd==='sort-bag'){bagSortMode=b.dataset.sort;wildUiDirty=true;renderWild();return;}else if(cmd==='explorer-slot'){if(wildKitCollapsed||wildIsAway()){toast('请先展开矿野之笈，再调整装备','#a89a86');return;}var slot=b.dataset.slot;if(ex&&ex.gear&&ex.gear[slot]){if(wildEquipSelected!==slot){wildEquipSelected=slot;wildUiDirty=true;toast('已选中装备槽，再次点击即可脱下','#a89a86');}else{wildEquipSelected=null;wildUnequip(slot);}}else{wildEquipSelected=slot;wildUiDirty=true;} } if(cmd==='hire')wildPromptHire();else if(cmd==='buy-invite'){wildBuyInvite(+b.dataset.qty);renderTavernShelf();}else if(cmd==='book')wildBookUpgrade(b.dataset.key);else if(cmd==='prayer')wildPrayer();else if(cmd==='bagitem')wildEquipFromBag(b.dataset.id);else if(cmd==='unequip')wildUnequip(b.dataset.slot);else if(cmd==='take-miner')wildTakeMinerGear(b.dataset.slot);else if(cmd==='usecons')wildEquipConsumable(b.dataset.id);else if(cmd==='unuse'){if(w.equippedConsumable){w.consumables.push(w.equippedConsumable);w.equippedConsumable=null;wildUiDirty=true;}}else if(cmd==='display-slot'){var s=+b.dataset.slot,id=w.displaySlots[s];if(id){w.displaySlots[s]=null;w.homeCollections.push(id);wildUiDirty=true;}}else if(cmd==='display-item'){var slot=w.displaySlots.indexOf(null);if(slot>=0)wildDisplay(b.dataset.id,slot);else toast('陈列位已满','#a89a86','先卸下一个陈列品');}else if(cmd==='toggle-wild-lock'){var item=state.bag.find(function(it){return String(it.id)===String(b.dataset.id);});if(item&&!wildIsAway()){item.locked=!item.locked;equipDirty=true;wildUiDirty=true;saveGame(false);}}else if(cmd==='start')wildStart();else if(cmd==='series'){wildSelectSeries(b.dataset.series);}else if(cmd==='diff'){wildSelectDifficulty(b.dataset.diff);}if(wildUiDirty||wildControlDirty||wildLogDirty)renderWild();});
+ document.addEventListener('input',function(e){
+   var el=e.target,kind=el&&el.dataset?el.dataset.winput:'';
+   if(kind==='returnhp-range'){
+     var v=Number(el.value);if(!isFinite(v))return;v=Math.max(5,Math.min(90,Math.round(v)));
+     wildState().returnHp=v;var number=$('wildReturnHpNumber');if(number)number.value=String(v);
+   }else if(kind==='returnhp-number'){
+     if(el.value==='')return;var n=Number(el.value);if(!isFinite(n)||n<5||n>90)return;
+     n=Math.round(n);wildState().returnHp=n;var range=$('wildReturnHpRange');if(range)range.value=String(n);
+   }
+ });
+ document.addEventListener('change',function(e){
+   var el=e.target,kind=el&&el.dataset?el.dataset.winput:'';
+   if(kind!=='returnhp-range'&&kind!=='returnhp-number')return;
+   var raw=kind==='returnhp-range'?el.value:el.value;
+   var v=Number(raw);if(!isFinite(v))v=Number(wildState().returnHp)||30;
+   v=Math.max(5,Math.min(90,Math.round(v)));wildState().returnHp=v;
+   var range=$('wildReturnHpRange'),number=$('wildReturnHpNumber');if(range)range.value=String(v);if(number)number.value=String(v);
+   saveGame(false);
+ });
 }
 
 </script>
