@@ -1568,6 +1568,12 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 .wild-junk-tile{min-width:0;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 2px;border:1px solid rgba(150,135,112,.22);border-radius:7px;background:rgba(255,255,255,.025);color:var(--text);cursor:default;}
 .wild-junk-tile .wild-junk-icon{font-size:16px;line-height:1.05;image-rendering:pixelated;filter:drop-shadow(1px 1px 0 rgba(0,0,0,.5));}
 .wild-junk-tile b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9.3px;font-weight:700;}
+/* 图鉴名称按杂物稀有度着色；提高选择器优先级，避免按钮文字颜色覆盖品质色。 */
+.wild-junk-tile b.r-normal{color:#d8dce3;}
+.wild-junk-tile b.r-rare{color:#4a9eff;}
+.wild-junk-tile b.r-epic{color:#b04efc;}
+.wild-junk-tile b.r-legend{color:#ffb020;}
+.wild-junk-tile b.r-artifact{color:#ff3c3c;}
 .wild-junk-tile small{font-size:8px;color:var(--dim);text-align:center;line-height:1.15;}
 .wild-junk-tile.unknown{border-style:dashed;background:rgba(0,0,0,.13);color:#8a8072;}
 .wild-junk-tile.unknown .wild-junk-icon{font-size:19px;color:#b1a48f;}
@@ -7606,8 +7612,8 @@ function doKiReset(keepIdx){
   var keepGem=null,keepAuto=!!(_o.gem&&_o.gem.auto);
   if(typeof keepIdx==='number'&&keepIdx>=0&&_o.gem&&_o.gem.gems&&_o.gem.gems[keepIdx])keepGem=_o.gem.gems[keepIdx];
   var _n=defaultState();
-  /* V16.2：六条无上杂物遗物与图鉴发现记录永久保留，实际杂物库存仍随返璞归真重置。 */
-  if(_o.wild&&_n.wild){_n.wild.crystalTotalEarned=_o.wild.crystalTotalEarned||0;_n.wild.crystalTotalSpent=_o.wild.crystalTotalSpent||0;_n.wild.crystals=0;_n.wild.junkRelics=Object.assign({},_o.wild.junkRelics||{});_n.wild.junkFound=Object.assign({},_o.wild.junkFound||{});_n.wild.seenMonsters=Array.isArray(_o.wild.seenMonsters)?_o.wild.seenMonsters.slice():[];}
+  /* V16.2：杂物系统属于跨轮收藏进度。返璞归真保留已合成遗物、发现记录、成功带回记录和当前库存。 */
+  if(_o.wild&&_n.wild){_n.wild.crystalTotalEarned=_o.wild.crystalTotalEarned||0;_n.wild.crystalTotalSpent=_o.wild.crystalTotalSpent||0;_n.wild.crystals=0;_n.wild.junkRelics=Object.assign({},_o.wild.junkRelics||{});_n.wild.junkFound=Object.assign({},_o.wild.junkFound||{});_n.wild.junkReturned=Object.assign({},_o.wild.junkReturned||{});_n.wild.junkInventory=Object.assign({},_o.wild.junkInventory||{});_n.wild.seenMonsters=Array.isArray(_o.wild.seenMonsters)?_o.wild.seenMonsters.slice():[];}
   /* 黑曜石深度羁绊一阶保留探险者身份与履历；二阶进一步保留山海杂记和当前晶粒。 */
   var _keepWildExplorer=!!(_o.wild&&_o.wild.explorer&&wildBondDeep('black'));
   var _keepWildBook=!!(_o.wild&&wildBondDeep('black')&&stoneTier('k')>=2);
@@ -11752,7 +11758,7 @@ function wildCarryMarkup(t){
  var col=(t.lootCollections||[]).map(function(c,i){var meta=WILD_COLLECTIONS.find(function(x){return x.id===c.id;})||WILD_HEARTS[c.id]||c;return item(c.name||meta.name||'陈列品','collection:'+(c.id||i)+':'+(c.obtainedAt||i),wildCollectionTip(meta));}).join('、')||empty();
  var con=(t.lootConsumables||[]).map(function(c,i){return item(c.name||'消耗品','consumable:'+(c.id||i)+':'+i,wildConsumableTip(c));}).join('、')||empty();
  var sing=(t.lootSing||[]).map(function(x,i){return item(x.name||'奇点商品','sing:'+(x.key||i)+':'+(x.obtainedAt||i),'');}).join('、')||empty();
- var junk=(t.lootJunk||[]).map(function(x,i){var meta=wildJunkItemById(x.id)||x;return item(x.name||meta.name||'杂物','junk:'+(x.id||i)+':'+(x.obtainedAt||i),wildJunkTooltip(meta));}).join('、')||empty();
+ var junk=(t.lootJunk||[]).map(function(x,i){var meta=wildJunkItemById(x.id)||x;return item(meta.shortName||x.shortName||'杂物','junk:'+(x.id||i)+':'+(x.obtainedAt||i),wildJunkTooltip(meta));}).join('、')||empty();
  var resDropped=!!dropped['resource:bundle'];
  var gold=item(fmt(t.gold),'resource:bundle','本趟累计金币');
  var ore=item(fmt(t.ore),'resource:bundle','本趟累计原石');
