@@ -1901,7 +1901,7 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 <div class="cloud-status" id="redeemMsg" style="margin-top:4px"></div>
 <div style="font-size:10.5px; color:var(--dim); margin-top:2px; line-height:1.6">官方兑换码由作者发放，每账号限兑一次；开发验证码需要二次确认。</div>
 <div class="setrow" id="prestigeRow" style="display:none">
-<button class="special" id="btnPrestige">🏆 金盆洗手 · 转生</button>
+<button class="special" id="btnPrestige">🏆 转生</button>
 <!-- v14.9.1：抵达「極」后的额外选项——与正常转生入口并存，默认隐藏，极状态显示 -->
 <button class="special" id="btnKiReset" style="display:none">🍂 返璞归真 · 额外选项 · 重置一切 · 保留永耀之石</button>
 </div>
@@ -3164,7 +3164,7 @@ function renderStoneBoard(){
     h+='<div class="spirit'+(has?' got':'')+(t>=1?' enh':'')+'" title="'+(has?('永耀'+d.name+'：'+(t>=1?STONE_ENH_DESC[k].replace(/<[^>]*>/g,''):d.desc)):'未获得——抵达「極」时获得 1 次抽奖机会')+'">'+
        '<span class="sp-ic">'+(has?d.icon:'❔')+'</span>'+
        '<span class="sp-nm">'+(has?'永耀'+d.name:'？？？')+'</span>'+
-       '<span class="sp-tx">'+tx+'</span>'+(has?wildStoneBondDescription(k):'')+badge+btn+'</div>';
+       '<span class="sp-tx">'+tx+'</span>'+wildStoneBondDescription(k)+badge+btn+'</div>';
   }
   h+='</div><div style="margin-top:8px">'+
      '<button class="btn-sec" id="btnStoneDraw" style="width:100%;font-size:12px;padding:8px 10px"'+
@@ -9306,7 +9306,8 @@ function render(){
   $('prestigeRow').style.display=(hasUltimate()||(state.maxDepth>=6&&prestigeGain()>0))?'flex':'none';
   var kiResetBtn=$('btnKiReset');
   if($('prestigeRow').style.display==='flex'){
-    setBtn($('btnPrestige'),'🏆 金盆洗手 · 转生'); // 極状态下同样可正常转生
+    var prestigeCdLeft=(singMode()&&minerLevelCap()>=50)?Math.max(0,(state.prestigeCdUntil||0)-gameNow()):0;
+    setBtn($('btnPrestige'),'🏆 转生',prestigeCdLeft>0?'⏳ 冷却剩余 '+fmtDur(prestigeCdLeft/1000):''); // 冷却时间随主循环实时更新
     if(kiResetBtn){
       kiResetBtn.style.display=hasUltimate()?'block':'none';
       if(hasUltimate())setBtn(kiResetBtn,'🍂 返璞归真 · 额外选项 · 重置一切 · 保留永耀之石');
@@ -10566,7 +10567,7 @@ function bindUI(){
     var g=prestigeGain();
     // 本轮溢出声望不足时明确告知（doPrestige 要求 g>0）——继续游戏攒够金币即可转生
     if(g<=0){
-      showModal({title:'🏆 金盆洗手 · 转生',confirmText:'知道了',cancelText:'',
+      showModal({title:'🏆 转生',confirmText:'知道了',cancelText:'',
         body:'本轮还没有可转化的声望 · 转生收益来自本轮赚到的金币。<br>继续游戏攒够金币后即可随时转生重新来过——<b>抵达「極」并不影响正常转生</b>；若想舍弃登顶后的一切，可选择同排的「🍂 返璞归真」。'});
       return;
     }
@@ -10581,7 +10582,7 @@ function bindUI(){
     // v13.6.3：本次转生后"矿工等级上限≥50 且声望达到上限"才进 CD——缺一零冷却
     var willCap=(state.prestige||0)+g>=PRESTIGE_CAP;
     var cdH=(willCap&&minerLevelCap()+1>=50)?prestigeCdHours(minerLevelCap()+1):0; // 本次转生后的矿工等级上限对应的冷却
-    showModal({title:'🏆 金盆洗手 · 转生',confirmText:'获得 '+g+' 声望',
+    showModal({title:'🏆 转生',confirmText:'获得 '+g+' 声望',
       // v12 修订：信息精简——声望收益只告知"永久提升全局产出"删幂曲线/幸运值括号说明；
       // 背包保留容量显式与永久背包格 · bagBase挂钩，不再硬编码 10
       body:'重置金币、矿石、升级、矿工与矿层 · <b>身上装备保留 · 装备背包保留 '+(state.bagBase||10)+' 格</b>'+(state.bag.length>(state.bagBase||10)?' · 超额装备按上锁优先、评分其次的顺序保留':'')+'，换取 <b class="g">'+g+'</b> 点声望。普通转生不再要求声望达到门槛；飞升与返璞归真仍按各自规则清空背包。<br>声望永久提升全局产出。'+
@@ -11040,8 +11041,10 @@ function wildStoneBondDescription(stoneKey){
   purple:'无上+合成陈列品在陈列品背包中也能生效',
   black:'死亡后可消耗 2 张星酌邀约复活原探险者并保留身份与履历；二次强化后还会保留山海杂记升级和智识晶粒'
  }[color];
- var active=wildBondActive(color),isDeep=wildBondDeep(color),status=active?(isDeep?'深度羁绊已激活':'矿野羁绊已激活'):(wildBondHas(color)?'已取得同色遗物，拥有该石后激活':'取得同色矿野遗物后激活');
- return '<div class="gem-stone-bond"><b>矿野羁绊</b><span>'+esc(base)+'</span><b>深度羁绊</b><span>'+esc(deep)+'</span><small class="'+(active?'active':'')+'">'+esc(status)+'</small></div>';
+ var active=wildBondActive(color),isDeep=wildBondDeep(color);
+ if(!active)return '<div class="gem-stone-bond"><small>获得对应颜色无上物品时解锁羁绊</small></div>';
+ var status=isDeep?'深度羁绊已激活':'矿野羁绊已激活';
+ return '<div class="gem-stone-bond"><b>矿野羁绊</b><span>'+esc(base)+'</span><b>深度羁绊</b><span>'+esc(deep)+'</span><small class="active">'+esc(status)+'</small></div>';
 }
 function wildEmptyGear(){return {pickaxe:null,helmet:null,gloves:null,boots:null,ring:null,amulet:null,belt:null};}
 function wildGear(){var w=wildState();if(w.explorer){if(!w.explorer.gear)w.explorer.gear=wildEmptyGear();return w.explorer.gear;}if(!w.storedGear)w.storedGear=wildEmptyGear();return w.storedGear;}
@@ -11107,7 +11110,7 @@ function showWildInfo(){
  section('③ 装备、陈列品与永久成长',
   '· 矿野之笈有 7 个装备槽。探险装备不使用矿工挖矿词条，同套装按 2 / 4 / 6 / 7 件触发六维加成。<br>'+setTable+
   '· 上表为普通稀有度基础值，最终按套装中最低稀有度乘倍率：普通 ×1、稀有 ×1.2、史诗 ×1.5、传说 ×2.5、至宝 ×4、无上 ×10。<br>'+
-  '· 陈列品上架后生效，同系列集齐 7 件自动合成无上+。红/蓝/紫/绿等永耀之石可通过杂物图鉴里的六条暗线合成无上遗物，拥有对应永耀之石后激活矿野羁绊；强化后升级为深度羁绊。<br>'+
+  '· 陈列品上架后生效，同系列集齐 7 件自动合成无上+。六种颜色的无上遗物可通过杂物图鉴中的对应暗线合成；拥有对应颜色的永耀之石并获得同色无上遗物后，可解锁矿野羁绊，进一步强化永耀之石可解锁深度羁绊。<br>'+
   '· 智识晶粒用于山海杂记永久提升任一六维；祈献至宝和无上装备可以获得晶粒。');
  section('④ 出发前设置与消耗品',
   '· 选择海洋或森林系列与远足、探索、惊险、绝境难度，系统自动匹配地图；等级门槛依次为 Lv.1、Lv.30、Lv.55、Lv.80。<br>'+
@@ -11119,17 +11122,15 @@ function showWildInfo(){
   '· 远足触发致命危险时会触发「走为上」，保留 1 点生命并返程；其他难度死亡会进入死亡与保全结算。');
  section('⑥ 掉落事件与消耗品',
   '· 掉落事件只在正向非战斗节点判定，越深入越容易遇到；可能获得消耗品、金币、原石或杂物。惊险与绝境还可能发现奇点商品，黄色永耀羁绊会提高其出现机会。<br>'+
-  '· 医疗包与护盾的稀有度随地图难度逐步开放：远足可得稀有；探索增加史诗；惊险增加传说；绝境增加至宝。医疗恢复量分别为 8%、16%、24%、32%。护盾依稀有度抵挡 2 / 3 / 4 / 5 次攻击，每次减伤 10% / 20% / 30% / 40%。<br>'+
+  '· 医疗包与护盾的稀有度随地图难度逐步开放：远足可得稀有；探索增加史诗；惊险增加传说；绝境增加至宝。医疗恢复量分别为 8%、16%、24%、32%。护盾依稀有度抵挡 2 / 3 / 4 / 5 次攻击，每次减伤 10% / 20% / 30% / 40%。护身符和复生石属于奇点商品，由奇点商品池掉落。<br>'+
   '· 击败怪物后可能获得金币、原石或杂物。只有击败地图 Boss 才有机会掉落陈列品。');
  section('⑦ 杂物、携带与合成',
   '· 杂物共有普通 50 件、稀有 30 件、史诗 20 件、传说 10 件、至宝 6 件。远足可发现普通/稀有；探索增加史诗；惊险增加传说；至宝仅绝境出现，各稀有度按图鉴物品数量作为权重。<br>'+
-  '· 每件陈列品、杂物、奇点商品占 1 格；金币与原石合并占 1 格。未使用的非至宝消耗品在旅途中仍占格，返家时自动弃置；至宝消耗品未触发则免费带回并入库，不占格。<br>'+
+  '· 每件陈列品、杂物、消耗品、奇点商品均占 1 格；金币与原石合并占 1 格。途中拾取的消耗品不论稀有度均占格；护身符和复生石按奇点商品占格。出发前装配的自用消耗品不计入携带容量；未触发的非至宝自用消耗品返家时自动弃置，至宝自用消耗品可带回。<br>'+
   '· 携带优先级可选物品类别优先或稀有度优先，也可拖动排序。六条杂物暗线各需普通、稀有、史诗、传说、至宝各一件，收齐后点击至宝部件即可合成对应无上遗物。');
  section('⑧ 安全返家、死亡与六石羁绊',
-  '· 安全返家后，容量内战利品入库；至宝消耗品不占格。死亡时装备和战利品逐件按忠诚对应的保全概率判定，无上及无上+陈列品无法保全。携带复生石可在家中复活。<br>'+
-  '· 红色：每步 -5 秒（最低 30 秒），深度 -10 秒（最低 25 秒）。绿色：探险中普通转生一次，深度不限制次数；飞升和返璞归真仍需返家。<br>'+
-  '· 蓝色：六维各增加拥有的永耀之石数量，深度效果为 1.5 倍，并让探险者等级跟随矿工等级上限。黄色：奇点商品概率 ×2，深度 ×4。<br>'+
-  '· 紫色：陈列位额外增加所拥有的永耀之石数量；深度羁绊让背包中的无上+陈列品也生效。黑色无基础效果；深度一阶在死亡时可消耗 2 张邀约复活探险者，二阶还会保留山海杂记。');
+  '· 安全返家后，容量内战利品入库。死亡时，旅途战利品会按携带优先级和容量处理，再按忠诚对应的概率逐件判定保全；无上及无上+陈列品无法保全。出发前装配的复生石可在死亡时触发复活；途中拾取的复生石按奇点商品处理。<br>'+
+  '· 六种颜色的羁绊分别对应同色的无上遗物。拥有对应颜色的永耀之石并获得同色无上遗物后，可解锁矿野羁绊；强化对应永耀之石后，可进一步解锁深度羁绊。');
  section('⑨ 下一次探险',
   '· 探险者在家中按感知属性持续恢复生命值。返家后可继续升级山海杂记、调整矿野之笈、上架陈列品、整理消耗品与携带优先级，再次选择地图出发。');
  h+='</div>';
@@ -11236,6 +11237,12 @@ function wildHpAfterMaxChange(hp,oldMax,newMax){
   hp=Math.max(0,Number(hp)||0);
   if(newMax>oldMax&&oldMax>0)hp=hp/oldMax*newMax;
   else if(newMax<oldMax)hp=Math.min(hp,newMax);
+  return Math.max(0,Math.min(newMax,hp));
+}
+/* 负面耐久效果结束时只恢复生命上限，当前生命维持绝对值。 */
+function wildHpAfterNegativeEffectEnd(hp,newMax){
+  newMax=Math.max(1,Number(newMax)||1);
+  hp=Math.max(0,Number(hp)||0);
   return Math.max(0,Math.min(newMax,hp));
 }
 function wildLogHpMaxChange(reason,oldMax,newMax,oldHp,newHp){
@@ -11353,11 +11360,10 @@ function wildCarryBuildCandidates(trip,includeDiscarded){
  function add(kind,item,name,rarity,obtained,key){var k=key||kind+':'+(++seq);if(!includeDiscarded&&trip&&trip.carryDiscardedKeys&&trip.carryDiscardedKeys[k])return;candidates.push({kind:kind,item:item,name:name||item&&item.name||kind,rarity:rarity||'normal',obtained:Number(obtained)||0,key:k});}
  (trip.lootCollections||[]).forEach(function(x,i){add('collections',x,x.name,x.rarity,x.obtainedAt,'collection:'+(x.id||i)+':'+(x.obtainedAt||i));});
  (trip.lootJunk||[]).forEach(function(x,i){add('junk',x,x.name,x.rarity,x.obtainedAt,'junk:'+(x.id||i)+':'+(x.obtainedAt||i));});
- // 途中拾取且未使用的非至宝消耗品占格；探险者出发时装配的自用消耗品始终不计入携带格数。
- (trip.lootConsumables||[]).forEach(function(x,i){if(x.rarity!=='artifact'){add('consumables',x,x.name,x.rarity,x.obtainedAt,'consumable:'+(x.id||i)+':'+i);}});
- // 至宝消耗品免费入库，不占容量；出发装配的自用消耗品也不参与容量排序。
+ // 途中拾取的消耗品无论稀有度都占格；出发前装配的自用消耗品不参与容量排序。
+ (trip.lootConsumables||[]).forEach(function(x,i){add('consumables',x,x.name,x.rarity,x.obtainedAt,'consumable:'+(x.id||i)+':'+i);});
+ // 奇点商品池中的全部掉落均按奇点商品类别占格，包括护身符与复生石。
  (trip.lootSing||[]).forEach(function(x,i){
-   if(x.key==='amulet'||x.key==='revival')return; // 两种至宝消耗品免费带回
    add('sing',x,x.name,x.rarity,x.obtainedAt,'sing:'+(x.key||i)+':'+(x.obtainedAt||i));
  });
  // 金币与原石合并成一个资源包，占用一个携带格。
@@ -11385,14 +11391,18 @@ function wildLogCarryDiscardChanges(trip){
  });
 }
 function wildCarryAtHome(trip){
- var w=wildState(),kept={collections:0,junk:0,sing:0,resources:0,gold:0,ore:0,freeArtifactConsumables:0,discardedConsumables:0};
+ var w=wildState(),kept={collections:0,junk:0,consumables:0,sing:0,resources:0,gold:0,ore:0,preEquippedArtifactConsumables:0,discardedConsumables:0};
  // 先按当前容量将新超额物品正式标记为放弃，再只结算尚未被放弃的候选物品。
  wildLogCarryDiscardChanges(trip);
  var plan=wildCarryBuildCandidates(trip),allPlan=wildCarryBuildCandidates(trip,true),discardKeys=trip.carryDiscardedKeys||{};
- var discard=allPlan.candidates.filter(function(c){return c.kind!=='consumables'&&!!discardKeys[c.key];}).map(function(c){if(c.kind==='resources')return '资源包（金 '+fmt(c.item.gold)+' / 原石 '+fmt(c.item.ore)+'）';return c.name+'（'+wildCarryCategoryName(c.kind)+'）';});
+ var discard=allPlan.candidates.filter(function(c){return !!discardKeys[c.key];}).map(function(c){if(c.kind==='resources')return '资源包（金 '+fmt(c.item.gold)+' / 原石 '+fmt(c.item.ore)+'）';return c.name+'（'+wildCarryCategoryName(c.kind)+'）';});
  plan.kept.forEach(function(c){
    if(c.kind==='collections'){wildCarryCollection(c.item);kept.collections++;}
    else if(c.kind==='junk'){w.junkInventory[c.item.id]=(Number(w.junkInventory[c.item.id])||0)+1;w.junkReturned[c.item.id]=(Number(w.junkReturned[c.item.id])||0)+1;kept.junk++;}
+   else if(c.kind==='consumables'){
+     // 途中拾取的消耗品按携带优先级占格，容量内均正常带回。
+     wildCarryConsumable(c.item,1);kept.consumables++;
+   }
    else if(c.kind==='resources'){
      if(c.item.gold>0){state.gold+=c.item.gold;state.totalGold+=c.item.gold;state.runGold+=c.item.gold;kept.gold=c.item.gold;}
      if(c.item.ore>0){var gs=gemState();gs.ore+=c.item.ore;gs.oreTotal+=c.item.ore;kept.ore=c.item.ore;}
@@ -11404,25 +11414,21 @@ function wildCarryAtHome(trip){
      kept.sing++;
    }
  });
- // 至宝消耗品不占携带格；未触发的低稀有度消耗品返家后自动弃置。
- function settleConsumable(item,origin){
-   if(!item)return;var qty=Math.max(1,Math.floor(Number(item.qty)||1));
-   for(var i=0;i<qty;i++){
-     if(item.rarity==='artifact'){
-       wildCarryConsumable(item,1);kept.freeArtifactConsumables++;
-       wildLog('💠 未触发的至宝消耗品「'+item.name+'」已安全带回，不占用背包格。','good');
-     }else{
-       kept.discardedConsumables++;
-       wildLog('🗑️ 未使用的'+(WILD_RNAME[item.rarity]||'普通')+'消耗品「'+item.name+'」已在返家时自动弃置。','event');
+ // 只有出发前装配的自用消耗品不参与容量计算；未触发的非至宝自用消耗品返家时弃置。
+ if(trip.activeConsumable){
+   var active=trip.activeConsumable,qty=Math.max(1,Math.floor(Number(active.qty)||1));
+   if(active.rarity==='artifact'){
+     for(var ai=0;ai<qty;ai++){
+       wildCarryConsumable(active,1);kept.preEquippedArtifactConsumables++;
+       wildLog('💠 出发前装配的至宝消耗品「'+active.name+'」未触发，已安全带回。','good');
      }
+   }else for(var aj=0;aj<qty;aj++){
+     kept.discardedConsumables++;
+     wildLog('🗑️ 出发前装配的'+(WILD_RNAME[active.rarity]||'普通')+'消耗品「'+active.name+'」未触发，已在返家时自动弃置。','event');
    }
  }
- (trip.lootConsumables||[]).forEach(function(c){settleConsumable(c,'途中掉落');});
- if(trip.activeConsumable)settleConsumable(trip.activeConsumable,'出发装配');
- // 奇点商品池中直接掉落的护身符/复生石也属于至宝消耗品，免费入包。
- (trip.lootSing||[]).forEach(function(x){if(x.key==='amulet'||x.key==='revival'){settleConsumable({type:x.key,rarity:'artifact',name:x.name,id:'special-'+gameNow()+'-'+Math.random()},'奇点商品');kept.sing++;}});
  w.equippedConsumable=null;
- return {collections:kept.collections,junk:kept.junk,sing:kept.sing,resources:kept.resources,gold:kept.gold,ore:kept.ore,freeArtifactConsumables:kept.freeArtifactConsumables,discardedConsumables:kept.discardedConsumables,capacity:plan.capacity,slotsUsed:plan.kept.length,discarded:discard};
+ return {collections:kept.collections,junk:kept.junk,consumables:kept.consumables,sing:kept.sing,resources:kept.resources,gold:kept.gold,ore:kept.ore,preEquippedArtifactConsumables:kept.preEquippedArtifactConsumables,discardedConsumables:kept.discardedConsumables,capacity:plan.capacity,slotsUsed:plan.kept.length,discarded:discard};
 }
 function wildClearActiveConsumable(trip){
  var w=wildState(),item=trip&&trip.activeConsumable;
@@ -11439,18 +11445,21 @@ function wildDeath(trip){
  (trip.lootCollections||[]).forEach(function(it,i){var label=it.name||it.id||'陈列品',key='collection:'+(it.id||i)+':'+(it.obtainedAt||i);if(it.rarity==='unique'||it.id==='waterheart'||it.id==='woodheart'){lostUnique++;lostItems++;lostNames.push(label);return;}if(!deathKeptKeys[key]){lostItems++;lostNames.push(label+'（携带空间不足）');return;}if(Math.random()<p){wildCarryCollection(it);keptItems++;keptNames.push(label);}else{lostItems++;lostNames.push(label);}});
  // 杂物逐件参与死亡保全；累计发现记录保留，只有保全成功才进入可合成库存。
  (trip.lootJunk||[]).forEach(function(it,i){var label=it.name||it.id||'杂物',key='junk:'+(it.id||i)+':'+(it.obtainedAt||i);if(!deathKeptKeys[key]){lostItems++;lostNames.push(label+'（携带空间不足）');return;}if(Math.random()<p){w.junkInventory[it.id]=(Number(w.junkInventory[it.id])||0)+1;w.junkReturned[it.id]=(Number(w.junkReturned[it.id])||0)+1;keptItems++;keptNames.push(label);}else{lostItems++;lostNames.push(label);}});
- // 途中掉落的消耗品只有至宝品质可能保全，低于至宝的未使用消耗品按新规则直接弃置。
- (trip.lootConsumables||[]).forEach(function(it){var qty=Math.max(1,Math.floor(Number(it.qty)||1));for(var qi=0;qi<qty;qi++){
-   if(it.rarity==='artifact'&&Math.random()<p){wildCarryConsumable(it,1);keptItems++;keptNames.push(it.name||'至宝消耗品');}
-   else{lostItems++;lostNames.push(it.name||'消耗品');}
- }});
+ // 途中拾取的消耗品无论稀有度都先经过容量筛选，再逐件判定死亡保全。
+ (trip.lootConsumables||[]).forEach(function(it,i){var qty=Math.max(1,Math.floor(Number(it.qty)||1)),key='consumable:'+(it.id||i)+':'+i;
+   for(var qi=0;qi<qty;qi++){
+     if(!deathKeptKeys[key]){lostItems++;lostNames.push((it.name||'消耗品')+'（携带空间不足）');continue;}
+     if(Math.random()<p){wildCarryConsumable(it,1);keptItems++;keptNames.push(it.name||'消耗品');}
+     else{lostItems++;lostNames.push(it.name||'消耗品');}
+   }
+ });
  var active=trip.activeConsumable,revivedByStone=!!(active&&active.type==='revival'),revivedByBlack=!revivedByStone&&wildBondDeep('black')&&w.invites>=2;
  if(active&&active.type!=='revival'){
    if(active.rarity==='artifact'&&Math.random()<p){wildCarryConsumable(active,1);keptItems++;keptNames.push(active.name||'已装配至宝消耗品');}
    else{lostItems++;lostNames.push(active.name||'已装配消耗品');}
  }
- // 奇点商品中的护身符/复生石同样按至宝消耗品规则保全。
- (trip.lootSing||[]).forEach(function(it,i){var special=it.key==='amulet'||it.key==='revival',key='sing:'+(it.key||i)+':'+(it.obtainedAt||i);if(!special&&!deathKeptKeys[key]){lostItems++;lostNames.push((it.name||'奇点商品')+'（携带空间不足）');return;}if(Math.random()<p){if(special)wildCarryConsumable({id:'special-death-'+gameNow()+'-'+Math.random(),type:it.key,rarity:'artifact',name:it.name},1);else{if(!state.sing.inv)state.sing.inv={};state.sing.inv[it.key]=(state.sing.inv[it.key]||0)+1;}keptItems++;keptNames.push(it.name||'奇点商品');}else{lostItems++;lostNames.push(it.name||'奇点商品');}});
+ // 奇点商品池掉落的所有物品，包括护身符和复生石，均先经过容量筛选，再判定死亡保全。
+ (trip.lootSing||[]).forEach(function(it,i){var special=it.key==='amulet'||it.key==='revival',key='sing:'+(it.key||i)+':'+(it.obtainedAt||i);if(!deathKeptKeys[key]){lostItems++;lostNames.push((it.name||'奇点商品')+'（携带空间不足）');return;}if(Math.random()<p){if(special)wildCarryConsumable({id:'special-death-'+gameNow()+'-'+Math.random(),type:it.key,rarity:'artifact',name:it.name},1);else{if(!state.sing.inv)state.sing.inv={};state.sing.inv[it.key]=(state.sing.inv[it.key]||0)+1;}keptItems++;keptNames.push(it.name||'奇点商品');}else{lostItems++;lostNames.push(it.name||'奇点商品');}});
  // 金币与原石共用一个资源保全判定，保持与安全返家时的单格规则一致。
  if(Number(trip.gold)>0||Number(trip.ore)>0){if(!deathKeptKeys['resource:bundle']){lostItems++;lostNames.push('资源包（金 '+fmt(trip.gold||0)+' / 原石 '+fmt(trip.ore||0)+'）（携带空间不足）');}else if(Math.random()<p){if(Number(trip.gold)>0){state.gold+=trip.gold;state.totalGold+=trip.gold;state.runGold+=trip.gold;}if(Number(trip.ore)>0){gemState().ore+=trip.ore;gemState().oreTotal+=trip.ore;}keptItems++;keptNames.push('资源包（金 '+fmt(trip.gold||0)+' / 原石 '+fmt(trip.ore||0)+'）');}else{lostItems++;lostNames.push('资源包（金 '+fmt(trip.gold||0)+' / 原石 '+fmt(trip.ore||0)+'）');}}
  if(revivedByBlack)w.invites-=2;
@@ -11478,7 +11487,7 @@ function wildMakeMonster(series,tier){var pool=WILD_MONSTERS.filter(function(m){
 function wildChooseMonster(t,boss){var cfg=WILD_DIFF[t.diff],tier;if(boss)tier=cfg.boss;else{var allowed=cfg.commonPool; tier=allowed[Math.floor(Math.random()*allowed.length)];}return wildMakeMonster(t.series,tier);}
 function wildSense(stats,m){var limit={common:10,rare:40,elite:65,ultimate:100}[m.tier]||10;return stats.per>=Math.max(m.int,limit);}
 function wildBattle(trip,m,sensed,isReturn){
- var w=wildState(),ex=w.explorer,base=wildStats(true),st={};
+ var w=wildState(),ex=w.explorer,base=wildStats(true),st={},endingNegativeEndurance=!!(trip.nextDebuff&&trip.nextDebuff.stat==='end'&&Number(trip.nextDebuff.amount)>0);
  wildRememberMonster(m);
  WILD_KEYS.forEach(function(k){st[k]=base[k];});
  if(trip.nextBuff){st[trip.nextBuff.stat]+=trip.nextBuff.amount;wildLog('✨ 第 0.0 秒 · 战斗启发生效：'+WILD_LABEL[trip.nextBuff.stat]+' +'+trip.nextBuff.amount+'。','battle-good');trip.nextBuff=null;}
@@ -11566,7 +11575,7 @@ function wildBattle(trip,m,sensed,isReturn){
    }
    if(m.hp<=0){won=true;break;}if(pHp<=0){dead=true;break;}
  }
- trip.inBattle=false;var hpAtTempEnd=Math.max(0,Math.min(maxHp,pHp)),hpAfterTemp=wildHpAfterMaxChange(hpAtTempEnd,maxHp,baseMaxHp);wildLogHpMaxChange('战斗临时耐久效果结束',maxHp,baseMaxHp,hpAtTempEnd,hpAfterTemp);ex.hp=hpAfterTemp;ex.maxHp=baseMaxHp;trip.battles++;w.stats.battles++;ex.battles=(ex.battles||0)+1;if(won){ex.kills=(ex.kills||0)+1;w.stats.kills=(w.stats.kills||0)+1;}wildUiDirty=true;
+ trip.inBattle=false;var hpAtTempEnd=Math.max(0,Math.min(maxHp,pHp)),noHealOnTempEnd=endingNegativeEndurance&&maxHp<baseMaxHp,hpAfterTemp=noHealOnTempEnd?wildHpAfterNegativeEffectEnd(hpAtTempEnd,baseMaxHp):wildHpAfterMaxChange(hpAtTempEnd,maxHp,baseMaxHp);wildLogHpMaxChange('战斗临时耐久效果结束',maxHp,baseMaxHp,hpAtTempEnd,hpAfterTemp);ex.hp=hpAfterTemp;ex.maxHp=baseMaxHp;trip.battles++;w.stats.battles++;ex.battles=(ex.battles||0)+1;if(won){ex.kills=(ex.kills||0)+1;w.stats.kills=(w.stats.kills||0)+1;}wildUiDirty=true;
  if(won)trip.kills=(trip.kills||0)+1;wildLog('🏁 第 '+battleDur.toFixed(1)+' 秒 · '+m.name+' 战斗结束：'+(trip.amuletTriggered?'护身符触发，脱离战斗':(won?'获胜':'失利'))+' · '+(ex.name||'探险者')+' 剩余生命 '+Math.max(0,ex.hp).toFixed(0)+' / '+Number(ex.maxHp||baseMaxHp).toFixed(0)+'；怪物剩余生命 '+Math.max(0,m.hp).toFixed(1)+' / '+m.maxHp.toFixed(1)+'。',won?'battle-good':'battle-bad',battleDur*1000);
  if(trip.amuletTriggered){trip.amuletTriggered=false;if(trip.phase==='forward')wildReturnStart('护身符触发，抵挡致命伤害并开始返程');return {protected:true,duration:battleDur};}
  if(dead||ex.hp<=0){
@@ -11622,16 +11631,26 @@ function wildProcessReturn(trip){
 }
 function wildFinish(trip){
  var w=wildState(),exName=w.explorer?(w.explorer.name||'探险者'):'探险者',carried=wildCarryAtHome(trip);
- /* 在移除地图临时效果前记录抵达时的真实生命比例，避免返家重算上限后误判满血。 */
+ /* 在移除地图临时效果前记录抵达时的真实生命状态。 */
  var fullOnArrival=!!(w.explorer&&trip.diff==='despair'&&Number(trip.maxHp)>0&&Number(w.explorer.hp)>=Number(trip.maxHp)-0.0001);
- var summary='📋 '+exName+' 归来：正向探索 '+trip.steps+' 步，遭遇怪物 '+(trip.encounters||0)+' 只，击败 '+(trip.kills||0)+' 只；带回 '+carried.collections+' 件陈列品、'+carried.junk+' 件杂物、'+carried.sing+' 件奇点商品、至宝消耗品 '+carried.freeArtifactConsumables+' 件（免占格），资源包 '+(carried.resources>0?'1 项（金 '+fmt(carried.gold)+' / 原石 '+fmt(carried.ore)+'）':'0 项')+'；占用背包 '+carried.slotsUsed+'/'+carried.capacity+' 格。'+(carried.discardedConsumables?'另有 '+carried.discardedConsumables+' 件未触发的非至宝消耗品自动弃置。':'')+(carried.discarded.length?'未能带回 '+carried.discarded.length+' 项：'+carried.discarded.join('、')+'。':'容量内战利品均已带回。');
+ var endingNegativeMapEnd=!!(trip.temp&&Number(trip.temp.end)<0),mapEndOldHp=w.explorer?Number(w.explorer.hp)||0:0,mapEndOldMax=w.explorer?Number(w.explorer.maxHp)||Number(trip.maxHp)||0:0;
+ var summary='📋 '+exName+' 归来：正向探索 '+trip.steps+' 步，遭遇怪物 '+(trip.encounters||0)+' 只，击败 '+(trip.kills||0)+' 只；带回 '+carried.collections+' 件陈列品、'+carried.junk+' 件杂物、'+(carried.consumables||0)+' 件途中拾取消耗品、'+carried.sing+' 件奇点商品、资源包 '+(carried.resources>0?'1 项（金 '+fmt(carried.gold)+' / 原石 '+fmt(carried.ore)+'）':'0 项')+'；占用背包 '+carried.slotsUsed+'/'+carried.capacity+' 格。'+(carried.preEquippedArtifactConsumables?'另有 '+carried.preEquippedArtifactConsumables+' 件出发前装配且未触发的至宝自用消耗品已带回。':'')+(carried.discardedConsumables?'另有 '+carried.discardedConsumables+' 件出发前装配且未触发的非至宝消耗品自动弃置。':'')+(carried.discarded.length?'未能带回 '+carried.discarded.length+' 项：'+carried.discarded.join('、')+'。':'容量内战利品均已带回。');
   w.stats.completed=(w.stats.completed||0)+1;
   if(carried.collections>0)w.stats.collectionReturns=(w.stats.collectionReturns||0)+1;
   if(carried.sing>0)w.stats.singReturns=(w.stats.singReturns||0)+1;
   if(carried.sing>=2)w.stats.multiSingReturns=(w.stats.multiSingReturns||0)+1;
   if(trip.diff==='despair'&&trip.bossDefeated)w.stats.despairBossReturns=(w.stats.despairBossReturns||0)+1;
   w.trip=null;w.stats.returns++;
-  if(w.explorer){var ex=w.explorer;ex.returns=(ex.returns||0)+1;wildSyncLevel();if(fullOnArrival)w.stats.fullDespairReturns=(w.stats.fullDespairReturns||0)+1;}
+  if(w.explorer){
+    var ex=w.explorer;ex.returns=(ex.returns||0)+1;
+    if(endingNegativeMapEnd){
+      var mapRestoredMax=wildMaxHp(wildStats(false),ex.level),mapRestoredHp=wildHpAfterNegativeEffectEnd(mapEndOldHp,mapRestoredMax);
+      ex.maxHp=mapRestoredMax;ex.hp=mapRestoredHp;
+      wildLogHpMaxChange('负面场地耐久效果结束',mapEndOldMax,mapRestoredMax,mapEndOldHp,mapRestoredHp);
+    }
+    wildSyncLevel();
+    if(fullOnArrival)w.stats.fullDespairReturns=(w.stats.fullDespairReturns||0)+1;
+  }
   wildLog('✅ 探险者已安全回家，装备、等级、学习与陈列位重新解锁。','good');wildLog(summary,'good');
   checkAchievements();wildUiDirty=true;renderEquip(true);saveGame(false);
 }
@@ -11797,7 +11816,7 @@ function wildRenderHomeCollections(w,locked){
 function wildSetPanelHTML(el,html){if(!el)return;if(el.dataset.wildRenderedHTML!==html){el.innerHTML=html;el.dataset.wildRenderedHTML=html;}}
 function wildRenderCarryPriority(locked){
  var labels={collections:'陈列品',consumables:'消耗品',junk:'杂物',resources:'金币与原石',sing:'奇点商品'},icons={collections:'🏺',consumables:'🧪',junk:'🧩',resources:'🪙',sing:'🌟'},order=wildCarryPriorityOrder(),mode=wildState().carryPriorityMode||'category';
- return '<div class="wild-priority"><div class="wild-priority-head"><b>物品带回优先级</b><span>'+(locked?'外出中锁定':'左侧优先保留 · 拖动排序')+'</span></div><div class="wild-priority-modes"><button type="button" data-wcmd="carry-mode" data-mode="category" class="'+(mode==='category'?'active':'')+'" '+(locked?'disabled':'')+'>物品类别优先</button><button type="button" data-wcmd="carry-mode" data-mode="rarity" class="'+(mode==='rarity'?'active':'')+'" '+(locked?'disabled':'')+'>稀有度优先</button></div><div class="wild-priority-list" id="wildPriorityList">'+order.map(function(k,i){return '<div class="wild-priority-item'+(locked?' locked':'')+'" data-priority-key="'+k+'" draggable="false"><span class="wild-priority-handle">⠿</span><b>'+((i+1)+'.')+'</b><span>'+icons[k]+' '+labels[k]+'</span></div>';}).join('')+'</div><div class="wild-muted">'+(mode==='rarity'?'先保留稀有度更高的物品，同稀有度再按类别排序。':'先按上方类别顺序保留，同一类别内优先保留稀有度更高的物品。')+'金币与原石合并占用 1 格；未触发的至宝消耗品免占格带回。'+'</div></div>';
+ return '<div class="wild-priority"><div class="wild-priority-head"><b>物品带回优先级</b><span>'+(locked?'外出中锁定':'左侧优先保留 · 拖动排序')+'</span></div><div class="wild-priority-modes"><button type="button" data-wcmd="carry-mode" data-mode="category" class="'+(mode==='category'?'active':'')+'" '+(locked?'disabled':'')+'>物品类别优先</button><button type="button" data-wcmd="carry-mode" data-mode="rarity" class="'+(mode==='rarity'?'active':'')+'" '+(locked?'disabled':'')+'>稀有度优先</button></div><div class="wild-priority-list" id="wildPriorityList">'+order.map(function(k,i){return '<div class="wild-priority-item'+(locked?' locked':'')+'" data-priority-key="'+k+'" draggable="false"><span class="wild-priority-handle">⠿</span><b>'+((i+1)+'.')+'</b><span>'+icons[k]+' '+labels[k]+'</span></div>';}).join('')+'</div><div class="wild-muted">'+(mode==='rarity'?'先保留稀有度更高的物品，同稀有度再按类别排序。':'先按上方类别顺序保留，同一类别内优先保留稀有度更高的物品。')+'金币与原石合并占用 1 格；途中拾取的消耗品和奇点商品均占格；出发前装配的自用消耗品不计入携带容量。'+'</div></div>';
 }
 function wildRenderProfile(){
  var el=$('wildProfile');if(!el)return;var w=wildState(),ex=w.explorer;
