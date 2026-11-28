@@ -30,6 +30,13 @@ header{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .chip{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 11px;font-size:13px;display:flex;gap:6px;align-items:center;white-space:nowrap}
 .chip b{color:var(--gold);font-size:14px}
 .chip .sub{color:var(--dim);font-size:11px}
+.chip.prestige-capped #hPrestige{color:var(--bad)!important;text-shadow:0 0 8px rgba(255,92,92,.28)}
+.wild-state-icon{font-size:13px;line-height:1}
+.chip.wild-state-chip{gap:6px;border-color:rgba(126,211,33,.25);background:linear-gradient(180deg,rgba(38,54,30,.42),var(--panel));}
+.chip.wild-state-chip b{font-size:12px;color:#a89a86;}
+.chip.wild-state-chip[data-state="ready"] b{color:#9be15d;}
+.chip.wild-state-chip[data-state="healing"] b{color:#8fcaff;}
+.chip.wild-state-chip[data-state="away"] b{color:#ffcf5c;}
 .savestate{font-size:12px;color:var(--dim)}
 .win-chip{background:linear-gradient(180deg,#3a2f10,#2a2110)!important;border-color:#b8860b!important;color:#ffd54f!important;font-weight:800;animation:winpulse 2s ease-in-out infinite}
 @keyframes winpulse{50%{box-shadow:0 0 12px rgba(255,213,79,.35)}}
@@ -380,7 +387,7 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 /* 稀有度颜色：白(普通)/蓝(稀有)/紫(史诗)/金(传说)/红(至宝)/炫彩(无上) */
 .r-normal{color:#d8dce3}.r-rare{color:#4a9eff}.r-epic{color:#b04efc}
 .r-legend{color:#ffb020}.r-artifact{color:#ff3c3c}
-.r-unique{color:#ff9f43;font-weight:800;animation:hueflow 3s linear infinite}
+.r-unique{color:#ff9f43;font-weight:800;animation:hueflow 3s linear infinite}.r-unique-plus{color:#ffd18a;font-weight:900;text-shadow:0 0 7px rgba(255,159,67,.4);animation:hueflow 3s linear infinite}.r-unique-plus{color:#ffd18a;font-weight:900;text-shadow:0 0 7px rgba(255,159,67,.4);animation:hueflow 3s linear infinite}
 .r-unique-plus{color:#ffd18a;font-weight:900;text-shadow:0 0 7px rgba(255,159,67,.4);animation:hueflow 3s linear infinite}
 @keyframes hueflow{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}
 .bd-normal{border-color:#6b7078!important}.bd-rare{border-color:#4a9eff!important}.bd-epic{border-color:#b04efc!important}
@@ -433,7 +440,7 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 .smelt-grid .bagitem.locked:hover{border-color:#ff3c3c;transform:none}
 .slot{cursor:pointer}
 .slot.filled:hover{border-color:var(--gold)}
-.maint-help{cursor:help;border-bottom:1px dashed var(--gold)}
+.maint-help{cursor:help}.help-dot{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;min-width:16px;padding:0;margin-left:4px;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--dim);font-family:inherit;font-size:10px;font-weight:700;line-height:14px;vertical-align:middle;cursor:help}.help-dot:hover{border-color:var(--gold);color:var(--gold)}
 /* v10.3 信吗赌局 */
 .betcard{background:#241c12;border:1px solid #6b4fa0;border-radius:12px;padding:12px;margin-bottom:12px}
 .bet-title{font-size:14px;font-weight:800;color:#c9a7ff;margin-bottom:6px}
@@ -1518,14 +1525,38 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 .set-info-table tr:last-child td{border-bottom:0;}
 .set-info-rates{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 10px;}
 .set-info-rates span{padding:4px 7px;border-radius:6px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);font-size:10.5px;}
-/* V16.1：游戏指南与矿野图鉴 */
-.game-guide{font-size:12.5px;line-height:1.72;color:var(--dim)}
-.guide-intro{padding:10px 12px;margin-bottom:10px;border:1px solid rgba(255,207,92,.22);border-radius:10px;background:rgba(255,207,92,.055);color:var(--text)}
-.guide-section{padding:9px 2px;border-bottom:1px solid rgba(255,255,255,.07)}
-.guide-section:last-of-type{border-bottom:0}
-.guide-head{font-size:13px;font-weight:800;color:#f0d28e;margin-bottom:3px}
-.guide-copy{color:var(--dim)}
-.guide-copy b{color:var(--text)}
+/* V16.2：玩家指南按成长阶段分区 · 各阶段采用独立色调与卡片层级 */
+.game-guide{font-size:12.3px;line-height:1.68;color:var(--dim)}
+.guide-intro{padding:11px 12px;margin-bottom:13px;border:1px solid rgba(255,207,92,.28);border-radius:11px;background:linear-gradient(135deg,rgba(255,207,92,.10),rgba(255,207,92,.025));color:var(--text);line-height:1.75}
+.guide-era{padding:12px;margin:12px 0 14px;border:1px solid rgba(255,255,255,.10);border-radius:13px;background:rgba(0,0,0,.15);box-shadow:0 5px 16px rgba(0,0,0,.12)}
+.guide-era.early{border-color:rgba(255,207,92,.30);background:linear-gradient(145deg,rgba(117,79,23,.19),rgba(0,0,0,.13) 60%)}
+.guide-era.mid{border-color:rgba(91,164,220,.30);background:linear-gradient(145deg,rgba(30,83,125,.19),rgba(0,0,0,.13) 60%)}
+.guide-era.late{border-color:rgba(177,112,230,.32);background:linear-gradient(145deg,rgba(92,45,125,.20),rgba(0,0,0,.13) 60%)}
+.guide-era.end{border-color:rgba(126,211,145,.30);background:linear-gradient(145deg,rgba(40,104,63,.20),rgba(0,0,0,.13) 60%)}
+.guide-era-head{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.guide-stage-no{display:flex;align-items:center;justify-content:center;flex:none;width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.08);font-size:11px;font-weight:900;letter-spacing:.4px;color:var(--gold)}
+.guide-era.mid .guide-stage-no{color:#8fcaff}.guide-era.late .guide-stage-no{color:#d4a5ff}.guide-era.end .guide-stage-no{color:#9be1ad}
+.guide-era-title{font-size:14.5px;font-weight:850;color:#f5e8d3;line-height:1.35}
+.guide-era.mid .guide-era-title{color:#c7e6ff}.guide-era.late .guide-era-title{color:#e0c5ff}.guide-era.end .guide-era-title{color:#c9f0d2}
+.guide-era-subtitle{font-size:10.5px;color:var(--dim);margin-top:2px}
+.guide-goal{padding:8px 10px;margin-bottom:9px;border-radius:9px;background:rgba(0,0,0,.19);border:1px solid rgba(255,255,255,.055);color:var(--text)}
+.guide-goal b{color:var(--gold)}
+.guide-topic{padding:8px 9px;margin-top:7px;border-radius:9px;background:rgba(0,0,0,.13);border:1px solid rgba(255,255,255,.045)}
+.guide-topic-title{font-size:12px;font-weight:800;color:#ead9b9;margin-bottom:3px}
+.guide-era.mid .guide-topic-title{color:#b8dcf7}.guide-era.late .guide-topic-title{color:#d8b8fa}.guide-era.end .guide-topic-title{color:#bce7c7}
+.guide-topic-copy{color:var(--dim)}
+.guide-topic-copy b{color:var(--text)}
+.guide-upgrade-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 7px;margin-top:6px}
+.guide-upgrade-item{min-width:0;padding:6px 7px;border-radius:7px;background:rgba(255,255,255,.035);font-size:11.2px;line-height:1.5}
+.guide-upgrade-item b{color:var(--text)}
+@media(max-width:560px){.guide-upgrade-grid{grid-template-columns:1fr}}
+.guide-stage-footer{display:grid;grid-template-columns:1fr;gap:7px;margin-top:9px}
+.guide-metric,.guide-spend{padding:8px 9px;border-radius:9px;background:rgba(255,255,255,.045);font-size:11.5px;line-height:1.65}
+.guide-metric b,.guide-spend b{color:var(--text)}
+.guide-metric strong,.guide-spend strong{color:var(--gold)}
+.guide-era.mid .guide-metric strong,.guide-era.mid .guide-spend strong{color:#8fcaff}
+.guide-era.late .guide-metric strong,.guide-era.late .guide-spend strong{color:#d4a5ff}
+.guide-era.end .guide-metric strong,.guide-era.end .guide-spend strong{color:#9be1ad}
 .guide-note{margin-top:10px;padding:9px 11px;border:1px dashed rgba(255,207,92,.28);border-radius:9px;color:var(--text);background:rgba(255,207,92,.035)}
 .wild-ency{font-size:12px;line-height:1.6;color:var(--dim)}
 .wild-ency-intro{padding:8px 10px;margin-bottom:10px;background:rgba(255,207,92,.06);border:1px solid rgba(255,207,92,.2);border-radius:9px}
@@ -1700,9 +1731,10 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 <div class="chips">
 <div class="chip">💰 金币 <b id="hGold">50</b></div>
 <div class="chip">📈 收入 <b id="hIncome">0.3</b><span class="sub">/秒</span></div>
+<div class="chip" title="当前累计声望"><span>🏆 声望</span><b id="hPrestige">0</b></div>
+<div class="chip" title="当前生效的全局产出倍率"><span>🌐 全局倍率</span><b id="hGlobalMult">×1.00</b></div>
 <div class="chip">🍀 幸运 <b id="hLuck">0</b></div>
-<div class="chip">⚡ 挖矿 <b id="hRate">1.1</b><span class="sub">/秒</span></div>
-<div class="chip">🏆 声望 <b id="hPrestige">0</b><span class="sub" id="hPrestigeBonus">×1.00</span></div>
+<div class="chip wild-state-chip" data-state="none" title="矿野探险者状态"><span class="wild-state-icon" aria-hidden="true">🌿</span><b id="hWildStatus">无探险者</b></div>
 <div class="chip win-chip" id="winChip" style="display:none">🏆 <span id="winChipText">已获胜</span></div>
 <!-- v12.3：独立「云端」按钮 · 关于面板左边-->
 <button class="iconbtn" id="btnCloudTop" style="margin-right:auto" title="☁️ 云端存档">
@@ -1760,7 +1792,7 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 <button class="sec" disabled="" id="btnFill"><span id="fillMain">👥 一键填满 · +15 格 · Lv.1</span><small id="fillSub">💰 900 · 金币不足</small></button>
 <button class="sec" disabled="" id="btnDelSel"><span id="delMain">🗑️ 删除所选</span><small id="delSub">先在左侧点选一名矿工</small></button>
 </div>
-<div class="crew-hint">💡 <b>拖动</b>两个同级矿工到一起即可合成高一级；也可<b>点选</b>一个后再点另一个同级矿工。⚡ 一键合成只补足到<b>当前最高等级</b> · 上限 Lv.15 · 每次转生 +1· 新矿工 = 最高等级-3 · 🗑️ 删除所选 = 点选后解散、返还 20% 投入 · 最低级仅剩 1 名无法合成时用· 👥 一键填满 = 按当前级别买满 16 格 · 🤖 自动填充/升级 = 需先在奇点商店购买「络绎不绝」，开启后自动招募 / 合成 / 满格清孤矿 / 逐级升级</div>
+<div class="crew-hint">💡 同等级矿工可合成。拖动合并，或依次点选两名同级矿工。<button type="button" class="help-dot" id="btnCrewHelp" title="矿工团队说明" aria-label="矿工团队说明">?</button></div>
 <div class="summary crew-stats" id="crewStats">👷 矿工 <b>1</b> 名 · 最高 Lv.1· 挥镐 <b class="g">×1.00</b><br/>🪨 单镐产量 <b class="g">1</b> · 暴击 <b class="g">8.0%</b>×2.0</div>
 </div>
 <div class="bagwrap">
@@ -1800,9 +1832,9 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 <button data-q="max">最大</button>
 </div>
 <div class="alldimrow">
-<button class="buy alldimwide" disabled="" id="btnAllDim" title="声望超过 20 万后解锁：7 个维度 · 不含幸运各升 1 级"><span class="cost">🔒 所有维度升一级</span><span class="bamt">声望超过 20 万解锁 · 当前 0</span></button>
+<button class="buy alldimwide" disabled="" id="btnAllDim" title="声望超过 200,000 后解锁：7 个维度 · 不含幸运各升 1 级"><span class="cost">🔒 所有维度升一级</span><span class="bamt">声望超过 200,000 解锁 · 当前 0</span></button>
 </div>
-<div id="shopList"><div class="card" id="card-pick"><div class="card-icon">⚒️</div><div class="card-body"><div class="card-title">强化镐子 <span class="lv" id="lv-pick">Lv.0/29</span></div><div class="card-desc" id="desc-pick">矿石产量：每级 +25%（当前产量 ×1.00 · 基础 +0%）</div><div class="prereq" id="pre-pick"></div></div><button class="buy" id="buy-pick"><span class="cost">×1</span><span class="bamt">💰 20</span></button></div><div class="card" id="card-speed"><div class="card-icon">💨</div><div class="card-body"><div class="card-title">挖矿训练 <span class="lv" id="lv-speed">Lv.0/29</span></div><div class="card-desc" id="desc-speed">挥镐速度：每级 +10%（当前速度 ×1.00 · 基础 +0%）</div><div class="prereq" id="pre-speed"></div></div><button class="buy" id="buy-speed"><span class="cost">×1</span><span class="bamt">💰 8</span></button></div><div class="card" id="card-bag"><div class="card-icon">🎒</div><div class="card-body"><div class="card-title">扩容背包 <span class="lv" id="lv-bag">Lv.0/29</span></div><div class="card-desc" id="desc-bag">矿石背包容量成长 · 保持 3-5 秒装满· 议价每级 +4% · 上限 ×3 · 当前容量 4 · 约 4 秒挖满</div><div class="prereq" id="pre-bag"></div></div><button class="buy" id="buy-bag"><span class="cost">×1</span><span class="bamt">💰 5</span></button></div><div class="card" id="card-value"><div class="card-icon">💎</div><div class="card-body"><div class="card-title">矿石提纯 <span class="lv" id="lv-value">Lv.0/29</span></div><div class="card-desc" id="desc-value">矿石价值：每级 +15%（当前价值 ×1.00 · 基础 +0%）</div><div class="prereq" id="pre-value"></div></div><button class="buy" id="buy-value"><span class="cost">×1</span><span class="bamt">💰 12</span></button></div><div class="card" id="card-crit"><div class="card-icon">🎯</div><div class="card-body"><div class="card-title">暴击训练 <span class="lv" id="lv-crit">Lv.1/25</span></div><div class="card-desc" id="desc-crit">暴击率：每级 +3% · 含装备后上限 100%（当前暴击率 8.0% · 训练 +3%）</div><div class="prereq" id="pre-crit"></div></div><button class="buy" id="buy-crit"><span class="cost">×1</span><span class="bamt">💰 24</span></button></div><div class="card" id="card-critdmg"><div class="card-icon">💥</div><div class="card-body"><div class="card-title">暴击强化 <span class="lv" id="lv-critdmg">Lv.0/29</span></div><div class="card-desc" id="desc-critdmg">暴击伤害倍率：每级 +0.80 · 当前暴击伤害 ×2.00</div><div class="prereq" id="pre-critdmg"></div></div><button class="buy" id="buy-critdmg"><span class="cost">×1</span><span class="bamt">💰 13</span></button></div><div class="card" id="card-luck"><div class="card-icon">🍀</div><div class="card-body"><div class="card-title">幸运护符 <span class="lv" id="lv-luck">Lv.0/29</span></div><div class="card-desc" id="desc-luck">幸运：每级 +15 · 加快爆装 · 提升品质· 不参与门控 · 当前幸运：0</div><div class="prereq" id="pre-luck"></div></div><button class="buy" id="buy-luck"><span class="cost">×1</span><span class="bamt">💰 7</span></button></div><div class="card" id="card-autosell"><div class="card-icon">♻️</div><div class="card-body"><div class="card-title">自动出售 <span class="lv" id="lv-autosell"></span></div><div class="card-desc">每 3 秒自动整批结算矿石——开启后挂机无忧，关闭后可手动出售；声望 &gt;10 万后满背包即售</div></div><button class="buy" disabled="" id="buy-autosell"><span class="cost"></span><span class="bamt">💰 120</span></button></div></div>
+<div id="shopList"><div class="card" id="card-pick"><div class="card-icon">⚒️</div><div class="card-body"><div class="card-title">强化镐子 <span class="lv" id="lv-pick">Lv.0/29</span></div><div class="card-desc" id="desc-pick">矿石产量：每级 +25%（当前产量 ×1.00 · 基础 +0%）</div><div class="prereq" id="pre-pick"></div></div><button class="buy" id="buy-pick"><span class="cost">×1</span><span class="bamt">💰 20</span></button></div><div class="card" id="card-speed"><div class="card-icon">💨</div><div class="card-body"><div class="card-title">挖矿训练 <span class="lv" id="lv-speed">Lv.0/29</span></div><div class="card-desc" id="desc-speed">挥镐速度：每级 +10%（当前速度 ×1.00 · 基础 +0%）</div><div class="prereq" id="pre-speed"></div></div><button class="buy" id="buy-speed"><span class="cost">×1</span><span class="bamt">💰 8</span></button></div><div class="card" id="card-bag"><div class="card-icon">🎒</div><div class="card-body"><div class="card-title">扩容背包 <span class="lv" id="lv-bag">Lv.0/29</span></div><div class="card-desc" id="desc-bag">矿石背包容量成长 · 保持 3-5 秒装满· 议价每级 +4% · 上限 ×3 · 当前容量 4 · 约 4 秒挖满</div><div class="prereq" id="pre-bag"></div></div><button class="buy" id="buy-bag"><span class="cost">×1</span><span class="bamt">💰 5</span></button></div><div class="card" id="card-value"><div class="card-icon">💎</div><div class="card-body"><div class="card-title">矿石提纯 <span class="lv" id="lv-value">Lv.0/29</span></div><div class="card-desc" id="desc-value">矿石价值：每级 +15%（当前价值 ×1.00 · 基础 +0%）</div><div class="prereq" id="pre-value"></div></div><button class="buy" id="buy-value"><span class="cost">×1</span><span class="bamt">💰 12</span></button></div><div class="card" id="card-crit"><div class="card-icon">🎯</div><div class="card-body"><div class="card-title">暴击训练 <span class="lv" id="lv-crit">Lv.1/25</span></div><div class="card-desc" id="desc-crit">暴击率：每级 +3% · 含装备后上限 100%（当前暴击率 8.0% · 训练 +3%）</div><div class="prereq" id="pre-crit"></div></div><button class="buy" id="buy-crit"><span class="cost">×1</span><span class="bamt">💰 24</span></button></div><div class="card" id="card-critdmg"><div class="card-icon">💥</div><div class="card-body"><div class="card-title">暴击强化 <span class="lv" id="lv-critdmg">Lv.0/29</span></div><div class="card-desc" id="desc-critdmg">暴击伤害倍率：每级 +0.80 · 当前暴击伤害 ×2.00</div><div class="prereq" id="pre-critdmg"></div></div><button class="buy" id="buy-critdmg"><span class="cost">×1</span><span class="bamt">💰 13</span></button></div><div class="card" id="card-luck"><div class="card-icon">🍀</div><div class="card-body"><div class="card-title">幸运护符 <span class="lv" id="lv-luck">Lv.0/29</span></div><div class="card-desc" id="desc-luck">幸运：每级 +15 · 加快爆装 · 提升品质· 不参与门控 · 当前幸运：0</div><div class="prereq" id="pre-luck"></div></div><button class="buy" id="buy-luck"><span class="cost">×1</span><span class="bamt">💰 7</span></button></div><div class="card" id="card-autosell"><div class="card-icon">♻️</div><div class="card-body"><div class="card-title">自动出售 <span class="lv" id="lv-autosell"></span></div><div class="card-desc">每 3 秒自动整批结算矿石——开启后挂机无忧，关闭后可手动出售；声望 &gt;100,000 后满背包即售</div></div><button class="buy" disabled="" id="buy-autosell"><span class="cost"></span><span class="bamt">💰 120</span></button></div></div>
 <div class="gateline" id="gateLine">⚖️ <b>均衡门控</b>：当前最低维度 Lv.<b>0</b> · 领先 <b>5</b> 级即锁定 · 当前最大领先 1 级· 幸运不参与</div>
 </div>
 <!-- v11.2：奇点商店 · 声望超出上限 999999999 后替代上方原始商店 -->
@@ -1816,8 +1848,8 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 <div class="card-icon">🎒</div>
 <div class="card-body"><div class="card-title">永久背包格 <span class="lv" id="lv-bagslot">10 / 31</span></div>
 <div class="card-desc" id="desc-bagslot">当前永久格 10 / 31 · 总背包 10 格</div>
-<div class="prereq" id="pre-bagslot">🔒 声望达到 100 万解锁 · 当前 0</div></div>
-<button class="buy" disabled="" id="buy-bagslot" title="永久背包格需要声望达到 100 万 · 当前 0
+<div class="prereq" id="pre-bagslot">🔒 声望超过 1,000,000 解锁 · 当前 0</div></div>
+<button class="buy" disabled="" id="buy-bagslot" title="永久背包格需要声望超过 1,000,000 · 当前 0
 解锁后每次购买 +1 格 · 价格 ×10 · 声望 &gt;50 万转生时保留数同步 +1"><span class="cost"></span><span class="bamt">未解锁</span></button>
 </div>
 <div class="feed-title">🎒 装备背包 · 点击装备 · 点已装配卸下</div>
@@ -1910,16 +1942,14 @@ textarea{width:100%;height:70px;background:#151009;border:1px solid var(--line);
 </div>
 <div class="summary" id="spiritBoard"><div class="spirit-title">✨ 内在精神 <b class="g">0 / 6</b>飞升固化 · 永久生效 · 每种限一次</div><div class="spirits"><div class="spirit" title="未获得——飞升一套无上 6 件套即可固化该精神"><span class="sp-ic">❔</span><span class="sp-nm">？？？</span><span class="sp-tx">???</span></div><div class="spirit" title="未获得——飞升一套无上 6 件套即可固化该精神"><span class="sp-ic">❔</span><span class="sp-nm">？？？</span><span class="sp-tx">???</span></div><div class="spirit" title="未获得——飞升一套无上 6 件套即可固化该精神"><span class="sp-ic">❔</span><span class="sp-nm">？？？</span><span class="sp-tx">???</span></div><div class="spirit" title="未获得——飞升一套无上 6 件套即可固化该精神"><span class="sp-ic">❔</span><span class="sp-nm">？？？</span><span class="sp-tx">???</span></div><div class="spirit" title="未获得——飞升一套无上 6 件套即可固化该精神"><span class="sp-ic">❔</span><span class="sp-nm">？？？</span><span class="sp-tx">???</span></div><div class="spirit" title="未获得——飞升一套无上 6 件套即可固化该精神"><span class="sp-ic">❔</span><span class="sp-nm">？？？</span><span class="sp-tx">???</span></div></div></div>
 <!-- v14.9：永耀之石展示已自设置页迁入「宝石」标签页 -->
-<div class="feed-title">关于本游戏</div>
-<div style="font-size:12.5px; color:var(--dim); line-height:1.9">
-            矿工自动挖矿，矿石出售换金币，用于升级、招募与下潜。<br/>
-            装备按间隔掉落，[前缀] 即套装：同前缀凑 2/4/6 件生效，无上 6 件 ≈ ×100。<br/>
-            第 6 层起开放「🎲 信吗」赌局与「🏅 成就」系统 · 含 14 项隐藏成就。<br/>
-            商店「⏫ 所有维度升一级」需声望 &gt; 20 万解锁；装备页可购买永久背包格 · 声望 &gt; 100 万，价格 ×10，上限 31 格。<br/>
-            目标：全身 7 槽无上 = <b style="color:#fbbf24">获胜</b> · 一套 6 件全无上 = <b style="color:#fbbf24">大获全胜</b>。<br/>
-            矿野：招募探险者并为其配置装备，选择地图与难度后自动探索；可设置返程生命线，带回陈列品、消耗品及资源。陈列品需放入陈列位才生效，智识晶粒用于提升探险者六维。出发前装配的消耗品会在本次旅途中发挥作用，途中拾取的消耗品留到返程后使用。<br/>
-            进度保存在云端，离线收益 50% · 上限 8 小时 · 爆装速度 1/6· 当前版本 <b id="aboutGameVer">v16.2</b>旧版本存档在 v12 起无法使用。
-          </div>
+<div class="feed-title">关于本游戏 <button type="button" class="help-dot" id="btnAboutGuide" title="打开玩家指南" aria-label="打开玩家指南">?</button></div>
+<div style="font-size:12px; color:var(--dim); line-height:1.7">
+  自动采矿，出售矿石获得金币，用于招募、升级与下潜。矿层越深，装备可掉落的最高稀有度越高。<br/>
+  同前缀装备可组成套装；转生提升长期成长上限，飞升可获得永久精神。<br/>
+  矿野是独立探险玩法，陈列品需放入陈列位才会生效。<br/>
+  云端存档 · 离线收益 50% · 离线上限 8 小时 · 当前版本 <b id="aboutGameVer">v16.2</b>。<br/>
+  具体解锁门槛、掉落层级和转生目标，请查看右上角玩家指南。
+</div>
 <!-- v13.6：重置游戏从"转生/兑换码之间"迁至设置页最底部危险区域——远离高频点击区，防误触 -->
 <div style="margin-top:16px; border-top:1px dashed var(--line); padding-top:10px">
 <div style="font-size:11px; color:var(--dim); margin-bottom:6px; line-height:1.6">⚠️ 危险区域 —— 以下操作将清空你的云端存档，且<b style="color:#ff5c5c">无法恢复</b></div>
@@ -2598,10 +2628,10 @@ var SING_INSPIRE_P=1/1000;      // 灵光乍现：直接参透一项未获得精
 var SING_TOMATO_MIN_DEPTH=6;    // v13.5：番茄炒蛋 · 传说+保底第六层起可用——层数稀有度上限=层数，
                                 // 第 4 层才开放传说档；转生满的玩家会从第 1 层重打，浅层使用会因
                                 // 传说及以上权重全零在 genEquip 空转 100 次后兜底退出，buff 白费
-var SING_DOUBLE_CAP=2;          // 持有 2 瓶倍倍加后商店不再刷新该物品
+var SING_DOUBLE_CAP=12;         // 持有 12 瓶倍倍加后商店不再刷新该物品
 var SING_DEPTH13_COST=2.37e33;  // 第 13 层 · 犹大密室解锁价
 var SING_ITEMS={
-  clone  :{name:'克隆药水',icon:'🧪',cost:1  ,kind:'use',desc:'使用后立即增加一名当前最高等级矿工'},
+  clone  :{name:'克隆药水',icon:'🧪',cost:2  ,kind:'use',desc:'复制当前最高等级矿工；Lv.90及以下消耗1瓶，Lv.91–100消耗2瓶，Lv.101–110消耗3瓶，Lv.111及以上消耗4瓶'},
   double :{name:'倍倍加'  ,icon:'✌️',cost:1  ,kind:'use',desc:'将当前拥有的金币翻倍'},
   gravity:{name:'地心引力',icon:'🌍',cost:3  ,kind:'use',desc:'使用后立即进入下一层矿'},
   inspire:{name:'灵光乍现',icon:'💡',cost:1  ,kind:'use',desc:'使用后有 0.1% 概率直接参透一项未获得的内在精神'},
@@ -2646,9 +2676,9 @@ function singDaysDigits(days){ // 天数的位数值 · 展示用
 function singPrestigeHint(g){
   var days=Math.max(0,(state.prestige||0)+g-PRESTIGE_CAP);
   var dg=singDaysDigits(days),pt=singDaysPoints(days);
-  return '<br><b>声望已达上限 · '+fmt(PRESTIGE_CAP)+'</b>：本轮可获得的 '+fmt(g)+' 点声望全部溢出，按「天数」结算——'+
+  return '<br><b>声望已达上限 · '+fmtPrestige(PRESTIGE_CAP)+'</b>：本轮可获得的 '+fmtPrestige(g)+' 点声望全部溢出，按「天数」结算：'+
     '<b>奇点值 = 天数位数 − '+SING_DIGIT_BASE+'</b> · 每超出 '+SING_DIGIT_BASE+' 位 +1 点，不随转生清零。<br>'+
-    '本次预计：溢出 <b>'+fmt(days)+'</b> 点声望 · <b>'+dg+'</b> 位数→ 转化为 <b>'+pt+'</b> 点奇点值'+
+    '本次预计：溢出 <b>'+fmtPrestige(days)+'</b> 点声望 · <b>'+dg+'</b> 位数，转化为 <b>'+pt+'</b> 点奇点值'+
     (hasStone('emerald')&&stoneTier('g')>=1?' · 强化绿宝石额外 <b>+1</b>':(pt>0?'。':'。本次转化 0 点。'));
 }
 function singEarn(){return (state.sing&&state.sing.earned)||0;} // 累计折算奇点值 · 转生时累加
@@ -2675,18 +2705,23 @@ function singClock(ts){
   return (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
 }
 function singRestockLeft(){return Math.max(0,singNextRefreshAt(gameNow())-gameNow());}
-/* 随机刷 N 件 · N=1，奇之又奇生效后 2；排除：犹大密室已生效、倍倍加持有 ≥2 瓶、
+/* 随机刷 N 件 · N=1，奇之又奇生效后 2；排除：犹大密室已生效、倍倍加持有 ≥12 瓶、
  * 奇之又奇已生效、必须信持有达上限。v12.2.1：刷新只跟 8 小时倒计时走，与是否购买无关。
  * v13.6.2：本函数只刷物品、绝不碰 8 小时倒计时——倒计时是固定周期，手动刷新/购买都不重新计时，
  * 只有 8 小时到期的自然刷新 · singNaturalRestock才重置它 */
-/* v14.9.1：货架 roll 取加权随机——默认权重 1；改名卡权重 0.34。 */
+/* 奇点商店货架权重：默认 1；改名卡 0.34。 */
 var SING_ITEM_WEIGHT={rename:0.34};
+function singItemWeight(key){
+  var weight=SING_ITEM_WEIGHT[key]||1;
+  if(key==='clone'&&state.sing&&state.sing.inv&&(state.sing.inv.clone||0)>10)weight*=0.5;
+  return weight;
+}
 function singPickWeighted(pool){
   var total=0,i;
-  for(i=0;i<pool.length;i++)total+=SING_ITEM_WEIGHT[pool[i]]||1;
+  for(i=0;i<pool.length;i++)total+=singItemWeight(pool[i]);
   var r=Math.random()*total;
   for(i=0;i<pool.length;i++){
-    r-=SING_ITEM_WEIGHT[pool[i]]||1;
+    r-=singItemWeight(pool[i]);
     if(r<0)return pool[i];
   }
   return pool[pool.length-1];
@@ -2792,18 +2827,23 @@ function grantSupreme(){
   beep(523,0.1,'triangle',0.05);setTimeout(function(){beep(784,0.16,'triangle',0.05);},110);
   toast('👑 至高无上：'+r.it.name,'#ff9f43',r.it.statText+' · '+r.tag);
 }
+/* 克隆当前最高等级矿工所需克隆药水数量。 */
+function clonePotionCost(level){level=Math.max(1,Math.floor(Number(level)||1));return level>=111?4:level>=101?3:level>=91?2:1;}
 /* 使用物品栏物品 · inspire 无论成败都消耗；条件不满足时不消耗 */
 function singUse(key){
   if(!singMode())return;
   var n=(state.sing.inv&&state.sing.inv[key])||0;
   if(n<=0)return;
+  var consumeCount=1;
   if(key==='clone'){
     var md=minerData();
     if(md.total>=minerSlots()){toast('👷 没有空余栏位，先合成腾出格子','#ff5c5c');return;}
-    var lv=Math.max(1,md.maxLv);
+    var lv=Math.max(1,md.maxLv),need=clonePotionCost(lv);
+    if(n<need){toast('🧪 克隆药水数量不足','#ff5c5c','复制 Lv.'+lv+' 矿工需要 '+need+' 瓶，当前只有 '+n+' 瓶');return;}
+    consumeCount=need;
     state.miners.push({lv:lv,inv:0,id:++state.minerSeq});
     beep(587,0.09,'triangle',0.045);
-    toast('🧪 克隆药水：新增一名 Lv.'+lv+' 矿工','#7ed321','当前最高等级克隆 · 栏位 '+minerData().total+'/'+minerSlots());
+    toast('🧪 克隆药水：新增一名 Lv.'+lv+' 矿工','#7ed321','消耗 '+need+' 瓶 · 当前栏位 '+minerData().total+'/'+minerSlots());
   }else if(key==='double'){
     var gain=state.gold;
     if(!(gain>0)){toast('✌️ 当前没有金币可翻倍','#a89a86');return;}
@@ -2870,7 +2910,7 @@ function singUse(key){
     // V14：立马转生——立即清零转生冷却；当前没有冷却则无法使用 · 不消耗
     if(!(state.prestigeCdUntil>gameNow())){
       toast('⏱️ 当前没有转生冷却，无法使用','#a89a86',
-        '冷却仅在「矿工等级上限 ≥50 且声望达到上限」转生后出现<br>物品未消耗，等有冷却了再用');
+        '矿工等级上限达到 Lv.50 后，转生才会进入冷却<br>物品未消耗，等有冷却了再用');
       return;
     }
     state.prestigeCdUntil=0;
@@ -2904,7 +2944,7 @@ function singUse(key){
     return;
   }else return;
   if(state.sing.inv[key]){ /* 防 UI 渲染异常 · 如 renderBet 内部 betHist 渲染中断物品消耗流程 */
-    state.sing.inv[key]--;
+    state.sing.inv[key]=Math.max(0,n-consumeCount);
     derived=calcDerived();
     try{
       if(key==='gravity')render();
@@ -3013,16 +3053,16 @@ function markSpiritFull(){
 var STONE_DEFS={
   ruby    :{name:'红宝石',icon:'❤️',desc:'矿工的购买售价为原价的 90%'},
   sapphire:{name:'蓝宝石',icon:'💙',desc:'全局倍率固定 +1'},
-  emerald :{name:'绿宝石',icon:'💚',desc:'声望冷却时长缩减 50%'},
+  emerald :{name:'绿宝石',icon:'💚',desc:'转生冷却时长缩减 50%'},
   topaz   :{name:'黄宝石',icon:'💛',desc:'基础幸运值 +250'},
   amethyst:{name:'紫水晶',icon:'💜',desc:'「信吗」预言的金币奖励 +20%'},
   obsidian:{name:'黑曜石',icon:'🖤',desc:'看似平平无奇的一块黑色石头。'}
 };
 /* v14.9.2：强化档效果文案 · 未强化=基础档，已强化=下表；黑曜石二阶单独一条 */
 var STONE_ENH_DESC={
-  ruby    :'矿工购买售价 90% → <b>50%</b>，飞升/转生赠送矿工 = 等级上限 −15',
+  ruby    :'矿工购买售价 90% → <b>50%</b>，转生/飞升赠送矿工 = 重置前团队最高等级 −14',
   sapphire:'全局倍率 +1 → <b>+9</b>，矿渣原石离线也产出（在线量的 1/6）',
-  emerald :'声望冷却缩减 50% → <b>90%</b>，声望满后每次转生奇点值 <b>+1</b>',
+  emerald :'转生冷却缩减 50% → <b>90%</b>，声望满后每次转生奇点值 <b>+1</b>',
   topaz   :'幸运 +500，且每次掉落普通装备额外获得 1 件',
   amethyst:'「信吗」金币奖励 +20% → <b>+40%</b>，且心情连续加成 10% → <b>20%</b>',
   obsidian:'黑曜石宝石等级上限解锁至 <b>20 级</b>'
@@ -3065,17 +3105,19 @@ function ascendReady(){ // 可飞升：存在一套无上 6 件套，且其精�
   var g=victoryInfo().grand;
   return !!g&&!(state.spirits&&state.spirits[g.set]);
 }
-function ascendCost(){return Math.floor(Math.max(0,state.prestige)*0.9999);}
+function prestigeSeedMinerLevel(previousMax){return Math.max(1,Math.floor(Number(previousMax)||1)-14);}
+function ascendCost(){var p0=Math.max(0,Math.floor(Number(state.prestige)||0));return Math.max(0,p0-Math.floor(p0*0.0001));}
+function ascendEffectiveCost(){return oldStoneTier('obsidian')>=2?0:ascendCost();}
 function doAscend(){
   if(wildIsAway()){toast('⛏️ 探险者尚未归来','#ffb020','探险者会认不出你');return;}
-  minerData(); // 飞升清空矿工前，先记录本轮实际达到的最高等级。
+  var _preResetMaxMinerLv=minerData().maxLv; // 飞升前团队最高矿工等级，用于红宝石赠送矿工。
   var g=victoryInfo().grand;
   if(!g||(state.spirits&&state.spirits[g.set]))return;
   var d=SPIRIT_DEFS[g.set];
-  state.prestige-=(oldStoneTier('obsidian')>=2?0:ascendCost());state.prestigeCount++;state.ascensions++;state.runPrestigeCount=(state.runPrestigeCount||0)+1; // v14.9.2 黑曜二阶：飞升不消耗声望；V15.6 本轮次数同步 +1
+  var _ascendCost=ascendEffectiveCost();state.prestige=Math.max(0,Math.floor((Number(state.prestige)||0)-_ascendCost));state.prestigeCount++;state.ascensions++;state.runPrestigeCount=(state.runPrestigeCount||0)+1; // 黑曜二阶免除飞升声望消耗；飞升后首次普通转生免冷却
   if(!state.spirits)state.spirits={};
   state.spirits[g.set]=true;
-  state.prestigeCdUntil=0; // v13.6.2：飞升消耗 99.99% 声望，声望远未达上限——按新规则清零转生 CD · 飞升本身也从不被 CD 拦截
+  state.prestigeCdUntil=0;state.ascensionPrestigeFree=true; // 飞升清空旧 CD，并标记下一次普通转生免冷却。
   markSpiritFull(); // v13.6：飞升固化第 6 种精神即集齐極——记录达成时长
   onKiReached(); // v14：飞升抵極即赠 1 次永耀之石抽奖
   // 同转生重置 · 精神永久保留
@@ -3084,9 +3126,9 @@ function doAscend(){
   // v11.1：同转生赠送暴击 1 级 · 防止暴击强化前置挡住全体升级
   state.up={pick:0,speed:0,bag:0,value:0,luck:0,crit:1,critdmg:0};
   state.minerSeq++;
-  // V15.8：强化永耀红宝石——飞升/转生赠送矿工 = 重置后等级上限 −15（至少 1 级）
+  // V16.2：强化永耀红宝石——转生前团队最高等级 −14（至少 1 级）
   var _seedLv=1;
-  if(hasStone('ruby')&&stoneTier('r')>=1)_seedLv=Math.max(1,minerLevelCap()-15);
+  if(hasStone('ruby')&&stoneTier('r')>=1)_seedLv=prestigeSeedMinerLevel(_preResetMaxMinerLv);
   state.miners=[{lv:_seedLv,inv:0,id:state.minerSeq}];state.recruits=0;
   // 套装效果已固化为精神——矿工装备与探险者装备同步清空。
   for(var k in state.equip)state.equip[k]=null;
@@ -3109,7 +3151,7 @@ function doAscend(){
   showModal({title:'✨ 飞升！',confirmText:ult?'極':'继续挖矿',
     body:'你将 <b>'+PREFIX_SETS[g.set].name+'</b> 无上 6 件套的效果永久固化为内在精神：<br>'+
       '<b class="g">'+d.icon+' '+d.name+'</b> —— <b>'+d.text+'</b>永久生效，不再随转生消失<br><br>'+
-      (oldStoneTier('obsidian')>=2?'声望未消耗 · ':'声望几乎耗尽 · 保留 '+state.prestige+' 点 · ')+'回到第 1 层 · 矿工与探险者装备已全部清空；消耗品库存和已装配补给保留。<br>'+
+      (oldStoneTier('obsidian')>=2?'声望未消耗 · ':'消耗 '+fmtPrestige(_ascendCost)+' 点声望 · 保留 '+fmtPrestige(state.prestige)+' 点 · ')+'回到第 1 层 · 矿工与探险者装备已全部清空；消耗品库存和已装配补给保留。<br>飞升后第一次普通转生免冷却。<br>'+
       '已获得内在精神 <b class="g">'+spiritCount()+' / 6</b>'+(ult?' —— <b style="color:#ffd54f">極</b>！你已集齐全部六种精神，抵达传说的尽头。':'，继续收集下一套无上吧。')});
 }
 /* V11-4：精神展示板 · 设置页——6 格图标，已获得亮起，集齐显示「極」 */
@@ -3227,9 +3269,9 @@ var GEM_FEED_MAX=12;            // V15：宝石「最近掉落」最多保留条
 /* 10 级宝石效果文案 · 悬停/揭晓展示用——把对应永耀之石效果翻倍；未取得永耀之石则不生效 */
 /* v14.9.2：10 级宝石 = 强化永耀之石的消耗材料 · 强化后宝石消失、效果升级 */
 var GEM_EFFECTS={
-  r:'10 级红宝石：可强化永耀红宝石，矿工购买售价 90% → 50%，飞升/转生矿工 = 上限 −15',
+  r:'10 级红宝石：可强化永耀红宝石，矿工购买售价 90% → 50%，转生/飞升赠送矿工 = 重置前团队最高等级 −14',
   b:'10 级蓝宝石：可强化永耀蓝宝石，全局倍率 +1 → +9，矿渣原石离线按在线 1/6 产出',
-  g:'10 级绿宝石：可强化永耀绿宝石，声望冷却缩减 50% → 90%，声望满后转生奇点值 +1',
+  g:'10 级绿宝石：可强化永耀绿宝石，转生冷却缩减 50% → 90%，声望满后转生奇点值 +1',
   y:'10 级黄宝石：可强化永耀黄宝石，幸运 +500，且普通装备额外掉落 1 件',
   p:'10 级紫水晶：可强化永耀紫水晶，信吗金币奖励 +20% → +40%，心情加成 10% → 20%',
   k:'10 级黑曜石：可强化永耀黑曜石，黑曜石可突破原有等级上限'
@@ -4011,7 +4053,8 @@ function defaultState(){
     runPrestigeCount:0,   // V15.6：本轮转生+飞升次数，只驱动矿工等级/矿层上限；返璞归真归零
                           // prestigeCount 是跨轮生涯累计，留给统计页/成就/排行榜/_AS_MONO
     runMaxMinerLvEver:0,  // V16.2：本轮实际达到过的最高矿工等级；普通转生/飞升保留，返璞归真归零
-    prestigeCdUntil:0,    // v12.2.1：转生冷却截止时间戳 · v13.6.3 起：矿工等级上限≥50 且声望达到上限的转生才进入 CD
+    prestigeCdUntil:0,    // 转生冷却截止时间戳
+    ascensionPrestigeFree:false, // 飞升后第一次普通转生免冷却
     totalPrestige:0,      // v12：全游戏已获取声望 · 统计口径；prestige 达上限后只累计此项
     user:'',              // v12：用户名 · ≤5 字，绑定本机浏览器；左上角标题常驻
     lastSaveSource:'',    // v15.1：上次载入来源 auto/bak/local/new · 排查与展示用，旧档回填空串
@@ -5277,7 +5320,7 @@ var BAG_SLOT_BASE_COST=1e8; // 首次购买价 1 亿元，之后每级 ×10
 function bagSlotCost(){return BAG_SLOT_BASE_COST*Math.pow(10,(state.bagBase||10)-10);}
 function bagSlotUnlocked(){return state.prestige>BAG_SLOT_UNLOCK;}
 function buyBagSlot(){
-  if(!bagSlotUnlocked()){toast('🔒 声望未达 100 万','#ff5c5c','永久背包格需要声望达到 100 万 · 当前 '+fmt(state.prestige));return;}
+  if(!bagSlotUnlocked()){toast('🔒 声望尚未超过 1,000,000','#ff5c5c','永久背包格需要声望超过 1,000,000 · 当前 '+fmtPrestige(state.prestige));return;}
   if((state.bagBase||10)>=BAG_BASE_CAP){toast('🎒 已达上限','#a89a86','永久背包格上限 '+BAG_BASE_CAP+' 格');return;}
   var c=bagSlotCost();
   if(state.gold<c){toast('💰 金币不足','#ff5c5c','还需要 '+fmt(c-state.gold)+' 金币');return;}
@@ -5297,6 +5340,7 @@ var NUM_TIERS=[[1e4,'万'],[1e8,'亿'],[1e12,'万亿'],[1e16,'亿亿'],[1e20,'�
   [1e24,'亿³'],[1e28,'万•亿³'],[1e32,'亿⁴'],[1e36,'万•亿⁴'],[1e40,'亿⁵'],[1e44,'万•亿⁵'],
   [1e48,'亿⁶'],[1e52,'万•亿⁶'],[1e56,'亿⁷'],[1e60,'万•亿⁷'],[1e64,'亿⁸'],[1e68,'万•亿⁸'],
   [1e72,'亿⁹'],[1e76,'万•亿⁹']];
+function fmtPrestige(n){var v=Math.max(0,Math.floor(Number(n)||0));return v.toLocaleString('zh-CN',{maximumFractionDigits:0});}
 function fmt(n){
   if(!isFinite(n))return '∞';
   var neg=n<0;n=Math.abs(n);
@@ -8232,6 +8276,7 @@ function normalizeStateAfterMigration(s){
     if(typeof s.sing.autoCrew!=='boolean')s.sing.autoCrew=false;
   }
   if(typeof s.prestigeCdUntil!=='number'||!isFinite(s.prestigeCdUntil)||s.prestigeCdUntil<0)s.prestigeCdUntil=0;
+  if(typeof s.ascensionPrestigeFree!=='boolean')s.ascensionPrestigeFree=(Number(s.ascensions)||0)>0; // 旧存档兼容：已飞升账号获得一次免冷却首转。
   if(typeof s.lastSaveSource!=='string')s.lastSaveSource=''; // v15.1：旧档回填
   if(typeof s.spiritFullAt!=='number'||s.spiritFullAt<0)s.spiritFullAt=0; // v13.6：極达成时长
   /* V14：永曜之石字段清洗（旧档没有这些字段——normalize 末尾会从 defaultState 回填，
@@ -8531,7 +8576,7 @@ function redeemCode(code){
       state.totalPrestige=(state.totalPrestige||0)+n;
       var wasCap=(state.prestige||0)>=PRESTIGE_CAP;
       state.prestige=Math.min(PRESTIGE_CAP,(state.prestige||0)+n);
-      afterRedeem('声望 +'+fmt(n)+(wasCap?'已达上限 · 计入全游戏已获取':''));
+      afterRedeem('声望 +'+fmtPrestige(n)+(wasCap?'已达上限 · 计入全游戏已获取':''));
       return true;
     }
     return false;
@@ -8893,7 +8938,7 @@ function allDimPlan(){
 }
 function allDimLevelUp(){
   if(singMode()){toast('🌟 奇点商店态：原始维度已自动升至满级','#e040fb');return;} // v12 修订
-  if(state.prestige<=200000){toast('🔒 声望需超过 20 万','#ff5c5c','所有维度升一级需要声望超过 20 万 · 当前 '+fmt(state.prestige));return;} // v11.1
+  if(state.prestige<=200000){toast('🔒 声望需超过 200,000','#ff5c5c','所有维度升一级需要声望超过 200,000 · 当前 '+fmtPrestige(state.prestige));return;} // v11.1
   var plan=allDimPlan();
   if(plan.blocked){toast('🔒 有维度被锁定或前置未满足','#ff5c5c');return;}
   if(plan.total<=0){toast('✨ 所有维度已满级','#a89a86');return;}
@@ -8997,13 +9042,11 @@ function prestigeLuck(){
   return 0;
 }
 function prestigePct(){return Math.round((prestigeMult()-1)*100);}
-/* v13.6.3：转生冷却——仅"矿工等级上限≥50 且声望达到上限"奇点商店态的转生才进入 1 小时 CD；
- * 之后上限每提升 5 级，CD 再 +1 小时。cap = 转生后的矿工等级上限 · 原 60 级门槛下调至 50 级。
- * 两个条件缺一：不进 CD 且已有 CD 清零；飞升不受 CD 影响。 */
+/* 转生冷却只看本次转生后的矿工等级上限：Lv.50 起 1 小时，每再提高 5 级增加 1 小时。 */
 function prestigeCdHours(cap){
   if(cap<50)return 0;
   var h=1+Math.floor((cap-50)/5);
-  // V14：绿宝石——声望冷却时长缩减 50% · 1 小时 → 30 分钟；上限每 +5 级的那 1 小时同样减半
+  // V14：绿宝石——转生冷却时长缩减 50% · 1 小时 → 30 分钟；上限每 +5 级的那 1 小时同样减半
   // v14.9：10 级绿宝石——永耀绿宝石效果翻倍
   if(hasStone('emerald'))h=stoneTier('g')>=1?h*0.1:h/2;
   return h;
@@ -9014,10 +9057,10 @@ function doPrestige(){
   if(_wildTripAway){var _maxAwayPrestige=wildBondDeep('green')?Infinity:1;if((wildState().trip.prestigeUses||0)>=_maxAwayPrestige){toast('🌿 本趟探险的转生次数已用完','#ffb020','绿色深度羁绊可解除单次限制');return;}}
   var g=prestigeGain();
   if(g<=0)return;
-  minerData(); // 确保转生重置矿工前，先记录本轮实际达到的最高等级。
-  // v12.2.1：转生冷却拦截 · 防线；正常流程在按钮处已拦截
-  // v13.6.3：仅"矿工等级上限≥50 且声望达到上限"的冷却才拦截——其余情况旧 CD 不挡路 · 走到下面一并清零
-  if(singMode()&&minerLevelCap()>=50&&gameNow()<(state.prestigeCdUntil||0)){toast('⏳ 转生冷却中','#ff5c5c','还剩 '+fmtDur((state.prestigeCdUntil-gameNow())/1000)+' 可再次转生');return;}
+  var _preResetMaxMinerLv=minerData().maxLv; // 转生前团队真实最高等级。
+  var _freePrestigeThisTurn=!!state.ascensionPrestigeFree;
+  // 冷却防线：矿工等级上限达到 50 后生效；飞升后的首次普通转生免冷却。
+  if(!_freePrestigeThisTurn&&minerLevelCap()>=50&&gameNow()<(state.prestigeCdUntil||0)){toast('⏳ 转生冷却中','#ff5c5c','还剩 '+fmtDur((state.prestigeCdUntil-gameNow())/1000)+' 可再次转生');return;}
   if(_wildTripAway&&state.wild&&state.wild.trip)state.wild.trip.prestigeUses=(state.wild.trip.prestigeUses||0)+1;
   var wasSing=singMode(); // v12：记录切换前是否已在奇点商店态
   // v12：天数 = 本次转生的溢出声望。转生前已满 · =上限则本轮可获得声望全部等于天数；
@@ -9029,12 +9072,12 @@ function doPrestige(){
   state.prestige=Math.min(PRESTIGE_CAP,(state.prestige||0)+g); // 声望达到上限即封顶，不再增加
   state.totalPrestige=(state.totalPrestige||0)+g;             // 统计口径：全游戏已获取声望
   state.prestigeCount++;state.runPrestigeCount=(state.runPrestigeCount||0)+1;
-  // v13.6.3：转生冷却——"矿工等级上限≥50 且声望达到上限"奇点商店态才进入 CD · 1 小时起，每 +5 级再 +1 小时；
-  // 两个条件缺一不进 CD，已有 CD 一并清零 · 没有需要冷却的理由
-  var cdH=(singMode()&&minerLevelCap()>=50)?prestigeCdHours(minerLevelCap()):0;
+  if(_freePrestigeThisTurn)state.ascensionPrestigeFree=false; // 免冷却名额仅使用一次。
+  // 按转生后的矿工等级上限决定冷却，与声望状态无关。
+  var cdH=(!_freePrestigeThisTurn&&minerLevelCap()>=50)?prestigeCdHours(minerLevelCap()):0;
   if(cdH>0)state.prestigeCdUntil=gameNow()+cdH*3600*1000;
   else state.prestigeCdUntil=0;
-  var cdNote=cdH>0?'<br>⏳ <b>转生冷却</b>：矿工等级上限 ≥50 且声望已达上限，本次转生后 <b>'+cdH+'</b> 小时内无法再次转生 · 上限每 +5 级 +1 小时':'';
+  var cdNote=cdH>0?'<br>⏳ <b>转生冷却</b>：本次转生后的矿工等级上限为 Lv.'+minerLevelCap()+'，进入 <b>'+cdH+'</b> 小时冷却 · 上限每再提高 5 级，冷却增加 1 小时':'';
   if(singGain>0)state.sing.earned=(state.sing.earned||0)+singGain;
   state.sing.lastGain=singGain; // v12 修订：奇点商店页展示"上一次转生获得奇点值"
   // v11-13：先弃局再清零——旧版在金币清零后才退还注金，导致下注金额被带入
@@ -9050,9 +9093,9 @@ function doPrestige(){
   // 全体升级按钮会因该维度被前置挡住而不可用；送 1 级让转生后可直接全体升级
   state.up={pick:0,speed:0,bag:0,value:0,luck:0,crit:1,critdmg:0};
   state.minerSeq++;
-  // V15.8：强化永耀红宝石——飞升/转生赠送矿工 = 重置后等级上限 −15（至少 1 级）
+  // V16.2：强化永耀红宝石——转生前团队最高等级 −14（至少 1 级）
   var _seedLv=1;
-  if(hasStone('ruby')&&stoneTier('r')>=1)_seedLv=Math.max(1,minerLevelCap()-15);
+  if(hasStone('ruby')&&stoneTier('r')>=1)_seedLv=prestigeSeedMinerLevel(_preResetMaxMinerLv);
   state.miners=[{lv:_seedLv,inv:0,id:state.minerSeq}];state.recruits=0;
   // v12 修订：奇点商店态——原始商店 7 维在数值层面真正满级（此前仅"禁止购买"，
   // 维度数值仍是 0/1 级，导致奇点态挥镐 1 倍、背包 10 格，与承诺严重不符）。
@@ -9079,8 +9122,8 @@ function doPrestige(){
   milestoneSave(); // v13.4 自动存档：转生里程碑——无视节流立即强存
   if(nowSing){
     // v12 修订：提示精简——声望收益只告知"永久提升全局产出"，天数折算写清计算过程
-    toast('🏆 金盆洗手！获得 <b>'+fmt(g)+'</b> 点声望 · 声望已达上限','#fbbf24',
-      '本次溢出 <b>'+fmt(days)+'</b> 点声望 · '+singDaysDigits(days)+' 位数· 按位数折算 <b>'+singGain+'</b> 点奇点值 · 奇点值 = 天数位数 − '+SING_DIGIT_BASE+''+
+    toast('🏆 金盆洗手！获得 <b>'+fmtPrestige(g)+'</b> 点声望 · 声望已达上限','#fbbf24',
+      '本次溢出 <b>'+fmtPrestige(days)+'</b> 点声望 · '+singDaysDigits(days)+' 位数· 按位数折算 <b>'+singGain+'</b> 点奇点值 · 奇点值 = 天数位数 − '+SING_DIGIT_BASE+''+
       (singGain>0?'':' · 位数未超出 '+SING_DIGIT_BASE+' 位 · 累计折算 '+singEarn()+' 点')+
       '<br>声望永久提升全局产出 ×'+prestigeMult().toFixed(2)+' · '+bagNote+cdNote,true);
     // 殿后补充：仅切换瞬间提示商店页变化 · 不抢主提示
@@ -9089,7 +9132,7 @@ function doPrestige(){
         '原始商店维度已自动升至满级 · 当前奇点值 <b>'+singPoints()+'</b> 点',true);
     }
   }else{
-    toast('🏆 金盆洗手！获得 '+g+' 点声望','#fbbf24','声望永久提升全局产出 ×'+prestigeMult().toFixed(2)+' · '+bagNote+cdNote);
+    toast('🏆 金盆洗手！获得 '+fmtPrestige(g)+' 点声望','#fbbf24','声望永久提升全局产出 ×'+prestigeMult().toFixed(2)+' · '+bagNote+cdNote);
   }
 }
 
@@ -9223,16 +9266,36 @@ function syncPanelHeight(force){
   if(h>0&&h!==_lastPanelH){p.style.maxHeight=h+'px';_lastPanelH=h;}
 }
 window.addEventListener('resize',function(){syncPanelHeight(true);});
+function updateWildStatusChip(){
+  var value=$('hWildStatus');if(!value)return;
+  var w=state.wild||null,ex=w&&w.explorer,trip=w&&w.trip;
+  var status='none',label='无探险者',tip='尚未招募探险者';
+  if(ex&&trip&&trip.phase){
+    status='away';label=trip.phase==='return'?'探险者 · 返程中':'探险者 · 探索中';
+    tip='探险者正在矿野中，返家后可重新配置装备与消耗品';
+  }else if(ex){
+    var hp=Math.max(0,Number(ex.hp)||0),mx=0;
+    try{mx=wildMaxHp(wildStats(false),Number(ex.level)||1);}catch(e){mx=Math.max(1,Number(ex.maxHp)||100);}
+    mx=Math.max(1,mx);var pct=Math.max(0,Math.min(100,hp/mx*100));
+    if(pct>=99.999){status='ready';label='整装待发';tip='探险者生命值已满，可以出发';}
+    else{status='healing';label='回复中 · '+Math.floor(pct)+'%';tip='探险者正在家中恢复生命值，恢复至满血后即可出发';}
+  }
+  value.textContent=label;
+  var chip=value.closest?value.closest('.wild-state-chip'):null;
+  if(chip){chip.setAttribute('data-state',status);chip.title=tip;}
+}
 function render(){
   $('hGold').textContent=fmt(state.gold);
   $('hIncome').textContent=fmt(derived.goldPerSec);
+  var hpTop=$('hPrestige');
+  if(hpTop){
+    hpTop.textContent=fmtPrestige(state.prestige||0);
+    var hpChip=hpTop.closest?hpTop.closest('.chip'):null;
+    if(hpChip)hpChip.classList.toggle('prestige-capped',(Number(state.prestige)||0)>=PRESTIGE_CAP);
+  }
+  $('hGlobalMult').textContent='×'+prestigeMult().toFixed(2);
   $('hLuck').textContent=fmt(derived.luck);
-  $('hRate').textContent=fmt(derived.orePerSec);
-  // v11.3：声望超出上限时顶栏显示为上限 999999999 且标红 · 真实值见状态信息栏
-  var hp=$('hPrestige');
-  if(singMode()){hp.textContent=PRESTIGE_CAP;hp.style.color='#ff5c5c';}
-  else{hp.textContent=state.prestige;hp.style.color='';}
-  $('hPrestigeBonus').textContent='×'+prestigeMult().toFixed(2);
+  updateWildStatusChip();
   // v11.2：奇点商店态——商店 tab 改名为「奇点」
   var ts=$('tabShop');
   if(ts){var ti=ts.querySelector('.tab-ico'),tt=ts.querySelector('.tab-txt');if(ti)ti.textContent=singMode()?'🌟':'🛒';if(tt)tt.textContent=singMode()?'奇点':'商店';}
@@ -9259,7 +9322,7 @@ function render(){
   var fillLeft=Math.max(0,(derived.capacity-state.ore)/Math.max(derived.orePerSec,1e-9));
   $('bagBatch').textContent=' · 议价 售价 ×'+derived.sellMult.toFixed(2)+' · 约 '+fillLeft.toFixed(0)+' 秒挖满';
   $('bagGoldHint').innerHTML=state.autoSell
-    ? '<span style="color:var(--good)">♻️ 自动出售开启中 · 每 '+AUTO_SELL_CYCLE+' 秒整批结算'+(state.prestige>100000?' · 声望满 10 万：背包一满立即出售':'')+' · 背包约 '+derived.fillSec.toFixed(1)+' 秒挖满</span>'
+    ? '<span style="color:var(--good)">♻️ 自动出售开启中 · 每 '+AUTO_SELL_CYCLE+' 秒整批结算'+(state.prestige>100000?' · 声望超过 100,000：背包满仓立即出售':'')+' · 背包约 '+derived.fillSec.toFixed(1)+' 秒挖满</span>'
     : '出售价值：<b style="color:var(--gold)">+'+fmt(sellVal)+'</b>';
   $('fullWarn').classList.toggle('show',state.ore>=derived.capacity-ORE_EPS&&!state.autoSell);
   var sellBtn=$('btnSell');
@@ -9297,7 +9360,7 @@ function render(){
   if(ar)ar.style.display=ascendReady()?'flex':'none';
   if(ascendReady()){
     var gs=victoryInfo().grand;
-    setBtn($('btnAscend'),'✨ 飞升：'+PREFIX_SETS[gs.set].name+' → '+SPIRIT_DEFS[gs.set].text,'消耗 '+fmt(ascendCost())+' 声望 · 99.99%· 回到第 1 层 · 装备全清');
+    setBtn($('btnAscend'),'✨ 飞升：'+PREFIX_SETS[gs.set].name+' → '+SPIRIT_DEFS[gs.set].text,'消耗 '+fmtPrestige(ascendEffectiveCost())+' 声望 · 99.99%· 回到第 1 层 · 装备全清');
   }
   renderSpiritBoard();
   renderWild(); // V16：矿野日志与状态随主界面刷新，玩家无需手动刷新
@@ -9306,8 +9369,10 @@ function render(){
   $('prestigeRow').style.display=(hasUltimate()||(state.maxDepth>=6&&prestigeGain()>0))?'flex':'none';
   var kiResetBtn=$('btnKiReset');
   if($('prestigeRow').style.display==='flex'){
-    var prestigeCdLeft=(singMode()&&minerLevelCap()>=50)?Math.max(0,(state.prestigeCdUntil||0)-gameNow()):0;
-    setBtn($('btnPrestige'),'🏆 转生',prestigeCdLeft>0?'⏳ 冷却剩余 '+fmtDur(prestigeCdLeft/1000):''); // 冷却时间随主循环实时更新
+    var prestigeCdLeft=(!state.ascensionPrestigeFree&&minerLevelCap()>=50)?Math.max(0,(state.prestigeCdUntil||0)-gameNow()):0;
+    var nextPrestigeCd=(!state.ascensionPrestigeFree&&minerLevelCap()+1>=50)?prestigeCdHours(minerLevelCap()+1):0;
+    var prestigeCdText=prestigeCdLeft>0?'⏳ 冷却剩余 '+fmtDur(prestigeCdLeft/1000):(state.ascensionPrestigeFree?'飞升后首次转生免 CD':(nextPrestigeCd>0?'本次转生后冷却 '+fmtDur(nextPrestigeCd*3600):'矿工上限达到 Lv.50 后开始冷却'));
+    setBtn($('btnPrestige'),'🏆 转生',prestigeCdText); // 实时显示剩余 CD 或当前冷却规则
     if(kiResetBtn){
       kiResetBtn.style.display=hasUltimate()?'block':'none';
       if(hasUltimate())setBtn(kiResetBtn,'🍂 返璞归真 · 额外选项 · 重置一切 · 保留永耀之石');
@@ -9499,13 +9564,12 @@ function renderCrew(){
   var cs=$('crewStats');
   if(cs){
     var maintHtml=derived.maxMinerLv>4
-      ?'<br>🔧 <span class="maint-help" id="maintHelp">训练维护成本 ×'+fmt(Math.pow(UPG_MAXLV_FACTOR,Math.min(Math.max(0,derived.maxMinerLv-4),UPG_MAXLV_CAP)))+'</span>点击查看说明'
+      ?'<br>🔧 训练维护成本 ×'+fmt(Math.pow(UPG_MAXLV_FACTOR,Math.min(Math.max(0,derived.maxMinerLv-4),UPG_MAXLV_CAP)))+' <button type="button" class="maint-help help-dot" id="maintHelp" title="查看训练维护成本说明" aria-label="查看训练维护成本说明">?</button>'
       :'';
     cs.innerHTML=
       '👷 矿工 <b>'+derived.totalMiners+'</b> 名 · 最高 Lv.'+derived.maxMinerLv+'· 挥镐 <b class="g">×'+derived.swingSpeed.toFixed(2)+'</b><br>'+
       '🪨 单镐产量 <b class="g">'+fmt(derived.orePerHit)+'</b> · 暴击 <b class="g">'+fmtPct(derived.critChance*100)+'</b> · ×'+derived.critMult.toFixed(1)+''+maintHtml;
-    var mh=$('maintHelp');
-    if(mh)mh.onclick=showMaintHelp;
+    // 训练维护成本通过旁侧圆形问号打开。
   }
 }
 var renderedStageKey='';
@@ -9579,7 +9643,7 @@ function buildShop(){
   h+='<div class="card" id="card-autosell">'+
      '<div class="card-icon">♻️</div>'+
      '<div class="card-body"><div class="card-title">自动出售 <span class="lv" id="lv-autosell"></span></div>'+
-     '<div class="card-desc">每 '+AUTO_SELL_CYCLE+' 秒自动整批结算矿石——开启后挂机无忧，关闭后可手动出售；声望 &gt;10 万后满背包即售</div></div>'+
+     '<div class="card-desc">每 '+AUTO_SELL_CYCLE+' 秒自动整批结算矿石——开启后挂机无忧，关闭后可手动出售；声望 &gt;100,000 后满背包即售</div></div>'+
      '<button class="buy" id="buy-autosell"><span class="cost"></span><span class="bamt"></span></button></div>';
   $('shopList').innerHTML=h;
   UPGRADES.forEach(function(u){
@@ -9670,7 +9734,7 @@ function renderShop(){
     setBtn(e.btn,'×'+n,'💰 '+fmt(cost));
     e.btn.disabled=state.gold<cost;
   });
-  // V11.1-1：所有维度升一级 · 不含幸运；声望 20 万解锁；按钮内直接显示总价
+  // V11.1-1：所有维度升一级 · 不含幸运；声望超过 200,000 解锁；按钮内直接显示总价
   var ad=$('btnAllDim');
   if(ad){
     var plan=allDimPlan();
@@ -9679,8 +9743,8 @@ function renderShop(){
     ad.disabled=!ready;
     ad.classList.toggle('ready',ready);
     if(!unlocked){
-      setBtn(ad,'🔒 所有维度升一级','声望超过 20 万解锁 · 当前 '+fmt(state.prestige));
-      ad.title='声望超过 20 万后解锁：7 个维度 · 不含幸运各升 1 级';
+      setBtn(ad,'🔒 所有维度升一级','声望超过 200,000 解锁 · 当前 '+fmtPrestige(state.prestige));
+      ad.title='声望超过 200,000 后解锁：7 个维度 · 不含幸运各升 1 级';
     }else if(plan.blocked){
       setBtn(ad,'⏫ 所有维度升一级','有维度被锁定或前置未满足');
       ad.title='有维度被信吗锁定、均衡门控挡住或前置未满足——逐项升级解锁后可全体升级';
@@ -9966,9 +10030,9 @@ function renderBagSlot(){
   var pre=$('pre-bagslot');
   function showPre(t){pre.textContent=t;pre.className='prereq';pre.style.display=t?'':'none';}
   if(!unlocked){
-    showPre('🔒 声望达到 100 万解锁 · 当前 '+fmt(state.prestige));
+    showPre('🔒 声望超过 1,000,000 解锁 · 当前 '+fmtPrestige(state.prestige));
     setBtn(btn,'','未解锁');btn.disabled=true;btn.classList.remove('done');
-    btn.title='永久背包格需要声望达到 100 万 · 当前 '+fmt(state.prestige)+'\n解锁后每次购买 +1 格 · 价格 ×10 · 普通转生时背包保留容量同步 +1';
+    btn.title='永久背包格需要声望超过 1,000,000 · 当前 '+fmtPrestige(state.prestige)+'\n解锁后每次购买 +1 格 · 价格 ×10 · 普通转生时背包保留容量同步 +1';
     $('card-bagslot').classList.add('locked');
     return;
   }
@@ -10026,10 +10090,8 @@ function trophyRowHtml(){
   var h='<div class="stats-trophies">';
   TROPHY_KEYS.forEach(function(k,i){
     var d=TROPHY_DEFS[k],got=d.got();
-    var at=(state.trophyAt&&state.trophyAt[k])||0;
-    /* 只讲当前轮次：点亮＝本轮达成用时，未点亮＝获得条件。完全不提历史。 */
-    var tip=got?(d.name+' · 本轮已获得\n达成用时 '+fmtTime(at))
-               :(d.name+' · 本轮尚未获得\n获得条件：'+d.cond);
+    /* 奖杯提示只展示明确的达成条件，不展示达成时间或本轮计时。 */
+    var tip=d.name+'\n达成条件：'+d.cond;
     h+='<div class="trophy t'+(i+1)+(got?' got':'')+'" data-tip="'+esc(tip).replace(/\n/g,'&#10;')+'">'+
        trophySvg(i+1,got)+'<span>'+d.name+'</span></div>';
   });
@@ -10081,7 +10143,7 @@ function buildStatsHtml(){
   h+=kv('本轮在线时长',fmtTime(state.runPlaytime||0));
   h+=kv('本轮离线时长',fmtTime(state.runAwayTime||0));
   h+=kv('本轮金币',fmt(state.runGold||0));
-  h+=kv('当前声望','<b class="g">'+fmt(state.prestige||0)+'</b> 点 · 全局 ×'+prestigeMult().toFixed(2)+' · 幸运 +'+prestigeLuck());
+  h+=kv('当前声望','<b class="g">'+fmtPrestige(state.prestige||0)+'</b> 点 · 全局 ×'+prestigeMult().toFixed(2)+' · 幸运 +'+prestigeLuck());
   h+=kv('稀有度上限','第 '+state.depth+' 层最多掉到 <b>'+RARITIES[RARITY_ORDER[rarityCapByDepth()-1]].name+'</b> · 层数越深档位越高');
   h+=kv('挖矿速度',fmt(derived.orePerSec)+' 矿石/秒');
   h+=kv('金币收入',fmt(derived.goldPerSec)+' 金币/秒');
@@ -10102,6 +10164,30 @@ function buildStatsHtml(){
     h+=kv('奇点货架',singStocked().length?singStocked().map(function(sk){return SING_ITEMS[sk].icon+' '+SING_ITEMS[sk].name+' · 售价 '+SING_ITEMS[sk].cost+' 点';}).join(' · ')
       :('已售罄 · 下次 '+singClock(singNextRefreshAt(gameNow()))+' 刷新'));
   }
+  // V16.2：矿野生涯记录 · 直接使用游戏已累计字段，不覆盖或重置任何存档数据。
+  var ws=(state.wild&&state.wild.stats)||{};
+  var wnum=function(k){var n=Number(ws[k]);return isFinite(n)&&n>0?Math.floor(n):0;};
+  var jf=(state.wild&&state.wild.junkFound)||{},jr=(state.wild&&state.wild.junkReturned)||{},jrel=(state.wild&&state.wild.junkRelics)||{};
+  var junkKinds=Object.keys(jf).filter(function(k){return Number(jf[k])>0;}).length;
+  var junkFoundTotal=Object.keys(jf).reduce(function(a,k){return a+Math.max(0,Number(jf[k])||0);},0);
+  var junkReturnedTotal=Object.keys(jr).reduce(function(a,k){return a+Math.max(0,Number(jr[k])||0);},0);
+  var relicCount=Object.keys(jrel).filter(function(k){return !!jrel[k];}).length;
+  var ww=state.wild||{};
+  h+='<div class="stats-div"></div><div class="stats-sec">矿野生涯 · 探险与收藏记录</div>';
+  h+=kv('探险出发次数',fmt(wnum('trips'))+' 次');
+  h+=kv('成功完成返程',fmt(wnum('completed'))+' 次 · 返家总次数 '+fmt(wnum('returns'))+' 次');
+  h+=kv('探险身亡',fmt(wnum('deaths'))+' 次');
+  h+=kv('战斗场次 / 击败怪物',fmt(wnum('battles'))+' 场 / '+fmt(wnum('kills'))+' 只');
+  h+=kv('累计探险步数',fmt(wnum('steps'))+' 步');
+  h+=kv('途中发现战利品',fmt(wnum('loot'))+' 件');
+  h+=kv('带回陈列品的探险',fmt(wnum('collectionReturns'))+' 次');
+  h+=kv('带回奇点商品的探险',fmt(wnum('singReturns'))+' 次');
+  h+=kv('绝境 Boss 凯旋',fmt(wnum('despairBossReturns'))+' 次');
+  h+=kv('绝境满血返家',fmt(wnum('fullDespairReturns'))+' 次');
+  h+=kv('无上+陈列品合成',fmt(wnum('heartsCrafted'))+' 件');
+  h+=kv('杂物图鉴',fmt(junkKinds)+' / 116 种 · 累计发现 '+fmt(junkFoundTotal)+' 件');
+  h+=kv('杂物收藏',fmt(junkReturnedTotal)+' 件成功带回 · 已合成遗物 '+fmt(relicCount)+' / 6');
+  h+=kv('智识晶粒', '累计获得 '+fmt(Number(ww.crystalTotalEarned)||0)+' · 累计研习消耗 '+fmt(Number(ww.crystalTotalSpent)||0)+' · 当前 '+fmt(Number(ww.crystals)||0));
   return h;
 }
 function renderStats(){
@@ -10389,10 +10475,10 @@ function bindUI(){
   $('btnAscend').onclick=function(){ // V11-4：飞升
     if(!ascendReady())return;
     var gs=victoryInfo().grand,d=SPIRIT_DEFS[gs.set];
-    showModal({title:'✨ 飞升',confirmText:'消耗 '+fmt(ascendCost())+' 声望 · 飞升',
+    showModal({title:'✨ 飞升',confirmText:'消耗 '+fmtPrestige(ascendEffectiveCost())+' 声望 · 飞升',
       body:'将 <b>'+PREFIX_SETS[gs.set].name+'</b> 无上 6 件套的效果固化为内在精神：<br>'+
         '<b class="g">'+d.icon+' '+d.name+'</b> —— <b>'+d.text+'</b>永久生效<br><br>'+
-        '代价：消耗当前 <b>99.99%</b> 声望 · '+fmt(ascendCost())+' 点· 回到第 1 层 · 装备全部清空。<br>'+
+        (oldStoneTier('obsidian')>=2?'代价：黑曜石二阶免除声望消耗 · <b>0</b> 点 · ':'代价：消耗当前 <b>99.99%</b> 声望 · '+fmtPrestige(ascendEffectiveCost())+' 点 · ')+'回到第 1 层 · 装备全部清空。<br>'+
         '集齐 6 种内在精神即为 <b style="color:#ffd54f">極</b>。每种精神限一次，请谨慎选择时机。',
       onConfirm:function(){doAscend();}});
   };
@@ -10572,31 +10658,32 @@ function bindUI(){
       return;
     }
     // v12.2.1：转生冷却中——拦截并告知剩余时间
-    // v13.6.3：仅"矿工等级上限≥50 且声望达到上限"的冷却才拦截；其余情况转生零冷却 · 旧 CD 由 doPrestige 清零
-    var cdLeft=(singMode()&&minerLevelCap()>=50)?(state.prestigeCdUntil||0)-gameNow():0;
+    // 转生冷却只与矿工等级上限有关；飞升后的第一次普通转生免冷却。
+    var cdLeft=(!state.ascensionPrestigeFree&&minerLevelCap()>=50)?(state.prestigeCdUntil||0)-gameNow():0;
     if(cdLeft>0){
       showModal({title:'⏳ 转生冷却中',confirmText:'知道了',cancelText:'关闭',
-        body:'矿工等级上限 ≥50 且声望达到上限后，每次转生都会进入冷却 · 之后上限每 +5 级，冷却再 +1 小时。<br>距离下次可转生还剩 <b class="g">'+fmtDur(cdLeft/1000)+'</b>。'});
+        body:'矿工等级上限达到 Lv.50 后，转生会进入冷却 · 此后上限每再提高 5 级，冷却增加 1 小时。<br>距离下次可转生还剩 <b class="g">'+fmtDur(cdLeft/1000)+'</b>。'});
       return;
     }
-    // v13.6.3：本次转生后"矿工等级上限≥50 且声望达到上限"才进 CD——缺一零冷却
-    var willCap=(state.prestige||0)+g>=PRESTIGE_CAP;
-    var cdH=(willCap&&minerLevelCap()+1>=50)?prestigeCdHours(minerLevelCap()+1):0; // 本次转生后的矿工等级上限对应的冷却
+    // 预告本次转生后是否进入冷却；飞升后的首次普通转生免冷却。
+    var cdH=(!state.ascensionPrestigeFree&&minerLevelCap()+1>=50)?prestigeCdHours(minerLevelCap()+1):0;
     showModal({title:'🏆 转生',confirmText:'获得 '+g+' 声望',
       // v12 修订：信息精简——声望收益只告知"永久提升全局产出"删幂曲线/幸运值括号说明；
       // 背包保留容量显式与永久背包格 · bagBase挂钩，不再硬编码 10
-      body:'重置金币、矿石、升级、矿工与矿层 · <b>身上装备保留 · 装备背包保留 '+(state.bagBase||10)+' 格</b>'+(state.bag.length>(state.bagBase||10)?' · 超额装备按上锁优先、评分其次的顺序保留':'')+'，换取 <b class="g">'+g+'</b> 点声望。普通转生不再要求声望达到门槛；飞升与返璞归真仍按各自规则清空背包。<br>声望永久提升全局产出。'+
+      body:'重置金币、矿石、升级、矿工与矿层 · <b>身上装备保留 · 装备背包保留 '+(state.bagBase||10)+' 格</b>'+(state.bag.length>(state.bagBase||10)?' · 超额装备按上锁优先、评分其次的顺序保留':'')+'，换取 <b class="g">'+fmtPrestige(g)+'</b> 点声望。普通转生不再要求声望达到门槛；飞升与返璞归真仍按各自规则清空背包。<br>声望永久提升全局产出。'+
       (state.prestige>=PRESTIGE_CAP?singPrestigeHint(g):'')+
       '<br>每次转生：矿工等级上限 +1 · → Lv.'+minerLevelCap()+'、矿层上限 +1 · → 第 '+depthCap()+' 层，全游戏共 '+DEPTHS.length+' 层。'+
-      (cdH>0?'<br>⏳ <b>转生冷却提示</b>：本次转生后矿工等级上限 ≥50 · → Lv.'+(minerLevelCap()+1)+'且声望达到上限，将进入 <b>'+cdH+'</b> 小时转生冷却 · 此后上限每 +5 级，冷却再 +1 小时。':''),
+      (state.ascensionPrestigeFree?'<br>✨ 飞升后的第一次普通转生免冷却。':(cdH>0?'<br>⏳ 本次转生后矿工等级上限将达到 Lv.'+(minerLevelCap()+1)+'，进入 <b>'+cdH+'</b> 小时冷却；上限每再提高 5 级，冷却增加 1 小时。':'')),
       onConfirm:doPrestige});
   };
   // v14.9.1：返璞归真 · 極状态额外选项——独立确认流程 · 诗文 + 全量重置
   var krb=$('btnKiReset');if(krb)krb.onclick=function(){showKiResetModal();};
   $('btnHelp').onclick=function(){
-    var p=$('aboutPanel');if(p)p.classList.remove('open'); // v12：同时收起关于面板
+    var p=$('aboutPanel');if(p)p.classList.remove('open');
     showHelp();
   };
+  var aboutGuideBtn=$('btnAboutGuide');if(aboutGuideBtn)aboutGuideBtn.onclick=showHelp;
+  var crewHelpBtn=$('btnCrewHelp');if(crewHelpBtn)crewHelpBtn.onclick=showCrewHelp;
   bindSwitch($('swSound'),'sound');
   bindSwitch($('swAnim'),'anim');
   bindSwitch($('swNum'),'shortNum');
@@ -10633,29 +10720,84 @@ function bindSwitch(el,key){
 }
 function showMaintHelp(){
   showModal({title:'🔧 训练维护成本',confirmText:'明白了',cancelText:'关闭',
-    body:'最高等级矿工越强，所有升级维度的价格越高：最高矿工等级每超过 Lv.4 一级，7 个升级维度的每级价格 <b class="g">×'+UPG_MAXLV_FACTOR+'</b>Lv.12 起封顶。<br><br>冲矿工等级会抬高升级价格，两者互为成本锚；卡手时可以先买升级再冲矿工。转生后矿工重置，维护成本清零。'});
+    body:'最高等级矿工越强，所有升级维度的每级价格越高：最高矿工等级每超过 Lv.4 一级，价格乘以 <b class="g">×'+UPG_MAXLV_FACTOR+'</b>，Lv.12 起封顶。<br><br>冲矿工等级会抬高升级价格；卡手时可先买升级再提升矿工等级。转生后矿工重置，维护成本清零。'});
+}
+function showCrewHelp(){
+  showModal({title:'👷 矿工团队说明',confirmText:'明白了',cancelText:'关闭',
+    body:'矿工团队最多 <b>16 名</b>。两名同等级矿工可免费合成为高一级矿工。初始矿工等级上限为 <b>Lv.15</b>，每次普通转生或飞升后上限 +1。<br><br>招募矿工的等级为当前团队最高等级 −3，且不会超过等级上限。一键填满会按当前招募等级尽可能补满空位。<br><br>删除矿工会返还其投入金币的 <b>20%</b>；团队至少保留 1 名矿工。购买奇点商品「络绎不绝」后，可开启自动填充与升级。'});
 }
 function showHelp(){
-  var section=function(icon,title,body){return '<div class="guide-section"><div class="guide-head">'+icon+' '+title+'</div><div class="guide-copy">'+body+'</div></div>';};
-  var body='<div class="game-guide">'+
-    '<div class="guide-intro">从一名矿工开始，逐步扩充团队、深入矿层、收集装备，再通过转生与长期养成突破更高阶段。</div>'+
-    section('⛏️','第一阶段：建立矿工团队',
-      '矿工会持续开采矿石。招募需要金币，两个同等级矿工可以免费合成为更高等级；团队有固定栏位，合理安排招募与合成，让团队保持稳定成长。点击矿工也可以手动收获。')+
-    section('💰','核心资源：矿石与金币',
-      '矿石来自矿工开采，装满背包后出售即可换取金币。金币用于招募矿工和购买各类升级。提升产出、矿石价值与背包容量，可以让资源循环更顺畅。若开启自动出售，矿石会按设置自动换成金币。')+
-    section('📈','第二阶段：升级并深入矿层',
-      '使用金币提升各项能力，尽量保持维度均衡，逐步满足下潜条件。矿层越深，矿石价值与装备成长机会越高。商店、装备、套装和宝石都能帮助你提高效率。')+
-    section('🛡️','装备与宝石：打造长期战力',
-      '装备会随着挖矿进程掉落，稀有度越高，通常基础价值与属性越好。装备可以穿戴、锁定、出售或熔炼；同一套装集齐指定件数可获得额外效果。矿渣原石用于宝石洗练，宝石可合成、托管培养，并为永耀之石提供强化材料。')+
-    section('🏆','第三阶段：转生与声望',
-      '达到可转生阶段后，可以重置本轮矿工、矿层与升级，换取声望。声望会永久提升全局产出，并逐步提高后续轮次的成长上限。普通转生会保留身上装备和装备背包，适合反复积累长期成长。')+
-    section('✨','进阶目标：飞升、奇点与永耀之石',
-      '集齐高品质套装后可以飞升，把套装能力转化为永久精神效果。声望达到上限后，溢出部分可转化为奇点值，用于奇点商店中的特殊道具和长期提升。集齐精神并继续挑战，可追求更高阶的永耀之石及强化效果。')+
-    section('🎯','每个阶段可以做什么',
-      '<b>前期：</b>优先扩充矿工、提升基础维度，保持矿石持续转化为金币。<br><b>中期：</b>推进矿层、更新装备、完善套装，并开始积累矿渣原石与宝石。<br><b>后期：</b>围绕转生效率、声望上限、飞升套装和永耀之石规划长期目标。<br><b>随时：</b>查看成就、统计与排行榜，按当前资源选择最值得投入的成长路线。')+
-    '<div class="guide-note">🌿 矿野是独立的探险成长玩法，包含探险者、六维属性、地图、战斗、陈列品与战利品保全机制。请在矿野界面查看「玩法说明」与「图鉴」。</div>'+
+  var topic=function(icon,title,body){return '<div class="guide-topic"><div class="guide-topic-title">'+icon+' '+title+'</div><div class="guide-topic-copy">'+body+'</div></div>';};
+  var era=function(cls,no,title,subtitle,goal,topics,metrics,spend){
+    return '<section class="guide-era '+cls+'"><div class="guide-era-head"><span class="guide-stage-no">'+no+'</span><div><div class="guide-era-title">'+title+'</div><div class="guide-era-subtitle">'+subtitle+'</div></div></div>'+
+      '<div class="guide-goal"><b>本阶段目标：</b>'+goal+'</div>'+topics+
+      '<div class="guide-stage-footer"><div class="guide-metric"><strong>关键指标</strong><br>'+metrics+'</div><div class="guide-spend"><strong>资源投入</strong><br>'+spend+'</div></div></section>';
+  };
+  var upgradeGrid='<div class="guide-upgrade-grid">'+
+    '<div class="guide-upgrade-item"><b>强化镐子</b><br>每级矿石产量 +25%</div>'+
+    '<div class="guide-upgrade-item"><b>挖矿训练</b><br>每级挥镐速度 +10%</div>'+
+    '<div class="guide-upgrade-item"><b>扩容背包</b><br>增加矿石容量，出售议价每级 +4%</div>'+
+    '<div class="guide-upgrade-item"><b>矿石提纯</b><br>每级矿石价值 +15%</div>'+
+    '<div class="guide-upgrade-item"><b>暴击训练</b><br>每级暴击率 +3%，最高 25 级</div>'+
+    '<div class="guide-upgrade-item"><b>暴击强化</b><br>每级暴击伤害倍率 +0.80</div>'+
+    '<div class="guide-upgrade-item"><b>幸运护符</b><br>每级幸运 +15，影响爆装间隔与品质</div>'+
     '</div>';
-  showModal({title:'📘 游戏玩法指南',confirmText:'开始挖矿！',cancelText:'关闭',body:body});
+  var body='<div class="game-guide">'+
+    '<div class="guide-intro"><b>四段成长路线</b><br>前期经营矿洞、提升金币收入并培养矿工；中期通过普通转生累积声望与奇点值；后期反复飞升，把六套无上装备固化为六种精神并抵达「極」；大后期通过返璞归真积累永耀之石、强化宝石，再把宝石成长延伸到矿野。</div>'+
+    era('early','01','前期｜挖矿经营与矿工培养','一个普通转生循环：从第一桶金币，走到第六层矿',
+      '把金币收入、矿工团队和矿洞装备逐步做起来。推进到第六层后，信吗与无上装备开放，普通转生入口也会在本轮已有声望收益时出现。',
+      topic('⛏️','挖矿、出售与矿层',
+        '矿工持续开采矿石，矿石装满背包后出售换成金币。金币主要用于商店升级、招募矿工和解锁下一层。矿石基础价值随矿层加深而提高，每深入一层基础价值翻倍；更深矿层也会开放更高稀有度的装备。')+
+      topic('🛒','商店维度升级：前期最重要的金币投入',
+        '商店有七项升级，各自解决不同的产出瓶颈：'+upgradeGrid+
+        '<br>除「幸运护符」外，其余六项受均衡门控约束：某项等级比这六项中的最低等级高出 5 级时，会暂时无法继续升级。升级价格还会随矿层和团队最高矿工等级上升。遇到锁定时，优先补齐较低等级的维度。')+
+      topic('👷','矿工团队：招募、合成与等级上限',
+        '矿工团队最多 <b>16 名</b>。两名同等级矿工可以合成为一名高一级矿工；新招募矿工通常为当前团队最高等级 <b>−3 级</b>，最低为 Lv.1。初始矿工等级上限为 <b>Lv.15</b>，每次普通转生或飞升都会提高 1 级。团队最高等级越高，商店维度升级的训练维护成本也越高。')+
+      topic('🎽','矿洞装备与矿层掉落',
+        '矿洞装备的最高可掉落稀有度由当前矿层决定：<b>第 1 层普通、第 2 层稀有、第 3 层史诗、第 4 层传说、第 5 层至宝、第 6 层起无上</b>。这是该层的品质上限，不代表每件装备都会掉到上限；幸运会影响装备掉落间隔和品质分布。矿工身上的装备提供各自的挖矿属性，同一套装按 <b>2 / 4 / 6 件</b>触发常规套装效果。普通矿洞玩法没有 7 件套档位；只有达到「極中極」后，七个槽位全部穿戴同一狭义前缀的无上装备，才会触发特殊七件效果。')+
+      topic('🎲','信吗：从第六层开始的装备预言',
+        '挖到第 <b>6 层</b>后开放。每次装备掉落后，都会生成一条针对下一件装备的预言，玩家可以押「是」或「否」。猜中获得预言奖励，猜错损失下注金币。连续猜中达到 <b>3 次</b>后，矿石提纯价值开始增加；连续猜错达到 <b>3 次</b>后，挥镐速度开始增加。每继续连胜或连败一次，对应加成还会继续提高。')+
+      topic('🏆','普通转生：声望在这里结算',
+        '第 <b>6 层</b>是普通转生入口的重要开放节点。声望按本轮累计赚取的金币换算，只有在确认普通转生时才结算到账；转生确认窗口会显示本次实际获得的声望。普通转生会重置金币、矿石、矿工、矿层进度和商店维度。<br>保留规则：<b>身上穿戴的矿工装备保留</b>；装备背包只保留当前永久固定格数内的物品，初始为 <b>10 格</b>。超过容量的装备按上锁优先、评分其次的顺序保留。声望超过 100 万后可购买永久背包格，永久格数最多扩至 31 格。'),
+      '<b>每秒金币收入</b> · 当前矿层 / 已解锁最高层 · 矿工人数与最高等级 · 七项维度等级及门控状态 · 装备品质与套装 2 / 4 / 6 件进度 · 转生确认框中的本轮声望收益',
+      '先看瓶颈：产量不足补强化镐子，挥镐慢补挖矿训练，矿石卖价低补矿石提纯，背包频繁满再补扩容背包。暴击与幸运用于提高长期挖矿和装备成长。金币也要留给关键矿层解锁与矿工招募；六项受门控的升级尽量均衡推进。')+
+    era('mid','02','中期｜普通转生、声望与奇点商店','一个飞升循环：多轮普通转生，累积声望和矿工成长',
+      '利用多次普通转生扩大矿工等级上限和矿层上限，逐步提高声望倍率与幸运；达到声望封顶后开启奇点商店，开始积累奇点商品。',
+      topic('🏆','声望如何获得',
+        '声望来自<b>本轮累计赚取的金币</b>，会在普通转生确认时一次结算。金币收入越高、单轮积累越多，本次转生获得的声望就越多。声望会跨普通转生累积，返璞归真时则会重置。')+
+      topic('📈','声望带来的全局成长',
+        '声望提升基础全局产出倍率与声望幸运，两者按各自曲线成长。参考节点：<b>10 万声望约为全局 ×1.80、声望幸运 +200；100 万约 ×3.01、+500；500 万约 ×4.83、+1,000；1,000 万约 ×6.05、+1,200</b>。声望基础全局倍率最高为 <b>×8</b>，约在 <b>2,265 万声望</b>时达到；顶栏实际倍率还可能叠加永耀之石、奇点商品和限时效果。声望幸运有独立成长曲线，不要把声望封顶值当成这两项成长的共同起点或唯一目标。')+
+      topic('🔓','声望解锁的经营功能',
+        '声望<b>超过 100,000</b>：购买并开启自动出售后，矿石背包满仓可立即出售。<br>声望<b>超过 200,000</b>：解锁「所有维度升一级」。<br>声望<b>超过 1,000,000</b>：解锁永久装备背包格购买，每次增加 1 格，永久格数上限为 <b>31 格</b>。')+
+      topic('🌟','奇点商店与奇点值',
+        '当前声望达到 <b>999,999,999</b> 后，商店切换为奇点商店，原有七项维度会自动升至满级。此后普通转生时，超过声望上限的部分会折算为奇点值，用于购买奇点商品；奇点值跨普通转生和飞升保留。奇点商店可提供永久功能、层数解锁和一次性消耗品。')+
+      topic('⏳','转生冷却',
+        '转生冷却只看<b>转生后的矿工等级上限</b>，与当前声望无关。矿工等级上限达到 <b>Lv.50</b>后，普通转生开始进入冷却，基础为 <b>1 小时</b>；此后上限每再提高 5 级，冷却增加 1 小时。飞升会清空旧冷却，并让飞升后的第一次普通转生免 CD；永耀绿宝石还能缩短冷却。'),
+      '<b>当前声望</b> · 基础全局倍率与顶栏实际倍率 · 声望幸运 · 本轮待结算声望 · 矿工等级上限 · 矿层上限 · 奇点值余额及永久商品解锁情况',
+      '普通转生前确认本轮声望收益和背包保留情况。金币继续投入关键维度、矿工与矿层推进。奇点值优先考虑长期有效的功能、当前瓶颈和第 13 层解锁；准备飞升时，集中保留同一套装的高品质部件，逐步凑齐六件无上。')+
+    era('late','03','后期｜飞升、固化精神、冲击「極」','一个返璞归真循环：通过多次飞升集齐六种精神',
+      '每凑齐一套符合条件的六件无上装备，就飞升一次，把对应套装效果固化为永久精神；集齐六种精神后抵达「極」。',
+      topic('✨','飞升条件与代价',
+        '将同一套装的 <b>6 件无上装备同时穿在矿工身上</b>，且尚未获得该套装对应精神，即可飞升。飞升通常消耗当前声望的 <b>99.99%</b>，按规则向下取整保留约 0.01%；例如 999,999,999 点声望，飞升后保留 99,999 点。黑曜石二次强化后，飞升不再消耗声望。飞升会重置金币、矿石、矿工、矿层和商店维度，并清空矿工与探险者装备；已获得的精神保留。矿工等级上限与矿层上限各提高 1，且飞升后的第一次普通转生免 CD。')+
+      topic('🧠','六种内在精神',
+        '<b>古老</b>：矿石产量 ×100；<b>神秘</b>：幸运值 +1,000；<b>厚重</b>：矿石价值 ×100；<b>轻盈</b>：挖矿速度 ×100；<b>血怒</b>：暴击伤害 ×100；<b>虚空</b>：金币收益 ×100。每种精神只能固化一次，效果永久生效。')+
+      topic('🏁','抵达「極」',
+        '集齐 <b>6 / 6 种内在精神</b>即抵达「極」。每次抵达「極」都会获得 <b>1 次永耀之石抽奖机会</b>。抵达后可以继续普通转生和经营，也可以选择返璞归真，开启下一轮精神收集。'),
+      '<b>精神进度</b>（几 / 6） · 当前可飞升的无上六件套 · 各套装缺少的部位 · 本轮金币收入与声望 · 矿层深度 · 装备背包空位',
+      '此阶段的核心目标是凑齐指定套装的六件无上装备。优先推进更深矿层、提升幸运与装备掉落效率；整理背包时优先保留当前目标套装的高品质部件。凑齐六件并确认固化后，装备会被清空，所以飞升前先检查是否已经准备好下一套的收集方向。')+
+    era('end','04','大后期｜返璞归真、永耀之石与矿野羁绊','跨越多个返璞归真周期：把宝石收藏转化为永久成长',
+      '每次抵达「極」取得永耀之石机会，逐步集齐六色宝石并完成强化；再通过返璞归真开启下一轮，把成长延伸至矿野。',
+      topic('💎','永耀之石与永久效果',
+        '六种永耀之石分别提供不同方向的长期效果：<b>红宝石</b>降低矿工购买售价；<b>蓝宝石</b>提高全局倍率；<b>绿宝石</b>缩短转生冷却；<b>黄宝石</b>增加幸运；<b>紫水晶</b>提高信吗金币奖励；<b>黑曜石</b>参与特殊进阶。强化后会进一步提升对应效果。六颗石头集齐并完成全部强化后，可达到更高阶段「極中極」。')+
+      topic('🪄','宝石强化与返璞归真',
+        '强化永耀之石需要消耗对应颜色的高等级宝石：通常需要 <b>Lv.10</b>，黑曜石二次强化需要 <b>Lv.13</b>。强化不可逆，确认前要检查材料。抵达「極」后可以选择返璞归真：金币、矿工、声望、精神、装备和奇点值等本轮进度会重置；永耀之石、强化档、剩余抽奖次数和「極」称号会保留。普通宝石背包会重置，但有 <b>Lv.10 及以上</b>宝石时，可以选择 1 颗带入下一轮。已发现和带回的矿野杂物记录、库存及已合成遗物也会跨返璞归真保留。')+
+      topic('🌿','宝石与矿野：另一条长期成长线',
+        '矿野有独立的探险者六维、装备配置和战斗玩法，矿工身上的矿洞装备不会自动替代探险者的装备。探险中收集六色杂物并合成遗物后，拥有同色永耀之石即可激活对应<b>矿野羁绊</b>；强化永耀之石还能解锁<b>深度羁绊</b>。宝石与矿野的联动还会继续拓展，让宝石在探险者培养、战斗和路线构筑中发挥更强效果。'),
+      '<b>六色永耀之石收藏</b> · 各石强化档位 · 宝石等级与碎片储备 · 永耀之石抽奖次数 · 六色遗物合成进度 · 矿野羁绊解锁情况 · 「極」累计次数',
+      '优先完成六色永耀之石的收集与强化，提前留存对应颜色的 Lv.10 / Lv.13 宝石材料。返璞归真前检查是否有可带走的 Lv.10 宝石、未使用的抽奖机会，以及当前矿野遗物和羁绊进度。宝石强化与矿野遗物是两条可以互相放大的成长线。')+
+    '<div class="guide-note">不同成长阶段的资源目标会变化。普通转生侧重金币经营与声望积累，飞升侧重无上六件套，大后期则转向永耀之石、宝石强化和矿野羁绊。每次重置前，请以确认窗口展示的当次保留与消耗为准。</div>'+
+    '</div>';
+  showModal({title:'📘 玩家指南',confirmText:'开始挖矿！',cancelText:'关闭',body:body});
 }
 function rebuildAll(){
   renderedCrewKey='';renderedStageKey='';
@@ -10983,7 +11125,7 @@ var WILD_HEARTS={
  waterheart:{id:'waterheart',name:'水之仁心',rarity:'unique+',series:'sea',effect:{str:3.5,agi:3.5,int:3.5},gold:.5,homeHeal:1},
  woodheart:{id:'woodheart',name:'木之灵心',rarity:'unique+',series:'forest',effect:{end:3.5,loy:3.5,per:3.5},ore:.5,inviteDiscount:3}
 };
-var wildUiDirty=true,wildControlDirty=false,wildLogDirty=false,wildLastHomeHeal=0,wildBagSelected=null,wildEquipSelected=null,wildPrayerSelected=[],wildScenePinned=false,wildKitCollapsed=true;
+var wildUiDirty=true,wildControlDirty=false,wildLogDirty=false,wildLastHomeHeal=0,wildBagSelected=null,wildEquipSelected=null,wildConsumableSelected=null,wildDisplaySelected=null,wildPrayerSelected=[],wildScenePinned=false,wildKitCollapsed=true;
 var wildDexSelection={tab:'collections',series:'sea'};
 function wildState(){
  if(!state.wild||typeof state.wild!=='object')state.wild=defaultState().wild;
@@ -11731,7 +11873,15 @@ function wildConfirmDeleteConsumable(id){
    w.consumables.splice(idx,1);wildUiDirty=true;saveGame(false);renderWild();
  }});
 }
-function wildEquipConsumable(id){var w=wildState();if(wildIsAway())return;var idx=w.consumables.findIndex(function(c){return String(c.id)===String(id);});if(idx<0)return;if(w.equippedConsumable)wildCarryConsumable(w.equippedConsumable,1);var source=w.consumables[idx],active=Object.assign({},source);active.qty=1;if(Math.max(1,Number(source.qty)||1)>1)source.qty--;else w.consumables.splice(idx,1);w.equippedConsumable=active;wildUiDirty=true;saveGame(false);}
+function wildEquipConsumable(id){
+ var w=wildState();if(wildIsAway())return;
+ var idx=w.consumables.findIndex(function(c){return String(c.id)===String(id);});if(idx<0)return;
+ if(wildConsumableSelected!==String(id)){wildConsumableSelected=String(id);wildUiDirty=true;toast('已选中消耗品，再次点击同一件即可装配','#a89a86');return;}
+ if(w.equippedConsumable)wildCarryConsumable(w.equippedConsumable,1);
+ var source=w.consumables[idx],active=Object.assign({},source);active.qty=1;
+ if(Math.max(1,Number(source.qty)||1)>1)source.qty--;else w.consumables.splice(idx,1);
+ w.equippedConsumable=active;wildConsumableSelected=null;wildUiDirty=true;saveGame(false);
+}
 function wildDisplay(id,slot){var w=wildState();if(wildIsAway())return;wildEnsureDisplaySlots(w);if(slot<0||slot>=w.displaySlots.length)return;if(w.displaySlots[slot]){w.homeCollections.push(w.displaySlots[slot]);w.displaySlots[slot]=null;}if(id){var idx=w.homeCollections.indexOf(id);if(idx>=0){w.homeCollections.splice(idx,1);w.displaySlots[slot]=id;}}wildSyncLevel();wildUiDirty=true;saveGame(false);}
 function wildSortBag(){var idx=state.bag.map(function(_,i){return i;});var cmp={rarity:function(a,b){var d=RARITY_ORDER.indexOf(state.bag[b].rarity)-RARITY_ORDER.indexOf(state.bag[a].rarity);return d||state.bag[b].score-state.bag[a].score;},score:function(a,b){return state.bag[b].score-state.bag[a].score;},set:function(a,b){var A=state.bag[a],B=state.bag[b],d=(A.set||'').localeCompare(B.set||'');return d||B.score-A.score;},type:function(a,b){var A=state.bag[a],B=state.bag[b],d=A.type.localeCompare(B.type);return d||B.score-A.score;}};idx.sort(cmp[bagSortMode]||cmp.rarity);return idx;}
 function wildChartSvg(stats,temp){
@@ -11806,10 +11956,10 @@ function wildRenderHomeCollections(w,locked){
  h+='</div>'+wildActiveCollectionEffectsHTML(w)+'<div class="wild-grid">';
  (w.homeCollections||[]).forEach(function(id){
    var c=WILD_COLLECTIONS.find(function(x){return x.id===id;})||WILD_HEARTS[id];
-   if(c)h+='<button class="wild-item wild-item-with-icon'+(locked?' wild-locked':'')+'" data-wcmd="display-item" data-id="'+id+'" data-wild-tip="'+esc(wildCollectionTip(c)).replace(/\n/g,'&#10;')+'" '+(locked?'aria-disabled="true"':'')+'><span class="wild-item-icon" aria-hidden="true">'+wildCollectionIcon(c)+'</span><span class="wild-item-copy"><b>'+esc(c.name)+'</b><small class="r-'+wildRarityCssClass(c.rarity)+'">'+WILD_RNAME[c.rarity]+' · 点击装备至空位</small></span></button>';
+   if(c){var rarityClass='r-'+wildRarityCssClass(c.rarity);h+='<button class="wild-item wild-item-with-icon'+(wildDisplaySelected===String(id)?' selected':'')+(locked?' wild-locked':'')+'" data-wcmd="display-item" data-id="'+id+'" data-wild-tip="'+esc(wildCollectionTip(c)).replace(/\n/g,'&#10;')+'" '+(locked?'aria-disabled="true"':'')+'><span class="wild-item-icon" aria-hidden="true">'+wildCollectionIcon(c)+'</span><span class="wild-item-copy"><b class="'+rarityClass+'">'+esc(c.name)+'</b><small class="'+rarityClass+'">'+WILD_RNAME[c.rarity]+'</small></span></button>';}
  });
  if(!(w.homeCollections||[]).length)h+='<div class="wild-muted">尚未收集陈列品</div>';
- h+='</div>';
+ h+='</div>'+(homeCount?'<div class="wild-muted">点击藏品选中，再次点击同一件即可装入空陈列位。</div>':'');
  return h;
 }
 
@@ -11863,9 +12013,9 @@ function wildRenderConsumables(w,locked){
  items.sort(function(a,b){var tr=(typeRank[a.type]??9)-(typeRank[b.type]??9),rr=(rarityRank[b.rarity]||0)-(rarityRank[a.rarity]||0);return mode==='rarity'?(rr||tr||String(a.name).localeCompare(String(b.name))):(tr||rr||String(a.name).localeCompare(String(b.name)));});
  var h='<div class="wild-section-label"><span>🧪 探险消耗品</span><span class="wild-consumable-sort"><button type="button" data-wcmd="sort-consumables" data-sort="type" class="'+(mode==='type'?'active':'')+'">类型</button><button type="button" data-wcmd="sort-consumables" data-sort="rarity" class="'+(mode==='rarity'?'active':'')+'">稀有度</button></span></div>';
  h+='<div class="wild-gear-row wild-consumable-equipped"><span>消耗品槽位</span><div>'+(w.equippedConsumable?'<span class="wild-equipped-consumable-icon">'+wildConsumableIcon(w.equippedConsumable)+'</span><b class="r-'+wildRarityCssClass(w.equippedConsumable.rarity)+'" data-wild-tip="'+esc(wildConsumableTip(w.equippedConsumable)).replace(/\n/g,'&#10;')+'">'+esc(w.equippedConsumable.name)+'</b>':'<span class="wild-muted">空槽位</span>')+'</div><button class="wild-btn small" data-wcmd="unuse" '+(!w.equippedConsumable||locked?'disabled':'')+'>卸下</button></div><div class="wild-inventory">';
- items.forEach(function(c){var qty=Math.max(1,Number(c.qty)||1),id=esc(String(c.id)),rarityClass='r-'+wildRarityCssClass(c.rarity);h+='<div class="wild-consumable-stack"><button class="wild-item wild-item-with-icon'+(locked?' wild-locked':'')+'" data-wcmd="usecons" data-id="'+id+'" data-wild-tip="'+esc(wildConsumableTip(c)).replace(/\n/g,'&#10;')+'" '+(locked?'aria-disabled="true"':'')+'><span class="wild-item-icon" aria-hidden="true">'+wildConsumableIcon(c)+'</span><span class="wild-item-copy"><b class="'+rarityClass+'">'+esc(c.name)+(qty>1?'<span class="wild-stack-count">×'+qty+'</span>':'')+'</b><small class="'+rarityClass+'">'+WILD_RNAME[c.rarity]+' · 点击装入槽位</small></span></button><button class="wild-item-delete" type="button" data-wcmd="delete-consumable" data-id="'+id+'" '+(locked?'disabled':'')+' title="删除这一组消耗品" aria-label="删除 '+esc(c.name)+'">×</button></div>';});
+ items.forEach(function(c){var qty=Math.max(1,Number(c.qty)||1),id=esc(String(c.id)),rarityClass='r-'+wildRarityCssClass(c.rarity);h+='<div class="wild-consumable-stack"><button class="wild-item wild-item-with-icon'+(wildConsumableSelected===String(c.id)?' selected':'')+(locked?' wild-locked':'')+'" data-wcmd="usecons" data-id="'+id+'" data-wild-tip="'+esc(wildConsumableTip(c)).replace(/\n/g,'&#10;')+'" '+(locked?'aria-disabled="true"':'')+'><span class="wild-item-icon" aria-hidden="true">'+wildConsumableIcon(c)+'</span><span class="wild-item-copy"><b class="'+rarityClass+'">'+esc(c.name)+(qty>1?'<span class="wild-stack-count">×'+qty+'</span>':'')+'</b><small class="'+rarityClass+'">'+WILD_RNAME[c.rarity]+'</small></span></button><button class="wild-item-delete" type="button" data-wcmd="delete-consumable" data-id="'+id+'" '+(locked?'disabled':'')+' title="删除这一组消耗品" aria-label="删除 '+esc(c.name)+'">×</button></div>';});
  if(!items.length)h+='<div class="wild-muted">消耗品背包为空</div>';
- h+='</div>';return h;
+ h+='</div>'+(items.length?'<div class="wild-muted">点击消耗品选中，再次点击同一件即可装入槽位。</div>':'');return h;
 }
 function wildLogKey(x){return [Number(x&&x.t)||0,x&&x.kind||'',x&&x.text||'',Number(x&&x.revealAt)||0].join('|');}
 var wildJunkLogPattern=null,wildJunkLogByName=null;
@@ -12098,7 +12248,11 @@ function initWildUI(){
      e.preventDefault();e.stopImmediatePropagation();
    }
  },true);
- document.addEventListener('pointerover',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t&&t!==wildHoverTipTarget)wildShowHoverTip(t);});document.addEventListener('pointerout',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t&&(!e.relatedTarget||!t.contains(e.relatedTarget)))wildHideHoverTip(t);});document.addEventListener('focusin',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t)wildShowHoverTip(t);});document.addEventListener('focusout',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t)wildHideHoverTip(t);});document.addEventListener('visibilitychange',function(){if(document.hidden)return;var logs=wildState().logs||[];logs.forEach(function(x){if(x.revealAt)x.revealAt=0;});if(wildRevealTimer){clearTimeout(wildRevealTimer);wildRevealTimer=null;wildRevealAt=0;}wildLogDirty=true;if(wildState().mode==='wild')renderWild();});document.addEventListener('click',function(e){if(e.target.closest('#wildControl')&&!wildKitCollapsed&&!wildIsAway()){wildKitCollapsed=true;wildUiDirty=true;renderWild();}});document.addEventListener('click',function(e){var action=e.target.closest('#btnPrestige,#btnAscend,#btnKiReset');if(action&&wildIsAway()){if(action.id==='btnPrestige'&&wildBondActive('green'))return;e.preventDefault();e.stopImmediatePropagation();showModal({title:'⛏️ 探险尚未结束',confirmText:'知道了',cancelText:'',body:action.id==='btnPrestige'?'探险途中转生需要先合成绿色遗物并拥有永耀绿宝石。飞升与返璞归真仍需等待探险者返家。':'探险期间不能飞升或返璞归真，请等待探险者安全返程。'});return;}},true);document.addEventListener('click',function(e){var b=e.target.closest('[data-wcmd]');if(!b)return;var w=wildState(),ex=w.explorer,cmd=b.dataset.wcmd;if(wildIsAway()&&['book','prayer','bagitem','unequip','explorer-slot','take-miner','usecons','unuse','delete-consumable','display-slot','display-item','toggle-wild-lock'].indexOf(cmd)>=0)return;if(cmd==='mode'){w.mode=b.dataset.mode;wildUiDirty=true;renderWild();return;}else if(cmd==='toggle-kit'){if(wildIsAway()){toast('探险期间矿野之笈保持收起，装备已锁定','#a89a86');return;}wildKitCollapsed=!wildKitCollapsed;wildUiDirty=true;renderWild();return;}else if(cmd==='sort-bag'){bagSortMode=b.dataset.sort;wildUiDirty=true;renderWild();return;}else if(cmd==='sort-consumables'){w.consumableSortMode=b.dataset.sort==='rarity'?'rarity':'type';wildUiDirty=true;saveGame(false);renderWild();return;}else if(cmd==='explorer-slot'){if(wildKitCollapsed||wildIsAway()){toast('请先展开矿野之笈，再调整装备','#a89a86');return;}var slot=b.dataset.slot;var gear=wildGear();if(gear[slot]){if(wildEquipSelected!==slot){wildEquipSelected=slot;wildUiDirty=true;toast('已选中装备槽，再次点击即可脱下','#a89a86');}else{wildEquipSelected=null;wildUnequip(slot);}}else{wildEquipSelected=slot;wildUiDirty=true;} } if(cmd==='hire')wildPromptHire();else if(cmd==='dismiss-explorer')wildDismissExplorer();else if(cmd==='buy-invite'){wildBuyInvite(+b.dataset.qty);renderTavernShelf();}else if(cmd==='buy-tavern-special'){wildBuyTavernSpecial();renderTavernShelf();}else if(cmd==='delete-consumable'){wildConfirmDeleteConsumable(b.dataset.id);}else if(cmd==='book')wildBookUpgrade(b.dataset.key);else if(cmd==='prayer')wildPrayer();else if(cmd==='bagitem')wildEquipFromBag(b.dataset.id);else if(cmd==='unequip')wildUnequip(b.dataset.slot);else if(cmd==='take-miner')wildTakeMinerGear(b.dataset.slot);else if(cmd==='usecons')wildEquipConsumable(b.dataset.id);else if(cmd==='unuse'){if(w.equippedConsumable){wildCarryConsumable(w.equippedConsumable,1);w.equippedConsumable=null;wildUiDirty=true;saveGame(false);}}else if(cmd==='display-slot'){var s=+b.dataset.slot,id=w.displaySlots[s];if(id){w.displaySlots[s]=null;w.homeCollections.push(id);wildUiDirty=true;}}else if(cmd==='display-item'){wildEnsureDisplaySlots(w);var slot=w.displaySlots.indexOf(null);if(slot>=0)wildDisplay(b.dataset.id,slot);else toast('陈列位已满','#a89a86','先卸下一个陈列品');}else if(cmd==='carry-mode'){if(!wildIsAway()){w.carryPriorityMode=b.dataset.mode==='rarity'?'rarity':'category';wildUiDirty=true;saveGame(false);}}else if(cmd==='craft-junk'){wildAttemptJunkCraft(b.dataset.id);}else if(cmd==='toggle-wild-lock'){var item=state.bag.find(function(it){return String(it.id)===String(b.dataset.id);});if(item&&!wildIsAway()){item.locked=!item.locked;equipDirty=true;wildUiDirty=true;saveGame(false);}}else if(cmd==='start')wildStart();else if(cmd==='series'){wildSelectSeries(b.dataset.series);}else if(cmd==='diff'){wildSelectDifficulty(b.dataset.diff);}if(wildUiDirty||wildControlDirty||wildLogDirty)renderWild();});
+ document.addEventListener('pointerover',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t&&t!==wildHoverTipTarget)wildShowHoverTip(t);});document.addEventListener('pointerout',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t&&(!e.relatedTarget||!t.contains(e.relatedTarget)))wildHideHoverTip(t);});document.addEventListener('focusin',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t)wildShowHoverTip(t);});document.addEventListener('focusout',function(e){var t=e.target&&e.target.closest?e.target.closest('[data-wild-tip]'):null;if(t)wildHideHoverTip(t);});document.addEventListener('visibilitychange',function(){if(document.hidden)return;var logs=wildState().logs||[];logs.forEach(function(x){if(x.revealAt)x.revealAt=0;});if(wildRevealTimer){clearTimeout(wildRevealTimer);wildRevealTimer=null;wildRevealAt=0;}wildLogDirty=true;if(wildState().mode==='wild')renderWild();});document.addEventListener('click',function(e){if(e.target.closest('#wildControl')&&!wildKitCollapsed&&!wildIsAway()){wildKitCollapsed=true;wildUiDirty=true;renderWild();}});document.addEventListener('click',function(e){var action=e.target.closest('#btnPrestige,#btnAscend,#btnKiReset');if(action&&wildIsAway()){if(action.id==='btnPrestige'&&wildBondActive('green'))return;e.preventDefault();e.stopImmediatePropagation();showModal({title:'⛏️ 探险尚未结束',confirmText:'知道了',cancelText:'',body:action.id==='btnPrestige'?'探险途中转生需要先合成绿色遗物并拥有永耀绿宝石。飞升与返璞归真仍需等待探险者返家。':'探险期间不能飞升或返璞归真，请等待探险者安全返程。'});return;}},true);document.addEventListener('click',function(e){var b=e.target.closest('[data-wcmd]');if(!b)return;var w=wildState(),ex=w.explorer,cmd=b.dataset.wcmd;if(wildIsAway()&&['book','prayer','bagitem','unequip','explorer-slot','take-miner','usecons','unuse','delete-consumable','display-slot','display-item','toggle-wild-lock'].indexOf(cmd)>=0)return;if(cmd==='mode'){w.mode=b.dataset.mode;wildUiDirty=true;renderWild();return;}else if(cmd==='toggle-kit'){if(wildIsAway()){toast('探险期间矿野之笈保持收起，装备已锁定','#a89a86');return;}wildKitCollapsed=!wildKitCollapsed;wildUiDirty=true;renderWild();return;}else if(cmd==='sort-bag'){bagSortMode=b.dataset.sort;wildUiDirty=true;renderWild();return;}else if(cmd==='sort-consumables'){w.consumableSortMode=b.dataset.sort==='rarity'?'rarity':'type';wildUiDirty=true;saveGame(false);renderWild();return;}else if(cmd==='explorer-slot'){if(wildKitCollapsed||wildIsAway()){toast('请先展开矿野之笈，再调整装备','#a89a86');return;}var slot=b.dataset.slot;var gear=wildGear();if(gear[slot]){if(wildEquipSelected!==slot){wildEquipSelected=slot;wildUiDirty=true;toast('已选中装备槽，再次点击即可脱下','#a89a86');}else{wildEquipSelected=null;wildUnequip(slot);}}else{wildEquipSelected=slot;wildUiDirty=true;} } if(cmd==='hire')wildPromptHire();else if(cmd==='dismiss-explorer')wildDismissExplorer();else if(cmd==='buy-invite'){wildBuyInvite(+b.dataset.qty);renderTavernShelf();}else if(cmd==='buy-tavern-special'){wildBuyTavernSpecial();renderTavernShelf();}else if(cmd==='delete-consumable'){wildConfirmDeleteConsumable(b.dataset.id);}else if(cmd==='book')wildBookUpgrade(b.dataset.key);else if(cmd==='prayer')wildPrayer();else if(cmd==='bagitem')wildEquipFromBag(b.dataset.id);else if(cmd==='unequip')wildUnequip(b.dataset.slot);else if(cmd==='take-miner')wildTakeMinerGear(b.dataset.slot);else if(cmd==='usecons')wildEquipConsumable(b.dataset.id);else if(cmd==='unuse'){if(w.equippedConsumable){wildCarryConsumable(w.equippedConsumable,1);w.equippedConsumable=null;wildUiDirty=true;saveGame(false);}}else if(cmd==='display-slot'){var s=+b.dataset.slot,id=w.displaySlots[s];if(id){w.displaySlots[s]=null;w.homeCollections.push(id);wildUiDirty=true;}}else if(cmd==='display-item'){
+  var displayId=String(b.dataset.id);
+  if(wildDisplaySelected!==displayId){wildDisplaySelected=displayId;wildUiDirty=true;toast('已选中陈列品，再次点击同一件即可装配','#a89a86');}
+  else{wildEnsureDisplaySlots(w);var slot=w.displaySlots.indexOf(null);if(slot>=0){wildDisplay(displayId,slot);wildDisplaySelected=null;}else toast('陈列位已满','#a89a86','先卸下一个陈列品，再次点击已选中的藏品');}
+ }else if(cmd==='carry-mode'){if(!wildIsAway()){w.carryPriorityMode=b.dataset.mode==='rarity'?'rarity':'category';wildUiDirty=true;saveGame(false);}}else if(cmd==='craft-junk'){wildAttemptJunkCraft(b.dataset.id);}else if(cmd==='toggle-wild-lock'){var item=state.bag.find(function(it){return String(it.id)===String(b.dataset.id);});if(item&&!wildIsAway()){item.locked=!item.locked;equipDirty=true;wildUiDirty=true;saveGame(false);}}else if(cmd==='start')wildStart();else if(cmd==='series'){wildSelectSeries(b.dataset.series);}else if(cmd==='diff'){wildSelectDifficulty(b.dataset.diff);}if(wildUiDirty||wildControlDirty||wildLogDirty)renderWild();});
  document.addEventListener('input',function(e){
    var el=e.target,kind=el&&el.dataset?el.dataset.winput:'';
    if(kind==='returnhp-range'){
